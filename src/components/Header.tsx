@@ -12,21 +12,21 @@ const Header = () => {
   const navItems = isLoggedIn
     ? [
         { label: 'FAÇA SEU PEDIDO', path: '/pedido' },
-        { label: 'ACOMPANHE SEU PEDIDO', path: '/acompanhar' },
+        { label: 'MEUS PEDIDOS / RELATÓRIOS', path: '/relatorios' },
         { label: 'MEU PERFIL', path: '/perfil' },
       ]
     : [
         { label: 'FAÇA SEU PEDIDO', path: '/pedido' },
-        { label: 'ACOMPANHE SEU PEDIDO', path: '/acompanhar' },
+        { label: 'MEUS PEDIDOS / RELATÓRIOS', path: '/relatorios' },
         { label: 'LOGIN', path: '/login' },
       ];
 
   return (
-    <header className="sticky top-0 z-50 leather-gradient shadow-lg">
+    <header className="sticky top-0 z-50 bg-white shadow-lg">
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center gap-3">
           <img src={logo} alt="7ESTRIVOS" className="h-12 w-12 object-contain" />
-          <span className="hidden sm:block font-display text-xl font-bold text-primary-foreground tracking-wide">
+          <span className="hidden sm:block font-display text-xl font-bold text-primary tracking-wide">
             7ESTRIVOS
           </span>
         </Link>
@@ -40,7 +40,7 @@ const Header = () => {
               className={`px-4 py-2 rounded-md text-sm font-semibold tracking-wider transition-all duration-200 ${
                 location.pathname === item.path
                   ? 'bg-primary text-primary-foreground'
-                  : 'text-secondary-foreground hover:bg-primary/20'
+                  : 'text-primary hover:bg-primary/10'
               }`}
             >
               {item.label}
@@ -49,7 +49,7 @@ const Header = () => {
           {isLoggedIn && (
             <button
               onClick={logout}
-              className="ml-2 flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold text-secondary-foreground hover:bg-destructive/20 transition-colors"
+              className="ml-2 flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold text-primary hover:bg-destructive/10 transition-colors"
             >
               <LogOut size={16} />
               SAIR
@@ -60,7 +60,7 @@ const Header = () => {
         {/* Mobile menu button */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden text-secondary-foreground p-2"
+          className="md:hidden text-primary p-2"
         >
           {menuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -68,7 +68,7 @@ const Header = () => {
 
       {/* Mobile nav */}
       {menuOpen && (
-        <nav className="md:hidden leather-gradient border-t border-border/30 px-4 pb-4">
+        <nav className="md:hidden bg-white border-t border-border/30 px-4 pb-4">
           {navItems.map(item => (
             <Link
               key={item.path}
@@ -77,7 +77,7 @@ const Header = () => {
               className={`block px-4 py-3 rounded-md text-sm font-semibold tracking-wider ${
                 location.pathname === item.path
                   ? 'bg-primary text-primary-foreground'
-                  : 'text-secondary-foreground hover:bg-primary/20'
+                  : 'text-primary hover:bg-primary/10'
               }`}
             >
               {item.label}
@@ -86,7 +86,7 @@ const Header = () => {
           {isLoggedIn && (
             <button
               onClick={() => { logout(); setMenuOpen(false); }}
-              className="w-full text-left px-4 py-3 rounded-md text-sm font-semibold text-secondary-foreground hover:bg-destructive/20"
+              className="w-full text-left px-4 py-3 rounded-md text-sm font-semibold text-primary hover:bg-destructive/10"
             >
               SAIR
             </button>
