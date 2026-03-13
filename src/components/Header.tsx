@@ -68,7 +68,7 @@ const Header = () => {
 
       {/* Mobile nav */}
       {menuOpen && (
-        <nav className="md:hidden leather-gradient border-t border-border/30 px-4 pb-4">
+        <nav className="md:hidden bg-white border-t border-border/30 px-4 pb-4">
           {navItems.map(item => (
             <Link
               key={item.path}
