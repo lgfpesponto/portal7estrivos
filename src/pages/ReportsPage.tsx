@@ -33,18 +33,6 @@ const ReportsPage = () => {
     );
   }
 
-  const filteredOrders = useMemo(() => {
-    return orders.filter(o => {
-      if (filterDate && o.dataCriacao < filterDate) return false;
-      if (filterStatus && o.status !== filterStatus) return false;
-      return true;
-    });
-  }, [orders, filterDate, filterStatus]);
-
-  const totalValue = filteredOrders.reduce((s, o) => s + o.preco * o.quantidade, 0);
-  const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-  const allStatuses = [...new Set(orders.map(o => o.status))].sort();
 
   return (
     <div className="container mx-auto px-4 py-8">
