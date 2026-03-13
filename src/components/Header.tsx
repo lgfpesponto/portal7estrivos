@@ -49,7 +49,7 @@ const Header = () => {
           {isLoggedIn && (
             <button
               onClick={logout}
-              className="ml-2 flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold text-secondary-foreground hover:bg-destructive/20 transition-colors"
+              className="ml-2 flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold text-primary hover:bg-destructive/10 transition-colors"
             >
               <LogOut size={16} />
               SAIR
