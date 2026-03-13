@@ -12,12 +12,12 @@ const Header = () => {
   const navItems = isLoggedIn
     ? [
         { label: 'FAÇA SEU PEDIDO', path: '/pedido' },
-        { label: 'ACOMPANHE SEU PEDIDO', path: '/acompanhar' },
+        { label: 'MEUS PEDIDOS / RELATÓRIOS', path: '/relatorios' },
         { label: 'MEU PERFIL', path: '/perfil' },
       ]
     : [
         { label: 'FAÇA SEU PEDIDO', path: '/pedido' },
-        { label: 'ACOMPANHE SEU PEDIDO', path: '/acompanhar' },
+        { label: 'MEUS PEDIDOS / RELATÓRIOS', path: '/relatorios' },
         { label: 'LOGIN', path: '/login' },
       ];
 
