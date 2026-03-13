@@ -22,11 +22,11 @@ const Header = () => {
       ];
 
   return (
-    <header className="sticky top-0 z-50 leather-gradient shadow-lg">
+    <header className="sticky top-0 z-50 bg-white shadow-lg">
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center gap-3">
           <img src={logo} alt="7ESTRIVOS" className="h-12 w-12 object-contain" />
-          <span className="hidden sm:block font-display text-xl font-bold text-primary-foreground tracking-wide">
+          <span className="hidden sm:block font-display text-xl font-bold text-primary tracking-wide">
             7ESTRIVOS
           </span>
         </Link>
