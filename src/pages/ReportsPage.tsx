@@ -10,6 +10,18 @@ const ReportsPage = () => {
   const [filterDate, setFilterDate] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
+  const filteredOrders = useMemo(() => {
+    return orders.filter(o => {
+      if (filterDate && o.dataCriacao < filterDate) return false;
+      if (filterStatus && o.status !== filterStatus) return false;
+      return true;
+    });
+  }, [orders, filterDate, filterStatus]);
+
+  const totalValue = filteredOrders.reduce((s, o) => s + o.preco * o.quantidade, 0);
+  const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const allStatuses = [...new Set(orders.map(o => o.status))].sort();
+
   if (!isLoggedIn) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
