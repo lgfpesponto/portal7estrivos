@@ -77,7 +77,7 @@ const Header = () => {
               className={`block px-4 py-3 rounded-md text-sm font-semibold tracking-wider ${
                 location.pathname === item.path
                   ? 'bg-primary text-primary-foreground'
-                  : 'text-secondary-foreground hover:bg-primary/20'
+                  : 'text-primary hover:bg-primary/10'
               }`}
             >
               {item.label}
