@@ -86,7 +86,7 @@ const Header = () => {
           {isLoggedIn && (
             <button
               onClick={() => { logout(); setMenuOpen(false); }}
-              className="w-full text-left px-4 py-3 rounded-md text-sm font-semibold text-secondary-foreground hover:bg-destructive/20"
+              className="w-full text-left px-4 py-3 rounded-md text-sm font-semibold text-primary hover:bg-destructive/10"
             >
               SAIR
             </button>
