@@ -40,7 +40,7 @@ const Header = () => {
               className={`px-4 py-2 rounded-md text-sm font-semibold tracking-wider transition-all duration-200 ${
                 location.pathname === item.path
                   ? 'bg-primary text-primary-foreground'
-                  : 'text-secondary-foreground hover:bg-primary/20'
+                  : 'text-primary hover:bg-primary/10'
               }`}
             >
               {item.label}
