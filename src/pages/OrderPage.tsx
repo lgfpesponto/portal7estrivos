@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { saveDraft, deleteDraft, Draft } from '@/lib/drafts';
 import { Upload, X, Eye } from 'lucide-react';
 
 const ORDER_FIELDS = [
@@ -36,11 +37,14 @@ const TEXT_FIELDS = [
 const OrderPage = () => {
   const { isLoggedIn, user, addOrder } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState<Record<string, string>>({});
-  const [sobMedida, setSobMedida] = useState(false);
-  const [quantidade, setQuantidade] = useState(1);
-  const [numeroPedido, setNumeroPedido] = useState('');
-  const [fotos, setFotos] = useState<string[]>([]);
+  const location = useLocation();
+  const draftState = (location.state as { draft?: Draft })?.draft;
+  const [draftId, setDraftId] = useState(draftState?.id || '');
+  const [form, setForm] = useState<Record<string, string>>(draftState?.form || {});
+  const [sobMedida, setSobMedida] = useState(draftState?.sobMedida || false);
+  const [quantidade, setQuantidade] = useState(draftState?.quantidade || 1);
+  const [numeroPedido, setNumeroPedido] = useState(draftState?.numeroPedido || '');
+  const [fotos, setFotos] = useState<string[]>(draftState?.fotos || []);
   const [showMirror, setShowMirror] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -127,8 +131,26 @@ const OrderPage = () => {
 
   const confirmOrder = () => {
     addOrder(orderData);
+    if (draftId) deleteDraft(draftId);
     toast.success('Pedido criado com sucesso!');
     navigate('/relatorios');
+  };
+
+  const handleSaveDraft = () => {
+    if (!user) return;
+    const id = draftId || `draft-${Date.now()}`;
+    saveDraft({
+      id,
+      userId: user.id,
+      savedAt: new Date().toISOString(),
+      form,
+      sobMedida,
+      quantidade,
+      numeroPedido,
+      fotos,
+    });
+    setDraftId(id);
+    toast.success('Rascunho salvo!');
   };
 
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -241,6 +263,9 @@ const OrderPage = () => {
 
           <button type="submit" className="w-full orange-gradient text-primary-foreground py-3 rounded-lg font-bold tracking-wider hover:opacity-90 transition-opacity text-lg flex items-center justify-center gap-2">
             <Eye size={20} /> CONFERIR E FINALIZAR PEDIDO
+          </button>
+          <button type="button" onClick={handleSaveDraft} className="w-full border-2 border-primary text-primary py-3 rounded-lg font-bold tracking-wider hover:bg-primary/10 transition-colors text-lg flex items-center justify-center gap-2">
+            SALVAR RASCUNHO
           </button>
         </form>
       </motion.div>

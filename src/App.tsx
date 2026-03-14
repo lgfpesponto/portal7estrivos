@@ -15,6 +15,7 @@ import OrderDetailPage from "./pages/OrderDetailPage";
 import ReportsPage from "./pages/ReportsPage";
 import PiecesReportPage from "./pages/PiecesReportPage";
 import ProfilePage from "./pages/ProfilePage";
+import DraftsPage from "./pages/DraftsPage";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/relatorios" element={<ReportsPage />} />
             <Route path="/relatorio-pecas" element={<PiecesReportPage />} />
             <Route path="/perfil" element={<ProfilePage />} />
+            <Route path="/rascunhos" element={<DraftsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

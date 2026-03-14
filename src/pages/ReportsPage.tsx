@@ -2,7 +2,7 @@ import { useAuth, PRODUCTION_STATUSES, PRODUCTION_STATUSES_USER } from '@/contex
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Filter, FileText, Download, Printer, CheckCircle } from 'lucide-react';
+import { Filter, FileText, Download, Printer, CheckCircle, StickyNote } from 'lucide-react';
 import jsPDF from 'jspdf';
 
 const formatDateBR = (date: string, time?: string) => {
@@ -203,7 +203,12 @@ const ReportsPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-3xl font-display font-bold mb-6">MEUS PEDIDOS</h1>
+        <div className="flex items-center gap-4 mb-6">
+          <h1 className="text-3xl font-display font-bold">MEUS PEDIDOS</h1>
+          <button onClick={() => navigate('/rascunhos')} className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-bold text-sm hover:bg-primary/10 transition-colors">
+            <StickyNote size={16} /> Rascunhos
+          </button>
+        </div>
 
         {/* Filters */}
         <div className="bg-card rounded-xl p-4 western-shadow mb-6">
