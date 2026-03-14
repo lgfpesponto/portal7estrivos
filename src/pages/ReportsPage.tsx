@@ -14,6 +14,7 @@ const ReportsPage = () => {
   const { isLoggedIn, isAdmin, orders, allOrders, user } = useAuth();
   const navigate = useNavigate();
   const [filterDate, setFilterDate] = useState('');
+  const [filterDateEnd, setFilterDateEnd] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVendedor, setFilterVendedor] = useState('');
