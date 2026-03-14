@@ -222,6 +222,9 @@ const ReportsPage = () => {
           <button onClick={() => navigate('/rascunhos')} className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-bold text-sm hover:bg-primary/10 transition-colors">
             <StickyNote size={16} /> Rascunhos
           </button>
+          <button onClick={() => navigate('/pedido')} className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-bold text-sm hover:bg-primary/10 transition-colors">
+            <FileText size={16} /> Fazer pedido
+          </button>
         </div>
 
         {/* Filters */}
