@@ -16,7 +16,7 @@ const Index = () => {
 
   const financialData = useMemo(() => {
     const totalAno = orders.reduce((s, o) => s + o.preco * o.quantidade, 0);
-    const pago = orders.filter(o => o.status === 'Pago' || o.status === 'Entregue').reduce((s, o) => s + o.preco * o.quantidade, 0);
+    const pago = orders.filter(o => o.status === 'Pago' || o.status === 'Entregue' || o.status === 'Cobrado').reduce((s, o) => s + o.preco * o.quantidade, 0);
     const pendente = totalAno - pago;
     return { pendente };
   }, [orders]);
