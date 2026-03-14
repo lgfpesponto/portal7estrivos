@@ -182,11 +182,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (username.toLowerCase() === '7estrivos' && password === 'admin123') {
       setUser({
         id: 'admin-1',
-        nomeCompleto: '7ESTRIVOS',
+        nomeCompleto: 'Juliana Cristina Ribeiro',
         nomeUsuario: '7estrivos',
-        telefone: '(00) 00000-0000',
-        email: 'admin@7estrivos.com',
-        cpfCnpj: '00000000000',
+        telefone: '(16) 99114-9227',
+        email: 'lgfpesponto@gmail.com',
+        cpfCnpj: '02139487000113',
         isAdmin: true,
       });
       return true;

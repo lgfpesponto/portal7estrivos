@@ -199,7 +199,7 @@ const ReportsPage = () => {
               <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="bg-muted rounded-lg px-3 py-2 text-sm border border-border focus:border-primary outline-none" />
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1">Status</label>
+              <label className="block text-xs font-semibold mb-1">Progresso da Produção</label>
               <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="bg-muted rounded-lg px-3 py-2 text-sm border border-border focus:border-primary outline-none">
                 <option value="">Todos</option>
                 {allStatuses.map(s => <option key={s} value={s}>{s}</option>)}
