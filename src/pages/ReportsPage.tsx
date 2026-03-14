@@ -28,6 +28,7 @@ const ReportsPage = () => {
     return displayOrders.filter(o => {
       if (searchQuery && !o.numero.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (filterDate && o.dataCriacao < filterDate) return false;
+      if (filterDateEnd && o.dataCriacao > filterDateEnd) return false;
       if (filterStatus && o.status !== filterStatus) return false;
       return true;
     });
