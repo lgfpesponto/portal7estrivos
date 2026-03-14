@@ -14,6 +14,7 @@ const ReportsPage = () => {
   const { isLoggedIn, isAdmin, orders, allOrders, user } = useAuth();
   const navigate = useNavigate();
   const [filterDate, setFilterDate] = useState('');
+  const [filterDateEnd, setFilterDateEnd] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVendedor, setFilterVendedor] = useState('');
@@ -27,6 +28,7 @@ const ReportsPage = () => {
     return displayOrders.filter(o => {
       if (searchQuery && !o.numero.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (filterDate && o.dataCriacao < filterDate) return false;
+      if (filterDateEnd && o.dataCriacao > filterDateEnd) return false;
       if (filterStatus && o.status !== filterStatus) return false;
       return true;
     });
@@ -197,6 +199,10 @@ const ReportsPage = () => {
             <div>
               <label className="block text-xs font-semibold mb-1">Data de Criação (a partir de)</label>
               <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="bg-muted rounded-lg px-3 py-2 text-sm border border-border focus:border-primary outline-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold mb-1">Data de Criação (até)</label>
+              <input type="date" value={filterDateEnd} onChange={e => setFilterDateEnd(e.target.value)} className="bg-muted rounded-lg px-3 py-2 text-sm border border-border focus:border-primary outline-none" />
             </div>
             <div>
               <label className="block text-xs font-semibold mb-1">Progresso da Produção</label>
