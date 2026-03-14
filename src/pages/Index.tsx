@@ -65,7 +65,7 @@ const Index = () => {
         <div className="relative z-10 container mx-auto px-4 py-12">
           <motion.div initial="hidden" animate="visible" className="max-w-lg">
             <motion.h1 variants={fadeIn} custom={0} className="text-4xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-              7ESTRIVOS
+              Página de Representantes
             </motion.h1>
             <motion.p variants={fadeIn} custom={1} className="text-white/90 text-lg mb-6" style={{ fontFamily: "'Montserrat', sans-serif" }}>
               Crie fichas de produção, acompanhe seus pedidos e gerencie suas vendas no portal exclusivo para revendedores.
