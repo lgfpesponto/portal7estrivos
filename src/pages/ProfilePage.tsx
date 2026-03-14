@@ -1,8 +1,9 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, CreditCard, Pencil, Check, X } from 'lucide-react';
-import { useState } from 'react';
+import { User, Mail, Phone, CreditCard, Pencil, Check, X, HardHat } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Progress } from '@/components/ui/progress';
 
 const ProfilePage = () => {
   const { isLoggedIn, user, updateProfile } = useAuth();
