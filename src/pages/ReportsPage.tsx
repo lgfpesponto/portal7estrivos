@@ -13,11 +13,12 @@ const ReportsPage = () => {
 
   const filteredOrders = useMemo(() => {
     return orders.filter(o => {
+      if (searchQuery && !o.numero.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (filterDate && o.dataCriacao < filterDate) return false;
       if (filterStatus && o.status !== filterStatus) return false;
       return true;
     });
-  }, [orders, filterDate, filterStatus]);
+  }, [orders, filterDate, filterStatus, searchQuery]);
 
   const totalValue = filteredOrders.reduce((s, o) => s + o.preco * o.quantidade, 0);
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
