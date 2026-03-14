@@ -240,6 +240,11 @@ const ReportsPage = () => {
                 </select>
               </div>
             )}
+            <div className="flex items-end">
+              <button onClick={applyFilters} className="orange-gradient text-primary-foreground px-6 py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity flex items-center gap-2">
+                <Filter size={14} /> FILTRAR
+              </button>
+            </div>
           </div>
         </div>
 
