@@ -39,7 +39,7 @@ const ReportsPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-3xl font-display font-bold mb-6">Meus Pedidos / Relatórios</h1>
+        <h1 className="text-3xl font-display font-bold mb-6">MEUS PEDIDOS</h1>
 
         {/* Filters */}
         <div className="bg-card rounded-xl p-4 western-shadow mb-6">
