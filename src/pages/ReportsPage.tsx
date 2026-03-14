@@ -115,6 +115,7 @@ const ReportsPage = () => {
     const list = ordersToExport;
     const doc = new jsPDF({ format: 'a5' });
     const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
 
     list.forEach((order, idx) => {
       if (idx > 0) doc.addPage();
@@ -127,42 +128,97 @@ const ReportsPage = () => {
       doc.text(`Código: ${order.numero}`, 10, 20);
       doc.text(`Vendedor: ${order.vendedor}`, 10, 25);
       doc.text(`Data: ${formatDateBR(order.dataCriacao, order.horaCriacao)}`, pw - 10, 20, { align: 'right' });
+      doc.text(`Prazo: ${order.temLaser ? '30' : '10'} dias úteis`, pw - 10, 25, { align: 'right' });
 
-      // Details
+      // Details - all filled fields from updated form
       let y = 35;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
-      const details = [
-        ['Modelo', order.modelo], ['Tamanho', order.tamanho],
-        ['Solado', order.solado], ['Bico', order.formatoBico],
-        ['Vira', order.corVira], ['C. Gáspea', order.couroGaspea],
-        ['C. Cano', order.couroCano], ['C. Taloneira', order.couroTaloneira],
-        ['B. Cano', order.bordadoCano], ['B. Gáspea', order.bordadoGaspea],
-        ['B. Taloneira', order.bordadoTaloneira], ['Personalização', order.personalizacaoNome],
-        ['Cor Linha', order.corLinha], ['Borrachinha', order.corBorrachinha],
-        ['Trisce', order.trisce], ['Tiras', order.tiras],
-        ['Metais', order.metais], ['Acessórios', order.acessorios],
-      ].filter(([, v]) => v);
+      const details: [string, string][] = [
+        ['Modelo', order.modelo],
+        ['Tamanho', order.tamanho ? `${order.tamanho}${order.genero ? ' — ' + order.genero : ''}` : ''],
+        ['Sob Medida', order.sobMedida ? `Sim${order.sobMedidaDesc ? ' — ' + order.sobMedidaDesc : ''}` : ''],
+        ['Acessórios', order.acessorios],
+        ['Couro Cano', order.couroCano ? `${order.couroCano}${order.corCouroCano ? ' / ' + order.corCouroCano : ''}` : ''],
+        ['Couro Gáspea', order.couroGaspea ? `${order.couroGaspea}${order.corCouroGaspea ? ' / ' + order.corCouroGaspea : ''}` : ''],
+        ['Couro Taloneira', order.couroTaloneira ? `${order.couroTaloneira}${order.corCouroTaloneira ? ' / ' + order.corCouroTaloneira : ''}` : ''],
+        ['B. Cano', order.bordadoCano],
+        ['Cor B. Cano', order.corBordadoCano || ''],
+        ['B. Gáspea', order.bordadoGaspea],
+        ['Cor B. Gáspea', order.corBordadoGaspea || ''],
+        ['B. Taloneira', order.bordadoTaloneira],
+        ['Cor B. Taloneira', order.corBordadoTaloneira || ''],
+        ['Nome Bordado', order.nomeBordadoDesc || order.personalizacaoNome || ''],
+        ['Laser Cano', order.laserCano || ''],
+        ['Glitter Cano', order.corGlitterCano || ''],
+        ['Laser Gáspea', order.laserGaspea || ''],
+        ['Glitter Gáspea', order.corGlitterGaspea || ''],
+        ['Laser Taloneira', order.laserTaloneira || ''],
+        ['Glitter Taloneira', order.corGlitterTaloneira || ''],
+        ['Pintura', order.pintura === 'Sim' ? (order.pinturaDesc || 'Sim') : ''],
+        ['Estampa', order.estampa === 'Sim' ? (order.estampaDesc ? `Sim — ${order.estampaDesc}` : 'Sim') : ''],
+        ['Desenvolvimento', order.desenvolvimento],
+        ['Cor Linha', order.corLinha],
+        ['Borrachinha', order.corBorrachinha],
+        ['Cor Vivo', order.corVivo || ''],
+        ['Metal', order.metais],
+        ['Tipo Metal', order.tipoMetal || ''],
+        ['Cor Metal', order.corMetal || ''],
+        ['Strass', order.strassQtd ? `${order.strassQtd} un.` : ''],
+        ['Cruz Metal', order.cruzMetalQtd ? `${order.cruzMetalQtd} un.` : ''],
+        ['Bridão Metal', order.bridaoMetalQtd ? `${order.bridaoMetalQtd} un.` : ''],
+        ['Tricê', order.trisce === 'Sim' ? (order.triceDesc || 'Sim') : ''],
+        ['Tiras', order.tiras === 'Sim' ? (order.tirasDesc || 'Sim') : ''],
+        ['Solado', order.solado],
+        ['Cor Sola', order.corSola || ''],
+        ['Cor Vira', order.corVira || ''],
+        ['Costura Atrás', order.costuraAtras === 'Sim' ? 'Sim' : ''],
+        ['Carimbo', order.carimbo ? `${order.carimbo}${order.carimboDesc ? ' — ' + order.carimboDesc : ''}` : ''],
+        ['Adicional', order.adicionalDesc || ''],
+      ].filter(([, v]) => v) as [string, string][];
 
       details.forEach(([label, value]) => {
+        if (y > ph - 50) { doc.addPage(); y = 15; }
         doc.setFont('helvetica', 'bold');
         doc.text(`${label}:`, 10, y);
         doc.setFont('helvetica', 'normal');
-        doc.text(value, 45, y);
-        y += 5;
+        const lines = doc.splitTextToSize(value, pw - 55);
+        doc.text(lines, 45, y);
+        y += Math.max(5, lines.length * 4);
       });
 
       if (order.observacao) {
+        if (y > ph - 50) { doc.addPage(); y = 15; }
         y += 3;
         doc.setFont('helvetica', 'bold');
         doc.text('Observação:', 10, y);
         doc.setFont('helvetica', 'normal');
-        doc.text(order.observacao, 10, y + 5, { maxWidth: pw - 20 });
-        y += 12;
+        const obsLines = doc.splitTextToSize(order.observacao, pw - 20);
+        doc.text(obsLines, 10, y + 5);
+        y += 5 + obsLines.length * 4;
       }
 
-      // Stubs (canhotos) at bottom
-      const stubY = doc.internal.pageSize.getHeight() - 35;
+      // Photos
+      if (order.fotos && order.fotos.length > 0) {
+        if (y > ph - 60) { doc.addPage(); y = 15; }
+        y += 3;
+        doc.setFont('helvetica', 'bold');
+        doc.text('Fotos de Referência:', 10, y);
+        y += 5;
+        let photoX = 10;
+        order.fotos.forEach((foto) => {
+          try {
+            if (photoX + 30 > pw - 10) { photoX = 10; y += 25; }
+            if (y > ph - 50) { doc.addPage(); y = 15; photoX = 10; }
+            doc.addImage(foto, 'JPEG', photoX, y, 25, 25);
+            photoX += 28;
+          } catch { /* skip invalid images */ }
+        });
+        y += 28;
+      }
+
+      // Stubs (canhotos) at bottom of last page
+      const stubY = ph - 35;
       doc.setDrawColor(150);
       doc.line(5, stubY - 3, pw - 5, stubY - 3);
 
