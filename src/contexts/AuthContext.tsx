@@ -218,6 +218,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = useCallback(() => setUser(null), []);
 
+  const updateProfile = useCallback((data: Partial<Omit<User, 'id' | 'isAdmin'>>) => {
+    setUser(prev => prev ? { ...prev, ...data } : prev);
+  }, []);
+
   const recoverPassword = useCallback((cpfCnpj: string, digits: string) => {
     return digits === '123' || registeredUsers.some(u => u.cpfCnpj.startsWith(digits));
   }, []);
