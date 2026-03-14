@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { saveDraft, deleteDraft, Draft } from '@/lib/drafts';
 import { Upload, X, Eye } from 'lucide-react';
 
 const ORDER_FIELDS = [
