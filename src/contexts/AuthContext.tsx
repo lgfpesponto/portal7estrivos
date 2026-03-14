@@ -100,6 +100,8 @@ interface AuthContextType {
   updateProfile: (data: Partial<Omit<User, 'id' | 'isAdmin'>>) => void;
   orders: Order[];
   addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status'> & { numeroPedido?: string }) => void;
+  deleteOrder: (id: string) => void;
+  updateOrder: (id: string, data: Partial<Order>) => void;
   recoverPassword: (cpfCnpj: string, digits: string) => boolean;
   allOrders: Order[];
 }
