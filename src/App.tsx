@@ -13,6 +13,7 @@ import OrderPage from "./pages/OrderPage";
 import TrackOrderPage from "./pages/TrackOrderPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import ReportsPage from "./pages/ReportsPage";
+import PiecesReportPage from "./pages/PiecesReportPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/pedido/:id" element={<OrderDetailPage />} />
             <Route path="/acompanhar" element={<TrackOrderPage />} />
             <Route path="/relatorios" element={<ReportsPage />} />
+            <Route path="/relatorio-pecas" element={<PiecesReportPage />} />
             <Route path="/perfil" element={<ProfilePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
