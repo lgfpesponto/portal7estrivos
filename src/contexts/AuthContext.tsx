@@ -50,7 +50,7 @@ interface AuthContextType {
   register: (data: Omit<User, 'id'> & { senha: string }) => boolean;
   logout: () => void;
   orders: Order[];
-  addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'diasRestantes' | 'historico' | 'status'>) => void;
+  addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'diasRestantes' | 'historico' | 'status'> & { numeroPedido?: string }) => void;
   recoverPassword: (cpfCnpj: string, digits: string) => boolean;
 }
 
@@ -155,11 +155,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return digits === '123' || registeredUsers.some(u => u.cpfCnpj.startsWith(digits));
   }, []);
 
-  const addOrder = useCallback((orderData: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'diasRestantes' | 'historico' | 'status'>) => {
+  const addOrder = useCallback((orderData: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'diasRestantes' | 'historico' | 'status'> & { numeroPedido?: string }) => {
+    const { numeroPedido, ...rest } = orderData;
     const newOrder: Order = {
-      ...orderData,
+      ...rest,
       id: `order-${Date.now()}`,
-      numero: `7E-${new Date().getFullYear()}${String(orders.length + 1).padStart(4, '0')}`,
+      numero: numeroPedido || `7E-${new Date().getFullYear()}${String(orders.length + 1).padStart(4, '0')}`,
       dataCriacao: new Date().toISOString().split('T')[0],
       diasRestantes: 25,
       status: 'Em aberto',

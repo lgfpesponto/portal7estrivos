@@ -65,7 +65,7 @@ const Index = () => {
         <div className="relative z-10 container mx-auto px-4 py-12">
           <motion.div initial="hidden" animate="visible" className="max-w-lg">
             <motion.h1 variants={fadeIn} custom={0} className="text-4xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-              7ESTRIVOS
+              Página de Representantes
             </motion.h1>
             <motion.p variants={fadeIn} custom={1} className="text-white/90 text-lg mb-6" style={{ fontFamily: "'Montserrat', sans-serif" }}>
               Crie fichas de produção, acompanhe seus pedidos e gerencie suas vendas no portal exclusivo para revendedores.
@@ -121,15 +121,6 @@ const Index = () => {
                 </div>
               </motion.div>
 
-              {/* Orders link */}
-              <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={1}>
-                <Link to="/relatorios" className="block bg-card rounded-xl p-6 western-shadow hover:shadow-xl transition-shadow group">
-                  <h2 className="text-xl font-display font-bold flex items-center gap-2 group-hover:text-primary transition-colors">
-                    Meus Pedidos / Relatórios
-                  </h2>
-                  <p className="text-muted-foreground mt-2">Visualize todos os seus pedidos e gere relatórios detalhados.</p>
-                </Link>
-              </motion.div>
             </div>
 
             {/* Right column - only Pendente */}
