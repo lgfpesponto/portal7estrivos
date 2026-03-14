@@ -131,8 +131,26 @@ const OrderPage = () => {
 
   const confirmOrder = () => {
     addOrder(orderData);
+    if (draftId) deleteDraft(draftId);
     toast.success('Pedido criado com sucesso!');
     navigate('/relatorios');
+  };
+
+  const handleSaveDraft = () => {
+    if (!user) return;
+    const id = draftId || `draft-${Date.now()}`;
+    saveDraft({
+      id,
+      userId: user.id,
+      savedAt: new Date().toISOString(),
+      form,
+      sobMedida,
+      quantidade,
+      numeroPedido,
+      fotos,
+    });
+    setDraftId(id);
+    toast.success('Rascunho salvo!');
   };
 
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
