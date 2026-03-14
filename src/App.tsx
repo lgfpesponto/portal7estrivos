@@ -12,6 +12,7 @@ import RecoverPasswordPage from "./pages/RecoverPasswordPage";
 import OrderPage from "./pages/OrderPage";
 import TrackOrderPage from "./pages/TrackOrderPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
+import EditOrderPage from "./pages/EditOrderPage";
 import ReportsPage from "./pages/ReportsPage";
 import PiecesReportPage from "./pages/PiecesReportPage";
 import ProfilePage from "./pages/ProfilePage";
