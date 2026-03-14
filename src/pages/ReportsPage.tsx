@@ -2,7 +2,8 @@ import { useAuth, PRODUCTION_STATUSES, PRODUCTION_STATUSES_USER } from '@/contex
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Filter, FileText, Download, Printer, CheckCircle, StickyNote } from 'lucide-react';
+import { Filter, FileText, Download, Printer, CheckCircle, StickyNote, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 
 const formatDateBR = (date: string, time?: string) => {
@@ -11,7 +12,7 @@ const formatDateBR = (date: string, time?: string) => {
 };
 
 const ReportsPage = () => {
-  const { isLoggedIn, isAdmin, orders, allOrders, user } = useAuth();
+  const { isLoggedIn, isAdmin, orders, allOrders, user, deleteOrder } = useAuth();
   const navigate = useNavigate();
   const [filterDate, setFilterDate] = useState('');
   const [filterDateEnd, setFilterDateEnd] = useState('');
@@ -188,6 +189,19 @@ const ReportsPage = () => {
   };
 
   const [showReportOptions, setShowReportOptions] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const handleDelete = (id: string) => {
+    deleteOrder(id);
+    setConfirmDeleteId(null);
+    setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
+    toast.success('Pedido excluído com sucesso!');
+  };
+
+  const handleEdit = (orderId: string) => {
+    const order = (isAdmin ? allOrders : orders).find(o => o.id === orderId);
+    if (order) navigate(`/pedido/${orderId}/editar`);
+  };
 
   if (!isLoggedIn) {
     return (
@@ -330,6 +344,24 @@ const ReportsPage = () => {
                   </div>
                 </div>
               </div>
+
+              {isAdmin && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button onClick={() => navigate(`/pedido/${order.id}/editar`)} className="p-2 rounded-lg text-primary hover:bg-primary/10 transition-colors" title="Editar pedido">
+                    <Pencil size={16} />
+                  </button>
+                  {confirmDeleteId === order.id ? (
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => handleDelete(order.id)} className="px-2 py-1 rounded-lg bg-destructive text-destructive-foreground text-xs font-bold hover:opacity-90">Confirmar</button>
+                      <button onClick={() => setConfirmDeleteId(null)} className="px-2 py-1 rounded-lg bg-muted text-xs font-bold hover:opacity-80">Cancelar</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConfirmDeleteId(order.id)} className="p-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors" title="Excluir pedido">
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
