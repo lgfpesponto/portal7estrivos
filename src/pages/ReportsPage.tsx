@@ -189,6 +189,19 @@ const ReportsPage = () => {
   };
 
   const [showReportOptions, setShowReportOptions] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const handleDelete = (id: string) => {
+    deleteOrder(id);
+    setConfirmDeleteId(null);
+    setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
+    toast.success('Pedido excluído com sucesso!');
+  };
+
+  const handleEdit = (orderId: string) => {
+    const order = (isAdmin ? allOrders : orders).find(o => o.id === orderId);
+    if (order) navigate(`/pedido/${orderId}/editar`);
+  };
 
   if (!isLoggedIn) {
     return (
