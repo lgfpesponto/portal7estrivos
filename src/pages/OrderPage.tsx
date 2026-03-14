@@ -37,6 +37,7 @@ const OrderPage = () => {
   const [form, setForm] = useState<Record<string, string>>({});
   const [sobMedida, setSobMedida] = useState(false);
   const [quantidade, setQuantidade] = useState(1);
+  const [numeroPedido, setNumeroPedido] = useState('');
 
   if (!isLoggedIn) {
     return (
