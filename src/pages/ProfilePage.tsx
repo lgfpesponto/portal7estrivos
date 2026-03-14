@@ -1,12 +1,26 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, CreditCard, Pencil, Check, X } from 'lucide-react';
-import { useState } from 'react';
+import { User, Mail, Phone, CreditCard, Pencil, Check, X, HardHat } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Progress } from '@/components/ui/progress';
 
 const ProfilePage = () => {
-  const { isLoggedIn, user, updateProfile } = useAuth();
+  const { isLoggedIn, isAdmin, user, orders, updateProfile } = useAuth();
   const navigate = useNavigate();
+
+  const PRODUCTION_STATUSES_IN_PROD = [
+    'Aguardando', 'Corte', 'Sem bordado',
+    'Bordado Dinei', 'Bordado Sandro', 'Bordado 7Estrivos',
+    'Pesponto 01', 'Pesponto 02', 'Pesponto 03', 'Pesponto 04', 'Pesponto 05',
+    'Pespontando', 'Montagem', 'Revisão', 'Expedição',
+  ];
+
+  const botasProducao = useMemo(() => {
+    return orders.filter(o => PRODUCTION_STATUSES_IN_PROD.some(s => s.toLowerCase() === o.status.toLowerCase())).reduce((s, o) => s + o.quantidade, 0);
+  }, [orders]);
+
+  const totalBotas = useMemo(() => orders.reduce((s, o) => s + o.quantidade, 0), [orders]);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     nomeCompleto: '',
@@ -116,6 +130,20 @@ const ProfilePage = () => {
             )}
           </div>
         </div>
+
+        {!isAdmin && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-card rounded-xl p-6 western-shadow mt-6">
+            <h2 className="text-xl font-display font-bold flex items-center gap-2 mb-4">
+              <HardHat className="text-primary" size={22} /> Botas na produção
+            </h2>
+            <div className="bg-muted rounded-lg p-4 mb-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total em produção</p>
+              <p className="text-3xl font-bold text-primary mt-1">{botasProducao} {botasProducao === 1 ? 'bota' : 'botas'}</p>
+            </div>
+            <Progress value={totalBotas > 0 ? (botasProducao / totalBotas) * 100 : 0} className="h-3" />
+            <p className="text-xs text-muted-foreground mt-2">{botasProducao} de {totalBotas} botas totais estão em produção</p>
+          </motion.div>
+        )}
       </motion.div>
     </div>
   );
