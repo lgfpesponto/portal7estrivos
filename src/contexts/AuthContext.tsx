@@ -50,7 +50,7 @@ interface AuthContextType {
   register: (data: Omit<User, 'id'> & { senha: string }) => boolean;
   logout: () => void;
   orders: Order[];
-  addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'diasRestantes' | 'historico' | 'status'>) => void;
+  addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'diasRestantes' | 'historico' | 'status'> & { numeroPedido?: string }) => void;
   recoverPassword: (cpfCnpj: string, digits: string) => boolean;
 }
 
