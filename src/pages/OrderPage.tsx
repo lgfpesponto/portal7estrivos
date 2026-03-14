@@ -37,11 +37,14 @@ const TEXT_FIELDS = [
 const OrderPage = () => {
   const { isLoggedIn, user, addOrder } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState<Record<string, string>>({});
-  const [sobMedida, setSobMedida] = useState(false);
-  const [quantidade, setQuantidade] = useState(1);
-  const [numeroPedido, setNumeroPedido] = useState('');
-  const [fotos, setFotos] = useState<string[]>([]);
+  const location = useLocation();
+  const draftState = (location.state as { draft?: Draft })?.draft;
+  const [draftId, setDraftId] = useState(draftState?.id || '');
+  const [form, setForm] = useState<Record<string, string>>(draftState?.form || {});
+  const [sobMedida, setSobMedida] = useState(draftState?.sobMedida || false);
+  const [quantidade, setQuantidade] = useState(draftState?.quantidade || 1);
+  const [numeroPedido, setNumeroPedido] = useState(draftState?.numeroPedido || '');
+  const [fotos, setFotos] = useState<string[]>(draftState?.fotos || []);
   const [showMirror, setShowMirror] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
