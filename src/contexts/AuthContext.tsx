@@ -97,6 +97,7 @@ interface AuthContextType {
   login: (username: string, password: string) => boolean;
   register: (data: Omit<User, 'id' | 'isAdmin'> & { senha: string }) => boolean;
   logout: () => void;
+  updateProfile: (data: Partial<Omit<User, 'id' | 'isAdmin'>>) => void;
   orders: Order[];
   addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status'> & { numeroPedido?: string }) => void;
   recoverPassword: (cpfCnpj: string, digits: string) => boolean;
