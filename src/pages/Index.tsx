@@ -13,14 +13,33 @@ const fadeIn = {
 };
 
 const Index = () => {
-  const { isLoggedIn, orders } = useAuth();
+  const { isLoggedIn, isAdmin, orders, allOrders } = useAuth();
   const [chartPeriod, setChartPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano'>('mes');
+  const [receberVendedor, setReceberVendedor] = useState<string>('todos');
+
+  const sourceOrders = isAdmin ? allOrders : orders;
+
+  const vendedores = useMemo(() => {
+    const names = [...new Set(sourceOrders.map(o => o.vendedor))].sort();
+    return names;
+  }, [sourceOrders]);
+
+  const PRODUCTION_STATUSES_IN_PROD = [
+    'Aguardando', 'Corte', 'Sem bordado',
+    'Bordado Dinei', 'Bordado Sandro', 'Bordado 7Estrivos',
+    'Pesponto 01', 'Pesponto 02', 'Pesponto 03', 'Pesponto 04', 'Pesponto 05',
+    'Pespontando', 'Montagem', 'Revisão', 'Expedição',
+  ];
 
   const financialData = useMemo(() => {
-    const totalAno = orders.reduce((s, o) => s + o.preco * o.quantidade, 0);
-    const pendente = orders.filter(o => o.status === 'Entregue' || o.status === 'Cobrado').reduce((s, o) => s + o.preco * o.quantidade, 0);
-    return { pendente };
-  }, [orders]);
+    const filtered = sourceOrders.filter(o => (o.status === 'Entregue' || o.status === 'Cobrado') && (receberVendedor === 'todos' || o.vendedor === receberVendedor));
+    const aReceber = filtered.reduce((s, o) => s + o.preco * o.quantidade, 0);
+    return { aReceber };
+  }, [sourceOrders, receberVendedor]);
+
+  const botasProducao = useMemo(() => {
+    return sourceOrders.filter(o => PRODUCTION_STATUSES_IN_PROD.some(s => s.toLowerCase() === o.status.toLowerCase())).reduce((s, o) => s + o.quantidade, 0);
+  }, [sourceOrders]);
 
   const chartData = useMemo(() => {
     const data: { name: string; botas: number }[] = [];
