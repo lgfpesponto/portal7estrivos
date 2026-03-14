@@ -20,19 +20,39 @@ const ReportsPage = () => {
   const [filterVendedor, setFilterVendedor] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const displayOrders = isAdmin && filterVendedor
-    ? allOrders.filter(o => o.vendedor === filterVendedor)
+  // Applied filters (only update when user clicks "Filtrar")
+  const [appliedFilters, setAppliedFilters] = useState({
+    searchQuery: '',
+    filterDate: '',
+    filterDateEnd: '',
+    filterStatus: '',
+    filterVendedor: '',
+  });
+
+  const applyFilters = () => {
+    setAppliedFilters({
+      searchQuery,
+      filterDate,
+      filterDateEnd,
+      filterStatus,
+      filterVendedor,
+    });
+    setSelectedIds(new Set());
+  };
+
+  const displayOrders = isAdmin && appliedFilters.filterVendedor
+    ? allOrders.filter(o => o.vendedor === appliedFilters.filterVendedor)
     : orders;
 
   const filteredOrders = useMemo(() => {
     return displayOrders.filter(o => {
-      if (searchQuery && !o.numero.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-      if (filterDate && o.dataCriacao < filterDate) return false;
-      if (filterDateEnd && o.dataCriacao > filterDateEnd) return false;
-      if (filterStatus && o.status !== filterStatus) return false;
+      if (appliedFilters.searchQuery && !o.numero.toLowerCase().includes(appliedFilters.searchQuery.toLowerCase())) return false;
+      if (appliedFilters.filterDate && o.dataCriacao < appliedFilters.filterDate) return false;
+      if (appliedFilters.filterDateEnd && o.dataCriacao > appliedFilters.filterDateEnd) return false;
+      if (appliedFilters.filterStatus && o.status !== appliedFilters.filterStatus) return false;
       return true;
     });
-  }, [displayOrders, filterDate, filterStatus, searchQuery]);
+  }, [displayOrders, appliedFilters]);
 
   const totalValue = filteredOrders.reduce((s, o) => s + o.preco * o.quantidade, 0);
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
