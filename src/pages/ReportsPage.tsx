@@ -141,9 +141,7 @@ const ReportsPage = () => {
       // Stubs (canhotos) at bottom
       const stubY = doc.internal.pageSize.getHeight() - 35;
       doc.setDrawColor(150);
-      doc.setLineDash([2, 2]);
       doc.line(5, stubY - 3, pw - 5, stubY - 3);
-      doc.setLineDash([]);
 
       const stubs = ['CORTE', 'BORDADO OU LASER', 'PESPONTO', 'EXPEDIÇÃO'];
       const stubW = (pw - 10) / 4;
