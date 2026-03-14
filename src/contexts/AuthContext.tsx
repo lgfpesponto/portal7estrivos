@@ -97,6 +97,7 @@ interface AuthContextType {
   login: (username: string, password: string) => boolean;
   register: (data: Omit<User, 'id' | 'isAdmin'> & { senha: string }) => boolean;
   logout: () => void;
+  updateProfile: (data: Partial<Omit<User, 'id' | 'isAdmin'>>) => void;
   orders: Order[];
   addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status'> & { numeroPedido?: string }) => void;
   recoverPassword: (cpfCnpj: string, digits: string) => boolean;
@@ -217,6 +218,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = useCallback(() => setUser(null), []);
 
+  const updateProfile = useCallback((data: Partial<Omit<User, 'id' | 'isAdmin'>>) => {
+    setUser(prev => prev ? { ...prev, ...data } : prev);
+  }, []);
+
   const recoverPassword = useCallback((cpfCnpj: string, digits: string) => {
     return digits === '123' || registeredUsers.some(u => u.cpfCnpj.startsWith(digits));
   }, []);
@@ -242,7 +247,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const userOrders = user?.isAdmin ? orders : orders.filter(o => o.vendedor === user?.nomeCompleto);
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAdmin, login, register, logout, orders: userOrders, addOrder, recoverPassword, allOrders: orders }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAdmin, login, register, logout, updateProfile, orders: userOrders, addOrder, recoverPassword, allOrders: orders }}>
       {children}
     </AuthContext.Provider>
   );
