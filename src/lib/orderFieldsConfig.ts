@@ -22,6 +22,9 @@ export const MODELOS: { label: string; preco: number }[] = [
 // ==================== TAMANHOS ====================
 export const TAMANHOS = Array.from({ length: 22 }, (_, i) => String(24 + i));
 
+// ==================== GÊNERO ====================
+export const GENEROS = ['Feminino', 'Masculino'];
+
 // ==================== ACESSÓRIOS ====================
 export const ACESSORIOS: { label: string; preco: number }[] = [
   { label: 'Kit Faca', preco: 80 },
@@ -93,7 +96,12 @@ export const LASER_OPTIONS = [
   'Cruz Circular','Cruz Zero','Borboleta','Livia','Luiza',
   'Duquesa','Julia','Anjo',
 ];
-export const LASER_PRECO = 50;
+export const LASER_CANO_PRECO = 50;
+export const LASER_GASPEA_PRECO = 50;
+export const LASER_TALONEIRA_PRECO = 0;
+export const GLITTER_CANO_PRECO = 30;
+export const GLITTER_GASPEA_PRECO = 30;
+export const GLITTER_TALONEIRA_PRECO = 0;
 
 // ==================== COR GLITTER/TECIDO ====================
 export const COR_GLITTER = [
@@ -125,7 +133,7 @@ export const AREA_METAL: { label: string; preco: number }[] = [
 ];
 export const TIPO_METAL = ['Rebite', 'Bola Grande'];
 export const COR_METAL = ['Níquel', 'Ouro Velho', 'Dourado'];
-export const STRASS_PRECO = 0.5;
+export const STRASS_PRECO = 0.60;
 export const CRUZ_METAL_PRECO = 6;
 export const BRIDAO_METAL_PRECO = 3;
 
@@ -170,4 +178,4 @@ export const ESTAMPA_PRECO = 30;
 export const PINTURA_PRECO = 15;
 export const TRICE_PRECO = 15;
 export const TIRAS_PRECO = 10;
-export const COSTURA_ATRAS_PRECO = 15;
+export const COSTURA_ATRAS_PRECO = 20;

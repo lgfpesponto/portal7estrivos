@@ -15,6 +15,7 @@ export interface Order {
   numero: string;
   vendedor: string;
   tamanho: string;
+  genero?: string;
   modelo: string;
   solado: string;
   formatoBico: string;
@@ -22,19 +23,34 @@ export interface Order {
   couroGaspea: string;
   couroCano: string;
   couroTaloneira: string;
+  corCouroGaspea?: string;
+  corCouroCano?: string;
+  corCouroTaloneira?: string;
   bordadoCano: string;
   bordadoGaspea: string;
   bordadoTaloneira: string;
+  corBordadoCano?: string;
+  corBordadoGaspea?: string;
+  corBordadoTaloneira?: string;
   personalizacaoNome: string;
   personalizacaoBordado: string;
+  nomeBordadoDesc?: string;
   corLinha: string;
   corBorrachinha: string;
   trisce: string;
+  triceDesc?: string;
   tiras: string;
+  tirasDesc?: string;
   metais: string;
+  tipoMetal?: string;
+  corMetal?: string;
+  strassQtd?: number;
+  cruzMetalQtd?: number;
+  bridaoMetalQtd?: number;
   acessorios: string;
   desenvolvimento: string;
   sobMedida: boolean;
+  sobMedidaDesc?: string;
   observacao: string;
   quantidade: number;
   preco: number;
@@ -45,6 +61,31 @@ export interface Order {
   temLaser: boolean;
   fotos: string[];
   historico: { data: string; local: string; descricao: string }[];
+  // Laser split by part
+  laserCano?: string;
+  corGlitterCano?: string;
+  laserGaspea?: string;
+  corGlitterGaspea?: string;
+  laserTaloneira?: string;
+  corGlitterTaloneira?: string;
+  // Estampa
+  estampa?: string;
+  estampaDesc?: string;
+  // Pintura
+  pintura?: string;
+  pinturaDesc?: string;
+  // Costura atrás
+  costuraAtras?: string;
+  // Cor sola
+  corSola?: string;
+  // Carimbo
+  carimbo?: string;
+  carimboDesc?: string;
+  // Cor vivo
+  corVivo?: string;
+  // Adicional
+  adicionalDesc?: string;
+  adicionalValor?: number;
 }
 
 export const PRODUCTION_STATUSES = [
@@ -76,7 +117,7 @@ function addBusinessDays(startDate: Date, days: number): Date {
   return result;
 }
 
-function businessDaysRemaining(startDate: Date, totalBusinessDays: number): number {
+export function businessDaysRemaining(startDate: Date, totalBusinessDays: number): number {
   const deadline = addBusinessDays(startDate, totalBusinessDays);
   const now = new Date();
   if (now >= deadline) return 0;
@@ -109,7 +150,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const generateMockOrders = (): Order[] => {
-  const models = ["Texana Clássica", "Country Premium", "Rodeio Special", "Selaria Gold", "Cowboy Elite"];
+  const models = ["Bota Tradicional", "Bota Feminino", "Coturno", "Capota", "Botina"];
   const statuses = ["Em aberto", "Corte", "Bordado 7Estrivos", "Montagem", "Revisão", "Expedição", "Entregue", "Pago"];
   const vendedores = ["Revendedor Demo", "Samuel", "Carlos", "Fernanda"];
 
@@ -128,29 +169,33 @@ const generateMockOrders = (): Order[] => {
       numero: `7E-${2024}${String(i + 1).padStart(4, '0')}`,
       vendedor: vendedores[i % vendedores.length],
       tamanho: `${38 + Math.floor(Math.random() * 8)}`,
+      genero: Math.random() > 0.5 ? 'Masculino' : 'Feminino',
       modelo: models[i % models.length],
-      solado: "Borracha Tratorada",
-      formatoBico: "Quadrado",
-      corVira: "Natural",
-      couroGaspea: "Floater Tabaco",
-      couroCano: "Floater Tabaco",
-      couroTaloneira: "Floater Tabaco",
-      bordadoCano: "Floral",
-      bordadoGaspea: "Liso",
-      bordadoTaloneira: "Floral",
+      solado: "Borracha",
+      formatoBico: "",
+      corVira: "Bege",
+      couroGaspea: "Floter",
+      couroCano: "Floter",
+      couroTaloneira: "Floter",
+      corCouroGaspea: "Marrom",
+      corCouroCano: "Marrom",
+      corCouroTaloneira: "Marrom",
+      bordadoCano: "Florência",
+      bordadoGaspea: "",
+      bordadoTaloneira: "",
       personalizacaoNome: "",
       personalizacaoBordado: "",
       corLinha: "Bege",
       corBorrachinha: "Marrom",
-      trisce: "Sim",
-      tiras: "Sem",
-      metais: "Fivela Prata",
+      trisce: "Não",
+      tiras: "Não",
+      metais: "",
       acessorios: "",
       desenvolvimento: "",
       sobMedida: false,
       observacao: "",
-      quantidade: Math.floor(Math.random() * 3) + 1,
-      preco: 800 + Math.floor(Math.random() * 1200),
+      quantidade: 1,
+      preco: 260 + Math.floor(Math.random() * 200),
       status: statuses[statusIdx],
       dataCriacao: createdDate.toISOString().split('T')[0],
       horaCriacao: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
@@ -181,7 +226,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(userData);
       return true;
     }
-    // Admin login
     if (username.toLowerCase() === '7estrivos' && password === 'admin123') {
       setUser({
         id: 'admin-1',
@@ -194,7 +238,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       return true;
     }
-    // Demo login
     if (username === 'demo' && password === '123456') {
       setUser({
         id: 'demo-1',
@@ -253,7 +296,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, ...data } : o));
   }, []);
 
-  // For regular users, only show their own orders
   const userOrders = user?.isAdmin ? orders : orders.filter(o => o.vendedor === user?.nomeCompleto);
 
   return (

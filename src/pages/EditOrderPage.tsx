@@ -4,34 +4,82 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Upload, X, Save, ArrowLeft } from 'lucide-react';
+import {
+  MODELOS, TAMANHOS, GENEROS, ACESSORIOS, TIPOS_COURO, CORES_COURO, COURO_PRECOS,
+  BORDADOS, LASER_OPTIONS, LASER_CANO_PRECO, LASER_GASPEA_PRECO,
+  GLITTER_CANO_PRECO, GLITTER_GASPEA_PRECO,
+  COR_GLITTER, COR_LINHA, COR_BORRACHINHA,
+  COR_VIVO, DESENVOLVIMENTO, AREA_METAL, TIPO_METAL, COR_METAL,
+  STRASS_PRECO, CRUZ_METAL_PRECO, BRIDAO_METAL_PRECO, SOLADO, COR_SOLA, COR_VIRA,
+  CARIMBO, SOB_MEDIDA_PRECO, NOME_BORDADO_PRECO, ESTAMPA_PRECO,
+  PINTURA_PRECO, TRICE_PRECO, TIRAS_PRECO, COSTURA_ATRAS_PRECO,
+} from '@/lib/orderFieldsConfig';
 
-const ORDER_FIELDS = [
-  { key: 'tamanho', label: 'Tamanho', options: ['34','35','36','37','38','39','40','41','42','43','44','45'] },
-  { key: 'modelo', label: 'Modelo', options: ['Texana Clássica','Country Premium','Rodeio Special','Selaria Gold','Cowboy Elite'] },
-  { key: 'solado', label: 'Solado', options: ['Borracha Tratorada','Borracha Lisa','Couro','Gel'] },
-  { key: 'formatoBico', label: 'Formato do Bico', options: ['Quadrado','Redondo','Semi Quadrado','Fino'] },
-  { key: 'corVira', label: 'Cor da Vira', options: ['Natural','Preta','Marrom'] },
-  { key: 'couroGaspea', label: 'Couro da Gáspea', options: ['Floater Tabaco','Floater Preto','Verniz','Camurça','Exótico'] },
-  { key: 'couroCano', label: 'Couro do Cano', options: ['Floater Tabaco','Floater Preto','Verniz','Camurça','Exótico'] },
-  { key: 'couroTaloneira', label: 'Couro da Taloneira', options: ['Floater Tabaco','Floater Preto','Verniz','Camurça'] },
-  { key: 'bordadoCano', label: 'Bordado do Cano', options: ['Floral','Geométrico','Tribal','Liso','Personalizado','Laser'] },
-  { key: 'bordadoGaspea', label: 'Bordado da Gáspea', options: ['Floral','Geométrico','Liso','Personalizado','Laser'] },
-  { key: 'bordadoTaloneira', label: 'Bordado da Taloneira', options: ['Floral','Geométrico','Liso','Personalizado','Laser'] },
-  { key: 'corLinha', label: 'Cor da Linha', options: ['Bege','Branca','Preta','Marrom','Vermelha','Azul','Café'] },
-  { key: 'corBorrachinha', label: 'Cor da Borrachinha', options: ['Marrom','Preta','Natural'] },
-  { key: 'trisce', label: 'Trisce', options: ['Sim','Não'] },
-  { key: 'tiras', label: 'Tiras', options: ['Sem','Simples','Dupla','Franja'] },
-  { key: 'metais', label: 'Metais', options: ['Sem','Fivela Prata','Fivela Dourada','Ponteira'] },
-  { key: 'acessorios', label: 'Acessórios', options: ['Sem','Esporas','Pulseira','Canivete Bainha Rosa'] },
-  { key: 'desenvolvimento', label: 'Desenvolvimento', options: ['Padrão','Desenvolvimento Novo'] },
-  { key: 'vivo', label: 'Vivo', options: ['Branco','Preto','Marrom','Natural'] },
-];
+const cls = {
+  label: 'block text-sm font-semibold mb-1',
+  select: 'w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none',
+  input: 'w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none',
+  inputSmall: 'bg-muted rounded-lg px-3 py-2 text-sm border border-border focus:border-primary outline-none',
+  checkItem: 'flex items-center gap-2 text-sm',
+};
 
-const TEXT_FIELDS = [
-  { key: 'personalizacaoNome', label: 'Personalização de Nome / Carimbo a Fogo' },
-  { key: 'personalizacaoBordado', label: 'Personalização do Bordado' },
-  { key: 'observacao', label: 'Observação' },
-];
+const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div className="space-y-3">
+    <h3 className="text-base font-display font-bold border-b border-border pb-1">{title}</h3>
+    {children}
+  </div>
+);
+
+const ToggleField = ({ label, value, onChange, textValue, onTextChange, textPlaceholder }: {
+  label: string; value: boolean; onChange: (v: boolean) => void;
+  textValue?: string; onTextChange?: (v: string) => void; textPlaceholder?: string;
+}) => (
+  <div className="flex flex-wrap items-center gap-3">
+    <span className="text-sm font-semibold min-w-[120px]">{label}:</span>
+    <select value={value ? 'tem' : 'nao'} onChange={e => onChange(e.target.value === 'tem')} className={cls.inputSmall + ' w-28'}>
+      <option value="nao">Não tem</option>
+      <option value="tem">Tem</option>
+    </select>
+    {value && textValue !== undefined && onTextChange && (
+      <input type="text" value={textValue} onChange={e => onTextChange(e.target.value)} placeholder={textPlaceholder} className={cls.inputSmall + ' flex-1 min-w-[180px]'} />
+    )}
+  </div>
+);
+
+const MultiSelect = ({ label, items, selected, onChange }: {
+  label: string; items: { label: string; preco: number }[]; selected: string[]; onChange: (v: string[]) => void;
+}) => (
+  <div>
+    <label className={cls.label}>{label}</label>
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-52 overflow-y-auto border border-border rounded-lg p-3 bg-muted/50">
+      {items.map(item => (
+        <label key={item.label} className={cls.checkItem}>
+          <input type="checkbox" checked={selected.includes(item.label)} onChange={e => {
+            if (e.target.checked) onChange([...selected, item.label]);
+            else onChange(selected.filter(s => s !== item.label));
+          }} className="accent-primary w-4 h-4" />
+          <span>{item.label} {item.preco > 0 && <span className="text-muted-foreground text-xs">(R${item.preco})</span>}</span>
+        </label>
+      ))}
+    </div>
+  </div>
+);
+
+const SelectField = ({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] | { label: string; preco: number }[] }) => (
+  <div>
+    <label className={cls.label}>{label}</label>
+    <select value={value} onChange={e => onChange(e.target.value)} className={cls.select}>
+      <option value="">Selecione...</option>
+      {options.map(o => {
+        const lbl = typeof o === 'string' ? o : o.label;
+        const extra = typeof o === 'string' ? '' : o.preco ? ` (R$${o.preco})` : '';
+        return <option key={lbl} value={lbl}>{lbl}{extra}</option>;
+      })}
+    </select>
+  </div>
+);
+
+const LASER_ITEMS: { label: string; preco: number }[] = LASER_OPTIONS.map(l => ({ label: l, preco: 0 }));
 
 const EditOrderPage = () => {
   const { id } = useParams();
@@ -39,60 +87,158 @@ const EditOrderPage = () => {
   const navigate = useNavigate();
   const order = allOrders.find(o => o.id === id);
 
-  const [form, setForm] = useState<Record<string, string>>({});
-  const [sobMedida, setSobMedida] = useState(false);
-  const [quantidade, setQuantidade] = useState(1);
   const [numeroPedido, setNumeroPedido] = useState('');
+  const [tamanho, setTamanho] = useState('');
+  const [genero, setGenero] = useState('');
+  const [modelo, setModelo] = useState('');
+  const [sobMedida, setSobMedida] = useState(false);
+  const [sobMedidaDesc, setSobMedidaDesc] = useState('');
+  const [acessorios, setAcessorios] = useState<string[]>([]);
+  const [tipoCouroCano, setTipoCouroCano] = useState('');
+  const [corCouroCano, setCorCouroCano] = useState('');
+  const [tipoCouroGaspea, setTipoCouroGaspea] = useState('');
+  const [corCouroGaspea, setCorCouroGaspea] = useState('');
+  const [tipoCouroTaloneira, setTipoCouroTaloneira] = useState('');
+  const [corCouroTaloneira, setCorCouroTaloneira] = useState('');
+  const [bordadoCano, setBordadoCano] = useState<string[]>([]);
+  const [corBordadoCano, setCorBordadoCano] = useState('');
+  const [bordadoGaspea, setBordadoGaspea] = useState<string[]>([]);
+  const [corBordadoGaspea, setCorBordadoGaspea] = useState('');
+  const [bordadoTaloneira, setBordadoTaloneira] = useState<string[]>([]);
+  const [corBordadoTaloneira, setCorBordadoTaloneira] = useState('');
+  const [nomeBordado, setNomeBordado] = useState(false);
+  const [nomeBordadoDesc, setNomeBordadoDesc] = useState('');
+  const [laserCano, setLaserCano] = useState<string[]>([]);
+  const [corGlitterCano, setCorGlitterCano] = useState('');
+  const [laserGaspea, setLaserGaspea] = useState<string[]>([]);
+  const [corGlitterGaspea, setCorGlitterGaspea] = useState('');
+  const [laserTaloneira, setLaserTaloneira] = useState<string[]>([]);
+  const [corGlitterTaloneira, setCorGlitterTaloneira] = useState('');
+  const [pintura, setPintura] = useState(false);
+  const [pinturaDesc, setPinturaDesc] = useState('');
+  const [estampa, setEstampa] = useState(false);
+  const [estampaDesc, setEstampaDesc] = useState('');
+  const [desenvolvimento, setDesenvolvimento] = useState('');
+  const [corLinha, setCorLinha] = useState('');
+  const [corBorrachinha, setCorBorrachinha] = useState('');
+  const [corVivo, setCorVivo] = useState('');
+  const [areaMetal, setAreaMetal] = useState('');
+  const [tipoMetal, setTipoMetal] = useState<string[]>([]);
+  const [corMetal, setCorMetal] = useState('');
+  const [strass, setStrass] = useState(false);
+  const [strassQtd, setStrassQtd] = useState(0);
+  const [cruzMetal, setCruzMetal] = useState(false);
+  const [cruzMetalQtd, setCruzMetalQtd] = useState(0);
+  const [bridaoMetal, setBridaoMetal] = useState(false);
+  const [bridaoMetalQtd, setBridaoMetalQtd] = useState(0);
+  const [trice, setTrice] = useState(false);
+  const [triceDesc, setTriceDesc] = useState('');
+  const [tiras, setTiras] = useState(false);
+  const [tirasDesc, setTirasDesc] = useState('');
+  const [solado, setSolado] = useState('');
+  const [corSola, setCorSola] = useState('');
+  const [corVira, setCorVira] = useState('');
+  const [costuraAtras, setCosturaAtras] = useState(false);
+  const [carimbo, setCarimbo] = useState('');
+  const [carimboDesc, setCarimboDesc] = useState('');
+  const [adicionalDesc, setAdicionalDesc] = useState('');
+  const [adicionalValor, setAdicionalValor] = useState(0);
+  const [observacao, setObservacao] = useState('');
   const [fotos, setFotos] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (order) {
-      setForm({
-        tamanho: order.tamanho, modelo: order.modelo, solado: order.solado,
-        formatoBico: order.formatoBico, corVira: order.corVira,
-        couroGaspea: order.couroGaspea, couroCano: order.couroCano, couroTaloneira: order.couroTaloneira,
-        bordadoCano: order.bordadoCano, bordadoGaspea: order.bordadoGaspea, bordadoTaloneira: order.bordadoTaloneira,
-        personalizacaoNome: order.personalizacaoNome, personalizacaoBordado: order.personalizacaoBordado,
-        corLinha: order.corLinha, corBorrachinha: order.corBorrachinha,
-        trisce: order.trisce, tiras: order.tiras, metais: order.metais,
-        acessorios: order.acessorios, desenvolvimento: order.desenvolvimento,
-        observacao: order.observacao,
-      });
-      setSobMedida(order.sobMedida);
-      setQuantidade(order.quantidade);
-      setNumeroPedido(order.numero);
-      setFotos(order.fotos || []);
-    }
+    if (!order) return;
+    setNumeroPedido(order.numero);
+    setTamanho(order.tamanho);
+    setGenero(order.genero || '');
+    setModelo(order.modelo);
+    setSobMedida(order.sobMedida);
+    setSobMedidaDesc(order.sobMedidaDesc || '');
+    setAcessorios(order.acessorios ? order.acessorios.split(', ').filter(Boolean) : []);
+    setTipoCouroCano(order.couroCano || '');
+    setCorCouroCano(order.corCouroCano || '');
+    setTipoCouroGaspea(order.couroGaspea || '');
+    setCorCouroGaspea(order.corCouroGaspea || '');
+    setTipoCouroTaloneira(order.couroTaloneira || '');
+    setCorCouroTaloneira(order.corCouroTaloneira || '');
+    setBordadoCano(order.bordadoCano ? order.bordadoCano.split(', ').filter(Boolean) : []);
+    setCorBordadoCano(order.corBordadoCano || '');
+    setBordadoGaspea(order.bordadoGaspea ? order.bordadoGaspea.split(', ').filter(Boolean) : []);
+    setCorBordadoGaspea(order.corBordadoGaspea || '');
+    setBordadoTaloneira(order.bordadoTaloneira ? order.bordadoTaloneira.split(', ').filter(Boolean) : []);
+    setCorBordadoTaloneira(order.corBordadoTaloneira || '');
+    setNomeBordado(!!(order.nomeBordadoDesc || order.personalizacaoNome));
+    setNomeBordadoDesc(order.nomeBordadoDesc || order.personalizacaoNome || '');
+    setLaserCano(order.laserCano ? order.laserCano.split(', ').filter(Boolean) : []);
+    setCorGlitterCano(order.corGlitterCano || '');
+    setLaserGaspea(order.laserGaspea ? order.laserGaspea.split(', ').filter(Boolean) : []);
+    setCorGlitterGaspea(order.corGlitterGaspea || '');
+    setLaserTaloneira(order.laserTaloneira ? order.laserTaloneira.split(', ').filter(Boolean) : []);
+    setCorGlitterTaloneira(order.corGlitterTaloneira || '');
+    setPintura(order.pintura === 'Sim');
+    setPinturaDesc(order.pinturaDesc || '');
+    setEstampa(order.estampa === 'Sim');
+    setEstampaDesc(order.estampaDesc || '');
+    setDesenvolvimento(order.desenvolvimento || '');
+    setCorLinha(order.corLinha || '');
+    setCorBorrachinha(order.corBorrachinha || '');
+    setCorVivo(order.corVivo || '');
+    setAreaMetal(order.metais || '');
+    setTipoMetal(order.tipoMetal ? order.tipoMetal.split(', ').filter(Boolean) : []);
+    setCorMetal(order.corMetal || '');
+    setStrass(!!(order.strassQtd && order.strassQtd > 0));
+    setStrassQtd(order.strassQtd || 0);
+    setCruzMetal(!!(order.cruzMetalQtd && order.cruzMetalQtd > 0));
+    setCruzMetalQtd(order.cruzMetalQtd || 0);
+    setBridaoMetal(!!(order.bridaoMetalQtd && order.bridaoMetalQtd > 0));
+    setBridaoMetalQtd(order.bridaoMetalQtd || 0);
+    setTrice(order.trisce === 'Sim');
+    setTriceDesc(order.triceDesc || '');
+    setTiras(order.tiras === 'Sim');
+    setTirasDesc(order.tirasDesc || '');
+    setSolado(order.solado || '');
+    setCorSola(order.corSola || '');
+    setCorVira(order.corVira || order.formatoBico || '');
+    setCosturaAtras(order.costuraAtras === 'Sim');
+    setCarimbo(order.carimbo || '');
+    setCarimboDesc(order.carimboDesc || '');
+    setAdicionalDesc(order.adicionalDesc || '');
+    setAdicionalValor(order.adicionalValor || 0);
+    setObservacao(order.observacao || '');
+    setFotos(order.fotos || []);
   }, [order]);
 
-  if (!isAdmin) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <p className="text-muted-foreground">Acesso restrito ao administrador.</p>
-      </div>
-    );
-  }
+  if (!isAdmin) return <div className="min-h-[60vh] flex items-center justify-center"><p className="text-muted-foreground">Acesso restrito ao administrador.</p></div>;
+  if (!order) return <div className="min-h-[60vh] flex items-center justify-center"><p className="text-muted-foreground">Pedido não encontrado.</p></div>;
 
-  if (!order) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <p className="text-muted-foreground">Pedido não encontrado.</p>
-      </div>
-    );
-  }
+  // Price calc (same logic as OrderPage)
+  const modeloPreco = MODELOS.find(m => m.label === modelo)?.preco || 0;
+  const acessoriosPreco = acessorios.reduce((sum, a) => sum + (ACESSORIOS.find(x => x.label === a)?.preco || 0), 0);
+  const couroPreco = [tipoCouroCano, tipoCouroGaspea, tipoCouroTaloneira].reduce((sum, t) => sum + (COURO_PRECOS[t] || 0), 0);
+  const bordadoPreco = [...bordadoCano, ...bordadoGaspea, ...bordadoTaloneira].reduce((sum, b) => sum + (BORDADOS.find(x => x.label === b)?.preco || 0), 0);
+  const laserCanoPreco = laserCano.length > 0 ? LASER_CANO_PRECO : 0;
+  const glitterCanoPreco = corGlitterCano ? GLITTER_CANO_PRECO : 0;
+  const laserGaspeaPreco = laserGaspea.length > 0 ? LASER_GASPEA_PRECO : 0;
+  const glitterGaspeaPreco = corGlitterGaspea ? GLITTER_GASPEA_PRECO : 0;
+  const totalLaserPreco = laserCanoPreco + glitterCanoPreco + laserGaspeaPreco + glitterGaspeaPreco;
+  const desenvPreco = DESENVOLVIMENTO.find(d => d.label === desenvolvimento)?.preco || 0;
+  const areaMetalPreco = AREA_METAL.find(a => a.label === areaMetal)?.preco || 0;
+  const strassPreco = strass ? strassQtd * STRASS_PRECO : 0;
+  const cruzMetalPrecoTotal = cruzMetal ? cruzMetalQtd * CRUZ_METAL_PRECO : 0;
+  const bridaoMetalPrecoTotal = bridaoMetal ? bridaoMetalQtd * BRIDAO_METAL_PRECO : 0;
+  const soladoPreco = SOLADO.find(s => s.label === solado)?.preco || 0;
+  const corSolaPreco = COR_SOLA.find(c => c.label === corSola)?.preco || 0;
+  const corViraPreco = COR_VIRA.find(c => c.label === corVira)?.preco || 0;
+  const carimboPreco = CARIMBO.find(c => c.label === carimbo)?.preco || 0;
+  const hasAnyLaser = laserCano.length > 0 || laserGaspea.length > 0 || laserTaloneira.length > 0;
 
-  const update = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
+  const total = modeloPreco + (sobMedida ? SOB_MEDIDA_PRECO : 0) + acessoriosPreco + couroPreco + bordadoPreco
+    + (nomeBordado ? NOME_BORDADO_PRECO : 0) + totalLaserPreco + (pintura ? PINTURA_PRECO : 0)
+    + (estampa ? ESTAMPA_PRECO : 0) + desenvPreco + areaMetalPreco + strassPreco + cruzMetalPrecoTotal + bridaoMetalPrecoTotal
+    + (trice ? TRICE_PRECO : 0) + (tiras ? TIRAS_PRECO : 0) + soladoPreco + corSolaPreco + corViraPreco
+    + (costuraAtras ? COSTURA_ATRAS_PRECO : 0) + carimboPreco + (adicionalValor > 0 ? adicionalValor : 0);
 
-  const temLaser = ['bordadoCano', 'bordadoGaspea', 'bordadoTaloneira'].some(k => form[k] === 'Laser');
-  const basePrice = 650;
-  const extraPrice = (form.couroGaspea === 'Exótico' || form.couroCano === 'Exótico' ? 250 : 0)
-    + (form.bordadoCano === 'Personalizado' || form.bordadoGaspea === 'Personalizado' ? 120 : 0)
-    + (form.metais && form.metais !== 'Sem' ? 90 : 0)
-    + (sobMedida ? 150 : 0)
-    + (form.personalizacaoNome ? 60 : 0);
-  const unitPrice = basePrice + extraPrice;
-  const total = unitPrice * quantidade;
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,29 +246,38 @@ const EditOrderPage = () => {
     if (!files) return;
     Array.from(files).forEach(file => {
       const reader = new FileReader();
-      reader.onload = (ev) => {
-        if (ev.target?.result) setFotos(prev => [...prev, ev.target!.result as string]);
-      };
+      reader.onload = (ev) => { if (ev.target?.result) setFotos(prev => [...prev, ev.target!.result as string]); };
       reader.readAsDataURL(file);
     });
     e.target.value = '';
   };
 
-  const removePhoto = (idx: number) => setFotos(prev => prev.filter((_, i) => i !== idx));
-
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     updateOrder(order.id, {
-      numero: numeroPedido,
-      tamanho: form.tamanho || '', modelo: form.modelo || '', solado: form.solado || '',
-      formatoBico: form.formatoBico || '', corVira: form.corVira || '',
-      couroGaspea: form.couroGaspea || '', couroCano: form.couroCano || '', couroTaloneira: form.couroTaloneira || '',
-      bordadoCano: form.bordadoCano || '', bordadoGaspea: form.bordadoGaspea || '', bordadoTaloneira: form.bordadoTaloneira || '',
-      personalizacaoNome: form.personalizacaoNome || '', personalizacaoBordado: form.personalizacaoBordado || '',
-      corLinha: form.corLinha || '', corBorrachinha: form.corBorrachinha || '',
-      trisce: form.trisce || '', tiras: form.tiras || '', metais: form.metais || '',
-      acessorios: form.acessorios || '', desenvolvimento: form.desenvolvimento || '',
-      sobMedida, observacao: form.observacao || '', quantidade, preco: unitPrice, temLaser, fotos,
+      numero: numeroPedido, tamanho, genero, modelo, sobMedida, sobMedidaDesc,
+      solado, quantidade: 1, preco: total, temLaser: hasAnyLaser, fotos,
+      couroGaspea: tipoCouroGaspea, couroCano: tipoCouroCano, couroTaloneira: tipoCouroTaloneira,
+      corCouroGaspea, corCouroCano, corCouroTaloneira,
+      bordadoCano: bordadoCano.join(', '), bordadoGaspea: bordadoGaspea.join(', '),
+      bordadoTaloneira: bordadoTaloneira.join(', '),
+      corBordadoCano, corBordadoGaspea, corBordadoTaloneira,
+      nomeBordadoDesc: nomeBordado ? nomeBordadoDesc : '',
+      laserCano: laserCano.join(', '), corGlitterCano,
+      laserGaspea: laserGaspea.join(', '), corGlitterGaspea,
+      laserTaloneira: laserTaloneira.join(', '), corGlitterTaloneira,
+      pintura: pintura ? 'Sim' : '', pinturaDesc,
+      estampa: estampa ? 'Sim' : '', estampaDesc,
+      corLinha, corBorrachinha, trisce: trice ? 'Sim' : 'Não', triceDesc,
+      tiras: tiras ? 'Sim' : 'Não', tirasDesc,
+      metais: areaMetal, tipoMetal: tipoMetal.join(', '), corMetal,
+      strassQtd: strass ? strassQtd : 0, cruzMetalQtd: cruzMetal ? cruzMetalQtd : 0,
+      bridaoMetalQtd: bridaoMetal ? bridaoMetalQtd : 0,
+      acessorios: acessorios.join(', '), desenvolvimento, observacao,
+      formatoBico: '', corVira, corVivo, corSola,
+      costuraAtras: costuraAtras ? 'Sim' : '', carimbo, carimboDesc,
+      adicionalDesc, adicionalValor: adicionalValor > 0 ? adicionalValor : 0,
+      personalizacaoNome: nomeBordado ? nomeBordadoDesc : '', personalizacaoBordado: '',
     });
     toast.success('Pedido atualizado com sucesso!');
     navigate('/relatorios');
@@ -139,36 +294,147 @@ const EditOrderPage = () => {
         <form onSubmit={handleSave} className="bg-card rounded-xl p-6 md:p-8 western-shadow space-y-6">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-1">Vendedor</label>
-              <input type="text" value={order.vendedor} readOnly className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border opacity-70" />
+              <label className={cls.label}>Vendedor</label>
+              <input type="text" value={order.vendedor} readOnly className={cls.input + ' opacity-70'} />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-1">Número do Pedido</label>
-              <input type="text" value={numeroPedido} onChange={e => setNumeroPedido(e.target.value)} className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+              <label className={cls.label}>Número do Pedido</label>
+              <input type="text" value={numeroPedido} onChange={e => setNumeroPedido(e.target.value)} className={cls.input} />
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {ORDER_FIELDS.map(f => (
-              <div key={f.key}>
-                <label className="block text-sm font-semibold mb-1">{f.label}</label>
-                <select value={form[f.key] || ''} onChange={e => update(f.key, e.target.value)} className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
-                  <option value="">Selecione...</option>
-                  {f.options.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <SelectField label="Tamanho" value={tamanho} onChange={setTamanho} options={TAMANHOS} />
+            <SelectField label="Gênero" value={genero} onChange={setGenero} options={GENEROS} />
+            <SelectField label="Modelo" value={modelo} onChange={setModelo} options={MODELOS} />
+          </div>
+
+          <ToggleField label="Sob Medida (+R$50)" value={sobMedida} onChange={setSobMedida} textValue={sobMedidaDesc} onTextChange={setSobMedidaDesc} textPlaceholder="Descreva a medida..." />
+          <MultiSelect label="Acessórios" items={ACESSORIOS} selected={acessorios} onChange={setAcessorios} />
+
+          <Section title="Couros">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <SelectField label="Tipo Couro do Cano" value={tipoCouroCano} onChange={setTipoCouroCano} options={TIPOS_COURO} />
+              <SelectField label="Cor Couro do Cano" value={corCouroCano} onChange={setCorCouroCano} options={CORES_COURO} />
+              <SelectField label="Tipo Couro da Gáspea" value={tipoCouroGaspea} onChange={setTipoCouroGaspea} options={TIPOS_COURO} />
+              <SelectField label="Cor Couro da Gáspea" value={corCouroGaspea} onChange={setCorCouroGaspea} options={CORES_COURO} />
+              <SelectField label="Tipo Couro da Taloneira" value={tipoCouroTaloneira} onChange={setTipoCouroTaloneira} options={TIPOS_COURO} />
+              <SelectField label="Cor Couro da Taloneira" value={corCouroTaloneira} onChange={setCorCouroTaloneira} options={CORES_COURO} />
+            </div>
+          </Section>
+
+          <Section title="Bordados">
+            <MultiSelect label="Bordado do Cano" items={BORDADOS} selected={bordadoCano} onChange={setBordadoCano} />
+            <div><label className={cls.label}>Cor do Bordado do Cano</label><input type="text" value={corBordadoCano} onChange={e => setCorBordadoCano(e.target.value)} className={cls.input} /></div>
+            <MultiSelect label="Bordado da Gáspea" items={BORDADOS} selected={bordadoGaspea} onChange={setBordadoGaspea} />
+            <div><label className={cls.label}>Cor do Bordado da Gáspea</label><input type="text" value={corBordadoGaspea} onChange={e => setCorBordadoGaspea(e.target.value)} className={cls.input} /></div>
+            <MultiSelect label="Bordado da Taloneira" items={BORDADOS} selected={bordadoTaloneira} onChange={setBordadoTaloneira} />
+            <div><label className={cls.label}>Cor do Bordado da Taloneira</label><input type="text" value={corBordadoTaloneira} onChange={e => setCorBordadoTaloneira(e.target.value)} className={cls.input} /></div>
+          </Section>
+
+          <ToggleField label="Nome Bordado (+R$50)" value={nomeBordado} onChange={setNomeBordado} textValue={nomeBordadoDesc} onTextChange={setNomeBordadoDesc} textPlaceholder="Nome, cor, local..." />
+
+          <Section title="Laser">
+            <MultiSelect label="Laser do Cano (+R$50)" items={LASER_ITEMS} selected={laserCano} onChange={setLaserCano} />
+            <SelectField label="Cor Glitter/Tecido do Cano (+R$30)" value={corGlitterCano} onChange={setCorGlitterCano} options={COR_GLITTER} />
+            <MultiSelect label="Laser da Gáspea (+R$50)" items={LASER_ITEMS} selected={laserGaspea} onChange={setLaserGaspea} />
+            <SelectField label="Cor Glitter/Tecido da Gáspea (+R$30)" value={corGlitterGaspea} onChange={setCorGlitterGaspea} options={COR_GLITTER} />
+            <MultiSelect label="Laser da Taloneira (sem custo)" items={LASER_ITEMS} selected={laserTaloneira} onChange={setLaserTaloneira} />
+            <SelectField label="Cor Glitter/Tecido da Taloneira (sem custo)" value={corGlitterTaloneira} onChange={setCorGlitterTaloneira} options={COR_GLITTER} />
+            <ToggleField label={`Pintura (+R$${PINTURA_PRECO})`} value={pintura} onChange={setPintura} textValue={pinturaDesc} onTextChange={setPinturaDesc} textPlaceholder="Cor da tinta..." />
+          </Section>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <ToggleField label={`Estampa (+R$${ESTAMPA_PRECO})`} value={estampa} onChange={setEstampa} textValue={estampaDesc} onTextChange={setEstampaDesc} textPlaceholder="Descreva a estampa..." />
+            </div>
+            <SelectField label="Desenvolvimento" value={desenvolvimento} onChange={setDesenvolvimento} options={DESENVOLVIMENTO} />
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-4">
+            <SelectField label="Cor da Linha" value={corLinha} onChange={setCorLinha} options={COR_LINHA} />
+            <SelectField label="Cor da Borrachinha" value={corBorrachinha} onChange={setCorBorrachinha} options={COR_BORRACHINHA} />
+            <SelectField label="Cor do Vivo" value={corVivo} onChange={setCorVivo} options={COR_VIVO} />
+          </div>
+
+          <Section title="Metais">
+            <div className="grid sm:grid-cols-3 gap-4">
+              <SelectField label="Área do Metal" value={areaMetal} onChange={setAreaMetal} options={AREA_METAL} />
+              <div>
+                <label className={cls.label}>Tipo do Metal</label>
+                <div className="flex flex-col gap-1">
+                  {TIPO_METAL.map(t => (
+                    <label key={t} className={cls.checkItem}>
+                      <input type="checkbox" checked={tipoMetal.includes(t)} onChange={e => {
+                        if (e.target.checked) setTipoMetal(prev => [...prev, t]);
+                        else setTipoMetal(prev => prev.filter(x => x !== t));
+                      }} className="accent-primary w-4 h-4" /> {t}
+                    </label>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-
-          {TEXT_FIELDS.map(f => (
-            <div key={f.key}>
-              <label className="block text-sm font-semibold mb-1">{f.label}</label>
-              <input type="text" value={form[f.key] || ''} onChange={e => update(f.key, e.target.value)} className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+              <SelectField label="Cor do Metal" value={corMetal} onChange={setCorMetal} options={COR_METAL} />
             </div>
-          ))}
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <ToggleField label="Strass (R$0,60/un)" value={strass} onChange={setStrass} />
+                {strass && <input type="number" min={0} value={strassQtd} onChange={e => setStrassQtd(Math.max(0, Number(e.target.value)))} className={cls.inputSmall + ' w-20'} placeholder="Qtd" />}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <ToggleField label="Cruz (R$6/un)" value={cruzMetal} onChange={setCruzMetal} />
+                {cruzMetal && <input type="number" min={0} value={cruzMetalQtd} onChange={e => setCruzMetalQtd(Math.max(0, Number(e.target.value)))} className={cls.inputSmall + ' w-20'} placeholder="Qtd" />}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <ToggleField label="Bridão (R$3/un)" value={bridaoMetal} onChange={setBridaoMetal} />
+                {bridaoMetal && <input type="number" min={0} value={bridaoMetalQtd} onChange={e => setBridaoMetalQtd(Math.max(0, Number(e.target.value)))} className={cls.inputSmall + ' w-20'} placeholder="Qtd" />}
+              </div>
+            </div>
+          </Section>
+
+          <Section title="Extras">
+            <ToggleField label={`Tricê (+R$${TRICE_PRECO})`} value={trice} onChange={setTrice} textValue={triceDesc} onTextChange={setTriceDesc} textPlaceholder="Cor do tricê..." />
+            <ToggleField label={`Tiras (+R$${TIRAS_PRECO})`} value={tiras} onChange={setTiras} textValue={tirasDesc} onTextChange={setTirasDesc} textPlaceholder="Cor das tiras..." />
+          </Section>
+
+          <Section title="Solados">
+            <div className="grid sm:grid-cols-3 gap-4">
+              <SelectField label="Tipo de Solado" value={solado} onChange={setSolado} options={SOLADO} />
+              <SelectField label="Cor da Sola" value={corSola} onChange={setCorSola} options={COR_SOLA} />
+              <SelectField label="Cor da Vira" value={corVira} onChange={setCorVira} options={COR_VIRA} />
+            </div>
+            <ToggleField label={`Costura Atrás (+R$${COSTURA_ATRAS_PRECO})`} value={costuraAtras} onChange={setCosturaAtras} />
+          </Section>
+
+          <Section title="Carimbo a Fogo">
+            <div className="flex flex-wrap items-center gap-3">
+              <select value={carimbo} onChange={e => setCarimbo(e.target.value)} className={cls.inputSmall + ' w-44'}>
+                <option value="">Sem carimbo</option>
+                {CARIMBO.map(c => <option key={c.label} value={c.label}>{c.label} (R${c.preco})</option>)}
+              </select>
+              <input type="text" value={carimboDesc} onChange={e => setCarimboDesc(e.target.value)} placeholder="Quais carimbos e onde..." className={cls.inputSmall + ' flex-1 min-w-[180px]'} />
+            </div>
+          </Section>
+
+          <Section title="Adicional">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className={cls.label}>Descrição do Adicional</label>
+                <input type="text" value={adicionalDesc} onChange={e => setAdicionalDesc(e.target.value)} placeholder="Ex: franja extra..." className={cls.input} />
+              </div>
+              <div>
+                <label className={cls.label}>Valor do Adicional (R$)</label>
+                <input type="number" min={0} step={0.01} value={adicionalValor || ''} onChange={e => setAdicionalValor(Math.max(0, Number(e.target.value)))} className={cls.input} />
+              </div>
+            </div>
+          </Section>
 
           <div>
-            <label className="block text-sm font-semibold mb-2">Fotos de Referência</label>
+            <label className={cls.label}>Observação</label>
+            <textarea value={observacao} onChange={e => setObservacao(e.target.value)} rows={3} className={cls.input + ' min-h-[80px]'} />
+          </div>
+
+          <div>
+            <label className={cls.label}>Fotos de Referência</label>
             <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" />
             <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 bg-muted border border-border rounded-lg text-sm font-semibold hover:border-primary transition-colors">
               <Upload size={16} /> Adicionar Fotos
@@ -178,9 +444,7 @@ const EditOrderPage = () => {
                 {fotos.map((foto, i) => (
                   <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border border-border">
                     <img src={foto} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => removePhoto(i)} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center">
-                      <X size={12} />
-                    </button>
+                    <button type="button" onClick={() => setFotos(prev => prev.filter((_, idx) => idx !== i))} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center"><X size={12} /></button>
                   </div>
                 ))}
               </div>
@@ -188,21 +452,17 @@ const EditOrderPage = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <input type="checkbox" checked={sobMedida} onChange={e => setSobMedida(e.target.checked)} id="sobMedida" className="accent-primary w-4 h-4" />
-            <label htmlFor="sobMedida" className="text-sm font-semibold">Sob Medida (+R$150)</label>
+            <label className="text-sm font-semibold">Quantidade:</label>
+            <input type="number" value={1} readOnly className={cls.inputSmall + ' w-20 opacity-70'} />
           </div>
 
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-semibold">Quantidade:</label>
-            <input type="number" min={1} value={quantidade} onChange={e => setQuantidade(Math.max(1, Number(e.target.value)))} className="w-20 bg-muted rounded-md px-3 py-2 text-sm border border-border focus:border-primary outline-none" />
+          <div className="bg-muted rounded-lg p-3">
+            <p className="text-sm"><span className="font-semibold">Prazo de Produção:</span> {hasAnyLaser ? '30' : '10'} dias úteis</p>
           </div>
 
           <div className="bg-muted rounded-lg p-4">
-            <div className="flex justify-between text-sm mb-1"><span>Base</span><span>{formatCurrency(basePrice)}</span></div>
-            <div className="flex justify-between text-sm mb-1"><span>Extras</span><span>{formatCurrency(extraPrice)}</span></div>
-            <div className="flex justify-between text-sm mb-1"><span>Quantidade</span><span>×{quantidade}</span></div>
-            <div className="flex justify-between text-lg font-bold border-t border-border pt-2 mt-2">
-              <span>Total</span><span className="text-primary">{formatCurrency(total)}</span>
+            <div className="flex justify-between text-lg font-bold">
+              <span>Valor Total</span><span className="text-primary">{formatCurrency(total)}</span>
             </div>
           </div>
 

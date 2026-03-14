@@ -6,8 +6,10 @@ import { toast } from 'sonner';
 import { saveDraft, deleteDraft, Draft } from '@/lib/drafts';
 import { Upload, X, Eye } from 'lucide-react';
 import {
-  MODELOS, TAMANHOS, ACESSORIOS, TIPOS_COURO, CORES_COURO, COURO_PRECOS,
-  BORDADOS, LASER_OPTIONS, LASER_PRECO, COR_GLITTER, COR_LINHA, COR_BORRACHINHA,
+  MODELOS, TAMANHOS, GENEROS, ACESSORIOS, TIPOS_COURO, CORES_COURO, COURO_PRECOS,
+  BORDADOS, LASER_OPTIONS, LASER_CANO_PRECO, LASER_GASPEA_PRECO, LASER_TALONEIRA_PRECO,
+  GLITTER_CANO_PRECO, GLITTER_GASPEA_PRECO, GLITTER_TALONEIRA_PRECO,
+  COR_GLITTER, COR_LINHA, COR_BORRACHINHA,
   COR_VIVO, DESENVOLVIMENTO, AREA_METAL, TIPO_METAL, COR_METAL,
   STRASS_PRECO, CRUZ_METAL_PRECO, BRIDAO_METAL_PRECO, SOLADO, COR_SOLA, COR_VIRA,
   CARIMBO, SOB_MEDIDA_PRECO, NOME_BORDADO_PRECO, ESTAMPA_PRECO,
@@ -42,7 +44,7 @@ const ToggleField = ({
       <option value="nao">Não tem</option>
       <option value="tem">Tem</option>
     </select>
-    {textValue !== undefined && onTextChange && (
+    {value && textValue !== undefined && onTextChange && (
       <input type="text" value={textValue} onChange={e => onTextChange(e.target.value)} placeholder={textPlaceholder || 'Descreva...'} className={cls.inputSmall + ' flex-1 min-w-[180px]'} />
     )}
   </div>
@@ -85,6 +87,7 @@ const OrderPage = () => {
   /* form state */
   const [numeroPedido, setNumeroPedido] = useState(draftState?.numeroPedido || '');
   const [tamanho, setTamanho] = useState('');
+  const [genero, setGenero] = useState('');
   const [modelo, setModelo] = useState('');
   const [sobMedida, setSobMedida] = useState(false);
   const [sobMedidaDesc, setSobMedidaDesc] = useState('');
@@ -110,16 +113,26 @@ const OrderPage = () => {
   const [nomeBordado, setNomeBordado] = useState(false);
   const [nomeBordadoDesc, setNomeBordadoDesc] = useState('');
 
-  // laser
-  const [laser, setLaser] = useState('');
-  const [corGlitter, setCorGlitter] = useState('');
+  // laser split by part
+  const [laserCano, setLaserCano] = useState<string[]>([]);
+  const [corGlitterCano, setCorGlitterCano] = useState('');
+  const [laserGaspea, setLaserGaspea] = useState<string[]>([]);
+  const [corGlitterGaspea, setCorGlitterGaspea] = useState('');
+  const [laserTaloneira, setLaserTaloneira] = useState<string[]>([]);
+  const [corGlitterTaloneira, setCorGlitterTaloneira] = useState('');
+
+  // pintura (inside laser section)
+  const [pintura, setPintura] = useState(false);
+  const [pinturaDesc, setPinturaDesc] = useState('');
+
+  // estampa + desenvolvimento (repositioned)
+  const [estampa, setEstampa] = useState(false);
+  const [estampaDesc, setEstampaDesc] = useState('');
+  const [desenvolvimento, setDesenvolvimento] = useState('');
+
   const [corLinha, setCorLinha] = useState('');
   const [corBorrachinha, setCorBorrachinha] = useState('');
   const [corVivo, setCorVivo] = useState('');
-
-  // estampa
-  const [estampa, setEstampa] = useState(false);
-  const [desenvolvimento, setDesenvolvimento] = useState('');
 
   // metais
   const [areaMetal, setAreaMetal] = useState('');
@@ -132,15 +145,13 @@ const OrderPage = () => {
   const [bridaoMetal, setBridaoMetal] = useState(false);
   const [bridaoMetalQtd, setBridaoMetalQtd] = useState(0);
 
-  // extras
-  const [pintura, setPintura] = useState(false);
-  const [pinturaDesc, setPinturaDesc] = useState('');
+  // extras (tiras + tricê)
   const [trice, setTrice] = useState(false);
   const [triceDesc, setTriceDesc] = useState('');
   const [tiras, setTiras] = useState(false);
   const [tirasDesc, setTirasDesc] = useState('');
 
-  // solado
+  // solados
   const [solado, setSolado] = useState('');
   const [corSola, setCorSola] = useState('');
   const [corVira, setCorVira] = useState('');
@@ -149,6 +160,10 @@ const OrderPage = () => {
   // carimbo
   const [carimbo, setCarimbo] = useState('');
   const [carimboDesc, setCarimboDesc] = useState('');
+
+  // adicional
+  const [adicionalDesc, setAdicionalDesc] = useState('');
+  const [adicionalValor, setAdicionalValor] = useState(0);
 
   const [observacao, setObservacao] = useState('');
   const [fotos, setFotos] = useState<string[]>([]);
@@ -168,41 +183,47 @@ const OrderPage = () => {
 
   /* ───── price calculation ───── */
   const modeloPreco = MODELOS.find(m => m.label === modelo)?.preco || 0;
-
   const acessoriosPreco = acessorios.reduce((sum, a) => sum + (ACESSORIOS.find(x => x.label === a)?.preco || 0), 0);
-
   const couroPreco = [tipoCouroCano, tipoCouroGaspea, tipoCouroTaloneira]
     .reduce((sum, t) => sum + (COURO_PRECOS[t] || 0), 0);
-
   const bordadoPreco = [...bordadoCano, ...bordadoGaspea, ...bordadoTaloneira]
     .reduce((sum, b) => sum + (BORDADOS.find(x => x.label === b)?.preco || 0), 0);
 
-  const laserPreco = laser ? LASER_PRECO : 0;
-  const desenvPreco = DESENVOLVIMENTO.find(d => d.label === desenvolvimento)?.preco || 0;
+  // Laser pricing: cano +50, glitter cano +30, gáspea +50, glitter gáspea +30, taloneira free
+  const laserCanoPreco = laserCano.length > 0 ? LASER_CANO_PRECO : 0;
+  const glitterCanoPreco = corGlitterCano ? GLITTER_CANO_PRECO : 0;
+  const laserGaspeaPreco = laserGaspea.length > 0 ? LASER_GASPEA_PRECO : 0;
+  const glitterGaspeaPreco = corGlitterGaspea ? GLITTER_GASPEA_PRECO : 0;
+  const laserTaloneiraPreco = laserTaloneira.length > 0 ? LASER_TALONEIRA_PRECO : 0;
+  const glitterTaloneiraPreco = corGlitterTaloneira ? GLITTER_TALONEIRA_PRECO : 0;
+  const totalLaserPreco = laserCanoPreco + glitterCanoPreco + laserGaspeaPreco + glitterGaspeaPreco + laserTaloneiraPreco + glitterTaloneiraPreco;
 
+  const desenvPreco = DESENVOLVIMENTO.find(d => d.label === desenvolvimento)?.preco || 0;
   const areaMetalPreco = AREA_METAL.find(a => a.label === areaMetal)?.preco || 0;
   const strassPreco = strass ? strassQtd * STRASS_PRECO : 0;
   const cruzMetalPrecoTotal = cruzMetal ? cruzMetalQtd * CRUZ_METAL_PRECO : 0;
   const bridaoMetalPrecoTotal = bridaoMetal ? bridaoMetalQtd * BRIDAO_METAL_PRECO : 0;
-
   const soladoPreco = SOLADO.find(s => s.label === solado)?.preco || 0;
   const corSolaPreco = COR_SOLA.find(c => c.label === corSola)?.preco || 0;
   const corViraPreco = COR_VIRA.find(c => c.label === corVira)?.preco || 0;
   const carimboPreco = CARIMBO.find(c => c.label === carimbo)?.preco || 0;
 
+  const hasAnyLaser = laserCano.length > 0 || laserGaspea.length > 0 || laserTaloneira.length > 0;
+
   const total = modeloPreco
     + (sobMedida ? SOB_MEDIDA_PRECO : 0)
     + acessoriosPreco + couroPreco + bordadoPreco
     + (nomeBordado ? NOME_BORDADO_PRECO : 0)
-    + laserPreco
+    + totalLaserPreco
+    + (pintura ? PINTURA_PRECO : 0)
     + (estampa ? ESTAMPA_PRECO : 0)
     + desenvPreco + areaMetalPreco + strassPreco + cruzMetalPrecoTotal + bridaoMetalPrecoTotal
-    + (pintura ? PINTURA_PRECO : 0)
     + (trice ? TRICE_PRECO : 0)
     + (tiras ? TIRAS_PRECO : 0)
     + soladoPreco + corSolaPreco + corViraPreco
     + (costuraAtras ? COSTURA_ATRAS_PRECO : 0)
-    + carimboPreco;
+    + carimboPreco
+    + (adicionalValor > 0 ? adicionalValor : 0);
 
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -229,19 +250,32 @@ const OrderPage = () => {
     addOrder({
       numeroPedido: numeroPedido.trim(),
       vendedor: user?.nomeCompleto || '',
-      tamanho, modelo, sobMedida,
-      solado, quantidade: 1, preco: total, temLaser: !!laser, fotos,
-      // pack everything into these fields for storage
+      tamanho, genero, modelo, sobMedida, sobMedidaDesc,
+      solado, quantidade: 1, preco: total, temLaser: hasAnyLaser, fotos,
       couroGaspea: tipoCouroGaspea, couroCano: tipoCouroCano, couroTaloneira: tipoCouroTaloneira,
+      corCouroGaspea: corCouroGaspea, corCouroCano: corCouroCano, corCouroTaloneira: corCouroTaloneira,
       bordadoCano: bordadoCano.join(', '), bordadoGaspea: bordadoGaspea.join(', '),
       bordadoTaloneira: bordadoTaloneira.join(', '),
+      corBordadoCano, corBordadoGaspea, corBordadoTaloneira,
+      nomeBordadoDesc: nomeBordado ? nomeBordadoDesc : '',
+      laserCano: laserCano.join(', '), corGlitterCano,
+      laserGaspea: laserGaspea.join(', '), corGlitterGaspea,
+      laserTaloneira: laserTaloneira.join(', '), corGlitterTaloneira,
+      pintura: pintura ? 'Sim' : '', pinturaDesc,
+      estampa: estampa ? 'Sim' : '', estampaDesc,
       corLinha, corBorrachinha: corBorrachinha,
-      trisce: trice ? 'Sim' : 'Não',
-      tiras: tiras ? 'Sim' : 'Não',
-      metais: areaMetal,
+      trisce: trice ? 'Sim' : 'Não', triceDesc,
+      tiras: tiras ? 'Sim' : 'Não', tirasDesc,
+      metais: areaMetal, tipoMetal: tipoMetal.join(', '), corMetal,
+      strassQtd: strass ? strassQtd : 0,
+      cruzMetalQtd: cruzMetal ? cruzMetalQtd : 0,
+      bridaoMetalQtd: bridaoMetal ? bridaoMetalQtd : 0,
       acessorios: acessorios.join(', '),
       desenvolvimento, observacao,
-      formatoBico: '', corVira,
+      formatoBico: '', corVira, corVivo, corSola,
+      costuraAtras: costuraAtras ? 'Sim' : '',
+      carimbo, carimboDesc,
+      adicionalDesc, adicionalValor: adicionalValor > 0 ? adicionalValor : 0,
       personalizacaoNome: nomeBordado ? nomeBordadoDesc : '',
       personalizacaoBordado: '',
     } as any);
@@ -258,11 +292,14 @@ const OrderPage = () => {
     toast.success('Rascunho salvo!');
   };
 
+  /* ───── Laser multi-select as items for MultiSelect component ───── */
+  const LASER_ITEMS: { label: string; preco: number }[] = LASER_OPTIONS.map(l => ({ label: l, preco: 0 }));
+
   /* ───── mirror data (only filled fields, NO value) ───── */
   const mirrorRows: [string, string][] = [
     ['Vendedor', user?.nomeCompleto || ''],
     ['Número do Pedido', numeroPedido],
-    ['Tamanho', tamanho],
+    ['Tamanho', tamanho ? `${tamanho}${genero ? ' — ' + genero : ''}` : ''],
     ['Modelo', modelo],
     ['Sob Medida', sobMedida ? `Sim${sobMedidaDesc ? ' — ' + sobMedidaDesc : ''}` : ''],
     ['Acessórios', acessorios.join(', ')],
@@ -279,20 +316,24 @@ const OrderPage = () => {
     ['Bordado Taloneira', bordadoTaloneira.join(', ')],
     ['Cor Bordado Taloneira', corBordadoTaloneira],
     ['Nome Bordado', nomeBordado ? nomeBordadoDesc || 'Sim' : ''],
-    ['Laser', laser],
-    ['Cor Glitter/Tecido', corGlitter],
+    ['Laser Cano', laserCano.join(', ')],
+    ['Cor Glitter/Tecido Cano', corGlitterCano],
+    ['Laser Gáspea', laserGaspea.join(', ')],
+    ['Cor Glitter/Tecido Gáspea', corGlitterGaspea],
+    ['Laser Taloneira', laserTaloneira.join(', ')],
+    ['Cor Glitter/Tecido Taloneira', corGlitterTaloneira],
+    ['Pintura', pintura ? pinturaDesc || 'Sim' : ''],
+    ['Estampa', estampa ? (estampaDesc ? `Sim — ${estampaDesc}` : 'Sim') : ''],
+    ['Desenvolvimento', desenvolvimento],
     ['Cor da Linha', corLinha],
     ['Cor Borrachinha', corBorrachinha],
     ['Cor do Vivo', corVivo],
-    ['Estampa', estampa ? 'Sim' : ''],
-    ['Desenvolvimento', desenvolvimento],
     ['Área Metal', areaMetal],
     ['Tipo Metal', tipoMetal.join(', ')],
     ['Cor Metal', corMetal],
     ['Strass', strass ? `${strassQtd} un.` : ''],
     ['Cruz (metal)', cruzMetal ? `${cruzMetalQtd} un.` : ''],
     ['Bridão (metal)', bridaoMetal ? `${bridaoMetalQtd} un.` : ''],
-    ['Pintura', pintura ? pinturaDesc || 'Sim' : ''],
     ['Tricê', trice ? triceDesc || 'Sim' : ''],
     ['Tiras', tiras ? tirasDesc || 'Sim' : ''],
     ['Solado', solado],
@@ -300,6 +341,7 @@ const OrderPage = () => {
     ['Cor da Vira', corVira],
     ['Costura Atrás', costuraAtras ? 'Sim' : ''],
     ['Carimbo a Fogo', carimbo ? `${carimbo}${carimboDesc ? ' — ' + carimboDesc : ''}` : ''],
+    ['Adicional', adicionalDesc ? `${adicionalDesc}${adicionalValor > 0 ? ` — ${formatCurrency(adicionalValor)}` : ''}` : ''],
     ['Observação', observacao],
     ['Quantidade', '1'],
   ].filter(([, v]) => v) as [string, string][];
@@ -338,9 +380,10 @@ const OrderPage = () => {
             </div>
           </div>
 
-          {/* 3-4 Tamanho + Modelo */}
-          <div className="grid sm:grid-cols-2 gap-4">
+          {/* 3-4 Tamanho + Gênero + Modelo */}
+          <div className="grid sm:grid-cols-3 gap-4">
             <SelectField label="Tamanho" value={tamanho} onChange={setTamanho} options={TAMANHOS} />
+            <SelectField label="Gênero" value={genero} onChange={setGenero} options={GENEROS} />
             <SelectField label="Modelo" value={modelo} onChange={setModelo} options={MODELOS} />
           </div>
 
@@ -377,28 +420,37 @@ const OrderPage = () => {
           {/* 14 Nome Bordado */}
           <ToggleField label="Nome Bordado (+R$50)" value={nomeBordado} onChange={setNomeBordado} textValue={nomeBordadoDesc} onTextChange={setNomeBordadoDesc} textPlaceholder="Nome, cor, local..." />
 
-          {/* 15-16 Laser + Glitter */}
+          {/* 15 Laser (split by cano/gáspea/taloneira + pintura) */}
+          <Section title="Laser">
+            <MultiSelect label="Laser do Cano (+R$50)" items={LASER_ITEMS} selected={laserCano} onChange={setLaserCano} />
+            <SelectField label="Cor Glitter/Tecido do Cano (+R$30)" value={corGlitterCano} onChange={setCorGlitterCano} options={COR_GLITTER} />
+
+            <MultiSelect label="Laser da Gáspea (+R$50)" items={LASER_ITEMS} selected={laserGaspea} onChange={setLaserGaspea} />
+            <SelectField label="Cor Glitter/Tecido da Gáspea (+R$30)" value={corGlitterGaspea} onChange={setCorGlitterGaspea} options={COR_GLITTER} />
+
+            <MultiSelect label="Laser da Taloneira (sem custo)" items={LASER_ITEMS} selected={laserTaloneira} onChange={setLaserTaloneira} />
+            <SelectField label="Cor Glitter/Tecido da Taloneira (sem custo)" value={corGlitterTaloneira} onChange={setCorGlitterTaloneira} options={COR_GLITTER} />
+
+            {/* Pintura inside Laser section */}
+            <ToggleField label={`Pintura (+R$${PINTURA_PRECO})`} value={pintura} onChange={setPintura} textValue={pinturaDesc} onTextChange={setPinturaDesc} textPlaceholder="Cor da tinta..." />
+          </Section>
+
+          {/* Estampa + Desenvolvimento (repositioned before cor da linha) */}
           <div className="grid sm:grid-cols-2 gap-4">
-            <SelectField label={`Laser (+R$${LASER_PRECO})`} value={laser} onChange={setLaser} options={LASER_OPTIONS} />
-            <SelectField label="Cor Glitter/Tecido" value={corGlitter} onChange={setCorGlitter} options={COR_GLITTER} />
+            <div className="space-y-3">
+              <ToggleField label={`Estampa (+R$${ESTAMPA_PRECO})`} value={estampa} onChange={setEstampa} textValue={estampaDesc} onTextChange={setEstampaDesc} textPlaceholder="Descreva a estampa..." />
+            </div>
+            <SelectField label="Desenvolvimento" value={desenvolvimento} onChange={setDesenvolvimento} options={DESENVOLVIMENTO} />
           </div>
 
-          {/* 17-19 Linha, Borrachinha, Vivo */}
+          {/* Cor da Linha, Borrachinha, Vivo */}
           <div className="grid sm:grid-cols-3 gap-4">
             <SelectField label="Cor da Linha" value={corLinha} onChange={setCorLinha} options={COR_LINHA} />
             <SelectField label="Cor da Borrachinha" value={corBorrachinha} onChange={setCorBorrachinha} options={COR_BORRACHINHA} />
             <SelectField label="Cor do Vivo" value={corVivo} onChange={setCorVivo} options={COR_VIVO} />
           </div>
 
-          {/* 20-21 Estampa + Desenvolvimento */}
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <ToggleField label={`Estampa (+R$${ESTAMPA_PRECO})`} value={estampa} onChange={setEstampa} />
-            </div>
-            <SelectField label="Desenvolvimento" value={desenvolvimento} onChange={setDesenvolvimento} options={DESENVOLVIMENTO} />
-          </div>
-
-          {/* 22 Metais */}
+          {/* Metais */}
           <Section title="Metais">
             <div className="grid sm:grid-cols-3 gap-4">
               <SelectField label="Área do Metal" value={areaMetal} onChange={setAreaMetal} options={AREA_METAL} />
@@ -420,7 +472,7 @@ const OrderPage = () => {
             </div>
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="flex items-center gap-2 flex-wrap">
-                <ToggleField label="Strass (R$0,50/un)" value={strass} onChange={setStrass} />
+                <ToggleField label="Strass (R$0,60/un)" value={strass} onChange={setStrass} />
                 {strass && <input type="number" min={0} value={strassQtd} onChange={e => setStrassQtd(Math.max(0, Number(e.target.value)))} className={cls.inputSmall + ' w-20'} placeholder="Qtd" />}
               </div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -434,22 +486,23 @@ const OrderPage = () => {
             </div>
           </Section>
 
-          {/* 23-25 Pintura, Tricê, Tiras */}
-          <ToggleField label={`Pintura (+R$${PINTURA_PRECO})`} value={pintura} onChange={setPintura} textValue={pinturaDesc} onTextChange={setPinturaDesc} textPlaceholder="Cor da tinta..." />
-          <ToggleField label={`Tricê (+R$${TRICE_PRECO})`} value={trice} onChange={setTrice} textValue={triceDesc} onTextChange={setTriceDesc} textPlaceholder="Cor do tricê..." />
-          <ToggleField label={`Tiras (+R$${TIRAS_PRECO})`} value={tiras} onChange={setTiras} textValue={tirasDesc} onTextChange={setTirasDesc} textPlaceholder="Cor das tiras..." />
+          {/* Extras (Tiras + Tricê) */}
+          <Section title="Extras">
+            <ToggleField label={`Tricê (+R$${TRICE_PRECO})`} value={trice} onChange={setTrice} textValue={triceDesc} onTextChange={setTriceDesc} textPlaceholder="Cor do tricê..." />
+            <ToggleField label={`Tiras (+R$${TIRAS_PRECO})`} value={tiras} onChange={setTiras} textValue={tirasDesc} onTextChange={setTirasDesc} textPlaceholder="Cor das tiras..." />
+          </Section>
 
-          {/* 26-28 Solado, Sola, Vira */}
-          <div className="grid sm:grid-cols-3 gap-4">
-            <SelectField label="Tipo de Solado" value={solado} onChange={setSolado} options={SOLADO} />
-            <SelectField label="Cor da Sola" value={corSola} onChange={setCorSola} options={COR_SOLA} />
-            <SelectField label="Cor da Vira" value={corVira} onChange={setCorVira} options={COR_VIRA} />
-          </div>
+          {/* Solados */}
+          <Section title="Solados">
+            <div className="grid sm:grid-cols-3 gap-4">
+              <SelectField label="Tipo de Solado" value={solado} onChange={setSolado} options={SOLADO} />
+              <SelectField label="Cor da Sola" value={corSola} onChange={setCorSola} options={COR_SOLA} />
+              <SelectField label="Cor da Vira" value={corVira} onChange={setCorVira} options={COR_VIRA} />
+            </div>
+            <ToggleField label={`Costura Atrás (+R$${COSTURA_ATRAS_PRECO})`} value={costuraAtras} onChange={setCosturaAtras} />
+          </Section>
 
-          {/* 29 Costura Atrás */}
-          <ToggleField label={`Costura Atrás (+R$${COSTURA_ATRAS_PRECO})`} value={costuraAtras} onChange={setCosturaAtras} />
-
-          {/* 30 Carimbo a Fogo */}
+          {/* Carimbo a Fogo */}
           <Section title="Carimbo a Fogo">
             <div className="flex flex-wrap items-center gap-3">
               <select value={carimbo} onChange={e => setCarimbo(e.target.value)} className={cls.inputSmall + ' w-44'}>
@@ -460,13 +513,27 @@ const OrderPage = () => {
             </div>
           </Section>
 
-          {/* 31 Observação */}
+          {/* Adicional */}
+          <Section title="Adicional">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className={cls.label}>Descrição do Adicional</label>
+                <input type="text" value={adicionalDesc} onChange={e => setAdicionalDesc(e.target.value)} placeholder="Ex: franja extra, peça diferente..." className={cls.input} />
+              </div>
+              <div>
+                <label className={cls.label}>Valor do Adicional (R$)</label>
+                <input type="number" min={0} step={0.01} value={adicionalValor || ''} onChange={e => setAdicionalValor(Math.max(0, Number(e.target.value)))} placeholder="0,00" className={cls.input} />
+              </div>
+            </div>
+          </Section>
+
+          {/* Observação */}
           <div>
             <label className={cls.label}>Observação</label>
             <textarea value={observacao} onChange={e => setObservacao(e.target.value)} rows={3} className={cls.input + ' min-h-[80px]'} />
           </div>
 
-          {/* 32 Fotos */}
+          {/* Fotos */}
           <div>
             <label className={cls.label}>Fotos de Referência</label>
             <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" />
@@ -485,13 +552,18 @@ const OrderPage = () => {
             )}
           </div>
 
-          {/* 33 Quantidade */}
+          {/* Quantidade */}
           <div className="flex items-center gap-3">
             <label className="text-sm font-semibold">Quantidade:</label>
             <input type="number" value={1} readOnly className={cls.inputSmall + ' w-20 opacity-70'} />
           </div>
 
-          {/* 34 Valor Total */}
+          {/* Prazo */}
+          <div className="bg-muted rounded-lg p-3">
+            <p className="text-sm"><span className="font-semibold">Prazo de Produção:</span> {hasAnyLaser ? '30' : '10'} dias úteis</p>
+          </div>
+
+          {/* Valor Total */}
           <div className="bg-muted rounded-lg p-4">
             <div className="flex justify-between text-lg font-bold">
               <span>Valor Total</span><span className="text-primary">{formatCurrency(total)}</span>
