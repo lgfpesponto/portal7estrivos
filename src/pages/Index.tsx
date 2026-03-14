@@ -143,31 +143,44 @@ const Index = () => {
 
             </div>
 
-            {/* Right column - only Pendente */}
+            {/* Right column */}
             <div className="space-y-6">
-              {/* A receber */}
-              <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-display font-bold flex items-center gap-2">
-                    <DollarSign className="text-primary" size={22} /> A receber
+              {isAdmin ? (
+                /* Admin: A receber com filtro por vendedor */
+                <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-display font-bold flex items-center gap-2">
+                      <DollarSign className="text-primary" size={22} /> A receber
+                    </h2>
+                    <Select value={receberVendedor} onValueChange={setReceberVendedor}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Todos vendedores" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos vendedores</SelectItem>
+                        {vendedores.map(v => (
+                          <SelectItem key={v} value={v}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="bg-muted rounded-lg p-4">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Valor a Receber</p>
+                    <p className="text-3xl font-bold text-primary mt-1">{formatCurrency(financialData.aReceber)}</p>
+                  </div>
+                </motion.div>
+              ) : (
+                /* Revendedor: Pendente sem filtro */
+                <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
+                  <h2 className="text-xl font-display font-bold flex items-center gap-2 mb-4">
+                    <AlertCircle className="text-primary" size={22} /> Pendente
                   </h2>
-                  <Select value={receberVendedor} onValueChange={setReceberVendedor}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Todos vendedores" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos">Todos vendedores</SelectItem>
-                      {vendedores.map(v => (
-                        <SelectItem key={v} value={v}>{v}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="bg-muted rounded-lg p-4">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Valor a Receber</p>
-                  <p className="text-3xl font-bold text-primary mt-1">{formatCurrency(financialData.aReceber)}</p>
-                </div>
-              </motion.div>
+                  <div className="bg-muted rounded-lg p-4">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Valor Pendente</p>
+                    <p className="text-3xl font-bold text-primary mt-1">{formatCurrency(financialData.aReceber)}</p>
+                  </div>
+                </motion.div>
+              )}
 
               {/* Botas na produção */}
               <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={1} className="bg-card rounded-xl p-6 western-shadow">
