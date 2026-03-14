@@ -9,6 +9,7 @@ const ReportsPage = () => {
   const navigate = useNavigate();
   const [filterDate, setFilterDate] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredOrders = useMemo(() => {
     return orders.filter(o => {
