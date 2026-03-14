@@ -39,7 +39,7 @@ const ReportsPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-3xl font-display font-bold mb-6">Meus Pedidos / Relatórios</h1>
+        <h1 className="text-3xl font-display font-bold mb-6">MEUS PEDIDOS</h1>
 
         {/* Filters */}
         <div className="bg-card rounded-xl p-4 western-shadow mb-6">
@@ -72,11 +72,11 @@ const ReportsPage = () => {
             <p className="text-xs text-muted-foreground uppercase font-semibold">Total de Pedidos</p>
             <p className="text-2xl font-bold">{filteredOrders.length}</p>
           </div>
-          <div className="bg-card rounded-xl p-4 western-shadow flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase font-semibold">Valor Total</p>
-              <p className="text-2xl font-bold text-primary">{formatCurrency(totalValue)}</p>
-            </div>
+          <div className="bg-card rounded-xl p-4 western-shadow">
+            <p className="text-xs text-muted-foreground uppercase font-semibold">Valor Total</p>
+            <p className="text-2xl font-bold text-primary">{formatCurrency(totalValue)}</p>
+          </div>
+          <div className="bg-card rounded-xl p-4 western-shadow flex items-center justify-center">
             <button className="orange-gradient text-primary-foreground px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity">
               <FileText size={16} /> GERAR RELATÓRIO
             </button>
