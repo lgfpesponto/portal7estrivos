@@ -113,6 +113,10 @@ const OrderPage = () => {
               <label className="block text-sm font-semibold mb-1">Vendedor</label>
               <input type="text" value={user?.nomeCompleto || ''} readOnly className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border opacity-70" />
             </div>
+            <div>
+              <label className="block text-sm font-semibold mb-1">Número do Pedido *</label>
+              <input type="text" value={numeroPedido} onChange={e => setNumeroPedido(e.target.value)} placeholder="Ex: 7E-20250001" required className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+            </div>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

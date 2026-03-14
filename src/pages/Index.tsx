@@ -121,15 +121,6 @@ const Index = () => {
                 </div>
               </motion.div>
 
-              {/* Orders link */}
-              <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={1}>
-                <Link to="/relatorios" className="block bg-card rounded-xl p-6 western-shadow hover:shadow-xl transition-shadow group">
-                  <h2 className="text-xl font-display font-bold flex items-center gap-2 group-hover:text-primary transition-colors">
-                    Meus Pedidos / Relatórios
-                  </h2>
-                  <p className="text-muted-foreground mt-2">Visualize todos os seus pedidos e gere relatórios detalhados.</p>
-                </Link>
-              </motion.div>
             </div>
 
             {/* Right column - only Pendente */}
