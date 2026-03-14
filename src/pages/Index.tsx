@@ -1,8 +1,10 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Eye, BarChart3, AlertCircle } from 'lucide-react';
+import { ShoppingBag, Eye, BarChart3, DollarSign, HardHat } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const fadeIn = {
@@ -11,14 +13,33 @@ const fadeIn = {
 };
 
 const Index = () => {
-  const { isLoggedIn, orders } = useAuth();
+  const { isLoggedIn, isAdmin, orders, allOrders } = useAuth();
   const [chartPeriod, setChartPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano'>('mes');
+  const [receberVendedor, setReceberVendedor] = useState<string>('todos');
+
+  const sourceOrders = isAdmin ? allOrders : orders;
+
+  const vendedores = useMemo(() => {
+    const names = [...new Set(sourceOrders.map(o => o.vendedor))].sort();
+    return names;
+  }, [sourceOrders]);
+
+  const PRODUCTION_STATUSES_IN_PROD = [
+    'Aguardando', 'Corte', 'Sem bordado',
+    'Bordado Dinei', 'Bordado Sandro', 'Bordado 7Estrivos',
+    'Pesponto 01', 'Pesponto 02', 'Pesponto 03', 'Pesponto 04', 'Pesponto 05',
+    'Pespontando', 'Montagem', 'Revisão', 'Expedição',
+  ];
 
   const financialData = useMemo(() => {
-    const totalAno = orders.reduce((s, o) => s + o.preco * o.quantidade, 0);
-    const pendente = orders.filter(o => o.status === 'Entregue' || o.status === 'Cobrado').reduce((s, o) => s + o.preco * o.quantidade, 0);
-    return { pendente };
-  }, [orders]);
+    const filtered = sourceOrders.filter(o => (o.status === 'Entregue' || o.status === 'Cobrado') && (receberVendedor === 'todos' || o.vendedor === receberVendedor));
+    const aReceber = filtered.reduce((s, o) => s + o.preco * o.quantidade, 0);
+    return { aReceber };
+  }, [sourceOrders, receberVendedor]);
+
+  const botasProducao = useMemo(() => {
+    return sourceOrders.filter(o => PRODUCTION_STATUSES_IN_PROD.some(s => s.toLowerCase() === o.status.toLowerCase())).reduce((s, o) => s + o.quantidade, 0);
+  }, [sourceOrders]);
 
   const chartData = useMemo(() => {
     const data: { name: string; botas: number }[] = [];
@@ -124,14 +145,41 @@ const Index = () => {
 
             {/* Right column - only Pendente */}
             <div className="space-y-6">
+              {/* A receber */}
               <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
-                <h2 className="text-xl font-display font-bold flex items-center gap-2 mb-4">
-                  <AlertCircle className="text-primary" size={22} /> Pendente
-                </h2>
-                <div className="bg-muted rounded-lg p-4">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Valor Pendente</p>
-                  <p className="text-3xl font-bold text-primary mt-1">{formatCurrency(financialData.pendente)}</p>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-display font-bold flex items-center gap-2">
+                    <DollarSign className="text-primary" size={22} /> A receber
+                  </h2>
+                  <Select value={receberVendedor} onValueChange={setReceberVendedor}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Todos vendedores" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos vendedores</SelectItem>
+                      {vendedores.map(v => (
+                        <SelectItem key={v} value={v}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+                <div className="bg-muted rounded-lg p-4">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Valor a Receber</p>
+                  <p className="text-3xl font-bold text-primary mt-1">{formatCurrency(financialData.aReceber)}</p>
+                </div>
+              </motion.div>
+
+              {/* Botas na produção */}
+              <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={1} className="bg-card rounded-xl p-6 western-shadow">
+                <h2 className="text-xl font-display font-bold flex items-center gap-2 mb-4">
+                  <HardHat className="text-primary" size={22} /> Botas na produção
+                </h2>
+                <div className="bg-muted rounded-lg p-4 mb-4">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total em produção</p>
+                  <p className="text-3xl font-bold text-primary mt-1">{botasProducao} {botasProducao === 1 ? 'bota' : 'botas'}</p>
+                </div>
+                <Progress value={botasProducao > 0 ? Math.min((botasProducao / Math.max(sourceOrders.reduce((s, o) => s + o.quantidade, 0), 1)) * 100, 100) : 0} className="h-3" />
+                <p className="text-xs text-muted-foreground mt-2">{botasProducao} de {sourceOrders.reduce((s, o) => s + o.quantidade, 0)} botas totais estão em produção</p>
               </motion.div>
             </div>
           </div>
