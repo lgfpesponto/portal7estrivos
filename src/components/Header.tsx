@@ -12,7 +12,7 @@ const Header = () => {
   const navItems = isLoggedIn
     ? [
         { label: 'FAÇA SEU PEDIDO', path: '/pedido' },
-        { label: 'MEUS PEDIDOS / RELATÓRIOS', path: '/relatorios' },
+        { label: 'MEUS PEDIDOS', path: '/relatorios' },
         { label: 'MEU PERFIL', path: '/perfil' },
       ]
     : [
