@@ -17,7 +17,7 @@ const Header = () => {
       ]
     : [
         { label: 'FAÇA SEU PEDIDO', path: '/pedido' },
-        { label: 'MEUS PEDIDOS / RELATÓRIOS', path: '/relatorios' },
+        { label: 'MEUS PEDIDOS', path: '/relatorios' },
         { label: 'LOGIN', path: '/login' },
       ];
 
