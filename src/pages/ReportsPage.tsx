@@ -49,6 +49,10 @@ const ReportsPage = () => {
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <div>
+              <label className="block text-xs font-semibold mb-1">Buscar por Nº do Pedido</label>
+              <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Ex: 7E-2024..." className="bg-muted rounded-lg px-3 py-2 text-sm border border-border focus:border-primary outline-none" />
+            </div>
+            <div>
               <label className="block text-xs font-semibold mb-1">Data de Criação (a partir de)</label>
               <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="bg-muted rounded-lg px-3 py-2 text-sm border border-border focus:border-primary outline-none" />
             </div>
