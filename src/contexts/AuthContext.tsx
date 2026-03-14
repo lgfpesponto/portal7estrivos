@@ -245,11 +245,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setOrders(prev => [newOrder, ...prev]);
   }, [orders.length]);
 
+  const deleteOrder = useCallback((id: string) => {
+    setOrders(prev => prev.filter(o => o.id !== id));
+  }, []);
+
+  const updateOrder = useCallback((id: string, data: Partial<Order>) => {
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, ...data } : o));
+  }, []);
+
   // For regular users, only show their own orders
   const userOrders = user?.isAdmin ? orders : orders.filter(o => o.vendedor === user?.nomeCompleto);
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAdmin, login, register, logout, updateProfile, orders: userOrders, addOrder, recoverPassword, allOrders: orders }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAdmin, login, register, logout, updateProfile, orders: userOrders, addOrder, deleteOrder, updateOrder, recoverPassword, allOrders: orders }}>
       {children}
     </AuthContext.Provider>
   );
