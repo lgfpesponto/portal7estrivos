@@ -97,7 +97,7 @@ const OrderPage = () => {
       preco: unitPrice,
     });
     toast.success('Pedido criado com sucesso!');
-    navigate('/acompanhar');
+    navigate('/relatorios');
   };
 
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
