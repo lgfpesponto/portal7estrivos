@@ -2,7 +2,7 @@ import { useAuth, PRODUCTION_STATUSES, PRODUCTION_STATUSES_USER } from '@/contex
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Filter, FileText, Download, Printer, CheckCircle } from 'lucide-react';
+import { Filter, FileText, Download, Printer, CheckCircle, StickyNote } from 'lucide-react';
 import jsPDF from 'jspdf';
 
 const formatDateBR = (date: string, time?: string) => {
