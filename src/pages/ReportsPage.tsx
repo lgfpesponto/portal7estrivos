@@ -36,7 +36,7 @@ const ReportsPage = () => {
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const statuses = isAdmin ? PRODUCTION_STATUSES : PRODUCTION_STATUSES_USER;
-  const allStatuses = [...new Set(displayOrders.map(o => o.status))].sort((a, b) => statuses.indexOf(a) - statuses.indexOf(b));
+  const allStatuses = [...statuses];
   const allVendedores = isAdmin ? [...new Set(allOrders.map(o => o.vendedor))].sort() : [];
 
   const toggleSelect = (id: string) => {
