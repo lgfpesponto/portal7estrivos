@@ -64,7 +64,12 @@ const OrderPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!numeroPedido.trim()) {
+      toast.error('Preencha o Número do Pedido!');
+      return;
+    }
     addOrder({
+      numeroPedido: numeroPedido.trim(),
       vendedor: user?.nomeCompleto || '',
       tamanho: form.tamanho || '',
       modelo: form.modelo || '',
