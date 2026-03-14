@@ -21,6 +21,12 @@ const ProfilePage = () => {
   }, [orders]);
 
   const totalBotas = useMemo(() => orders.reduce((s, o) => s + o.quantidade, 0), [orders]);
+
+  const pendente = useMemo(() => {
+    return orders.filter(o => o.status === 'Entregue' || o.status === 'Cobrado').reduce((s, o) => s + o.preco * o.quantidade, 0);
+  }, [orders]);
+
+  const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     nomeCompleto: '',
