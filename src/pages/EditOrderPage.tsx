@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth, Order } from '@/contexts/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Upload, X, Save, ArrowLeft } from 'lucide-react';
+import { Link2, X, Save, ArrowLeft } from 'lucide-react';
 import {
   MODELOS, TAMANHOS, GENEROS, ACESSORIOS, TIPOS_COURO, CORES_COURO, COURO_PRECOS,
   BORDADOS, LASER_OPTIONS, LASER_CANO_PRECO, LASER_GASPEA_PRECO,
@@ -145,8 +145,7 @@ const EditOrderPage = () => {
   const [adicionalDesc, setAdicionalDesc] = useState('');
   const [adicionalValor, setAdicionalValor] = useState(0);
   const [observacao, setObservacao] = useState('');
-  const [fotos, setFotos] = useState<string[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fotoUrl, setFotoUrl] = useState('');
 
   useEffect(() => {
     if (!order) return;
@@ -208,7 +207,7 @@ const EditOrderPage = () => {
     setAdicionalDesc(order.adicionalDesc || '');
     setAdicionalValor(order.adicionalValor || 0);
     setObservacao(order.observacao || '');
-    setFotos(order.fotos || []);
+    setFotoUrl(order.fotos?.[0] || '');
   }, [order]);
 
   if (!isAdmin) return <div className="min-h-[60vh] flex items-center justify-center"><p className="text-muted-foreground">Acesso restrito ao administrador.</p></div>;
@@ -242,15 +241,7 @@ const EditOrderPage = () => {
 
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    const file = files[0];
-    const reader = new FileReader();
-    reader.onload = (ev) => { if (ev.target?.result) setFotos([ev.target!.result as string]); };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
+  const fotos = fotoUrl.trim() ? [fotoUrl.trim()] : [];
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -437,20 +428,26 @@ const EditOrderPage = () => {
           </div>
 
           <div>
-            <label className={cls.label}>Foto de Referência (máx. 1)</label>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-            <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 bg-muted border border-border rounded-lg text-sm font-semibold hover:border-primary transition-colors">
-              <Upload size={16} /> {fotos.length > 0 ? 'Substituir Foto' : 'Adicionar Foto'}
-            </button>
-            {fotos.length > 0 && (
-              <div className="flex flex-wrap gap-3 mt-3">
-                {fotos.map((foto, i) => (
-                  <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border border-border">
-                    <img src={foto} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => setFotos([])} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center"><X size={12} /></button>
-                  </div>
-                ))}
-              </div>
+            <label className={cls.label}>Link da Foto de Referência (Google Drive)</label>
+            <div className="flex items-center gap-2">
+              <Link2 size={16} className="text-muted-foreground flex-shrink-0" />
+              <input
+                type="url"
+                value={fotoUrl}
+                onChange={e => setFotoUrl(e.target.value)}
+                placeholder="Cole o link do Google Drive aqui..."
+                className={cls.input}
+              />
+              {fotoUrl && (
+                <button type="button" onClick={() => setFotoUrl('')} className="text-destructive hover:text-destructive/80">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            {fotoUrl && (
+              <a href={fotoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline mt-1 inline-block">
+                Abrir link ↗
+              </a>
             )}
           </div>
 

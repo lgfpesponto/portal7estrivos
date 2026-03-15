@@ -6,6 +6,7 @@ import { Filter, FileText, Download, Printer, CheckCircle, StickyNote, Pencil, T
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import JsBarcode from 'jsbarcode';
+import QRCode from 'qrcode';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -164,14 +165,15 @@ const ReportsPage = () => {
     doc.save('relatorio-pedidos.pdf');
   };
 
-  const generateProductionSheetPDF = () => {
+  const generateProductionSheetPDF = async () => {
     const list = ordersToExport;
     const doc = new jsPDF({ format: 'a4', orientation: 'portrait' });
     const pw = doc.internal.pageSize.getWidth(); // 210mm
     const contentH = 148.5; // A5 height (half A4)
     const m = 6; // margin
 
-    list.forEach((order, idx) => {
+    for (let idx = 0; idx < list.length; idx++) {
+      const order = list[idx];
       if (idx > 0) doc.addPage();
 
       // ─── Outer border ───
@@ -370,8 +372,19 @@ const ReportsPage = () => {
         lineIdx++;
       });
 
-      // ─── PHOTO (right side, between header and stubs) ───
-      if (order.fotos && order.fotos.length > 0) {
+      // ─── QR CODE (right side, between header and stubs) ───
+      if (order.fotos && order.fotos.length > 0 && order.fotos[0].startsWith('http')) {
+        try {
+          const qrSize = Math.min(pw - m - photoX - 6, descBottom - headerBottom - 10);
+          const qrX = photoX + 2 + ((pw - m - photoX - 3 - qrSize) / 2);
+          const qrY = headerBottom + 2;
+          const qrDataUrl = await QRCode.toDataURL(order.fotos[0], { width: 200, margin: 1 });
+          doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+          doc.setFontSize(6);
+          doc.setFont('helvetica', 'normal');
+          doc.text('Escaneie para ver a foto', qrX + qrSize / 2, qrY + qrSize + 3, { align: 'center' });
+        } catch { /* skip invalid */ }
+      } else if (order.fotos && order.fotos.length > 0) {
         try {
           const photoW = pw - m - photoX - 3;
           const photoH = descBottom - headerBottom - 4;
@@ -411,7 +424,7 @@ const ReportsPage = () => {
         const numW = doc.getTextWidth(orderNumClean);
         doc.text(orderNumClean, sx + (singleStubW - numW) / 2, stubTop + 22);
       });
-    });
+    }
 
     doc.save('fichas-producao.pdf');
   };

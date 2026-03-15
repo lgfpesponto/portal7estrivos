@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useAuth, formatBrasiliaDate, formatBrasiliaTime } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { saveDraft, deleteDraft, Draft } from '@/lib/drafts';
-import { Upload, X, Eye } from 'lucide-react';
+import { Link2, X, Eye } from 'lucide-react';
 import {
   MODELOS, TAMANHOS, GENEROS, ACESSORIOS, TIPOS_COURO, CORES_COURO, COURO_PRECOS,
   BORDADOS, LASER_OPTIONS, LASER_CANO_PRECO, LASER_GASPEA_PRECO, LASER_TALONEIRA_PRECO,
@@ -174,9 +174,8 @@ const OrderPage = () => {
   const [adicionalValor, setAdicionalValor] = useState(Number(df.adicionalValor) || 0);
 
   const [observacao, setObservacao] = useState(df.observacao || '');
-  const [fotos, setFotos] = useState<string[]>(draftState?.fotos || []);
+  const [fotoUrl, setFotoUrl] = useState(draftState?.fotos?.[0] || '');
   const [showMirror, setShowMirror] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isLoggedIn) {
     return (
@@ -234,16 +233,7 @@ const OrderPage = () => {
 
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  /* ───── photo upload (limit 1) ───── */
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    const file = files[0];
-    const reader = new FileReader();
-    reader.onload = (ev) => { if (ev.target?.result) setFotos([ev.target!.result as string]); };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
+  const fotos = fotoUrl.trim() ? [fotoUrl.trim()] : [];
 
   /* ───── submit ───── */
   const handleSubmit = (e: React.FormEvent) => {
@@ -272,8 +262,8 @@ const OrderPage = () => {
       toast.error(`Preencha os campos obrigatórios: ${missing.map(([, l]) => l).join(', ')}`);
       return;
     }
-    if (fotos.length === 0) {
-      toast.error('Adicione uma foto de referência!');
+    if (!fotoUrl.trim()) {
+      toast.error('Cole o link da foto de referência!');
       return;
     }
     setShowMirror(true);
@@ -598,22 +588,28 @@ const OrderPage = () => {
             <textarea value={observacao} onChange={e => setObservacao(e.target.value)} rows={3} className={cls.input + ' min-h-[80px]'} />
           </div>
 
-          {/* Fotos (limit 1) */}
+          {/* Link da Foto */}
           <div>
-            <label className={cls.label}>Foto de Referência (máx. 1)<span className="text-destructive ml-0.5">*</span></label>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-            <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 bg-muted border border-border rounded-lg text-sm font-semibold hover:border-primary transition-colors">
-              <Upload size={16} /> {fotos.length > 0 ? 'Substituir Foto' : 'Adicionar Foto'}
-            </button>
-            {fotos.length > 0 && (
-              <div className="flex flex-wrap gap-3 mt-3">
-                {fotos.map((foto, i) => (
-                  <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border border-border">
-                    <img src={foto} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => setFotos([])} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center"><X size={12} /></button>
-                  </div>
-                ))}
-              </div>
+            <label className={cls.label}>Link da Foto de Referência (Google Drive)<span className="text-destructive ml-0.5">*</span></label>
+            <div className="flex items-center gap-2">
+              <Link2 size={16} className="text-muted-foreground flex-shrink-0" />
+              <input
+                type="url"
+                value={fotoUrl}
+                onChange={e => setFotoUrl(e.target.value)}
+                placeholder="Cole o link do Google Drive aqui..."
+                className={cls.input}
+              />
+              {fotoUrl && (
+                <button type="button" onClick={() => setFotoUrl('')} className="text-destructive hover:text-destructive/80">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            {fotoUrl && (
+              <a href={fotoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline mt-1 inline-block">
+                Abrir link ↗
+              </a>
             )}
           </div>
 
@@ -660,12 +656,12 @@ const OrderPage = () => {
                   </div>
                 ))}
               </div>
-              {fotos.length > 0 && (
+              {fotoUrl && (
                 <div className="mt-3">
                   <span className="text-xs font-semibold">Foto de Referência:</span>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {fotos.map((f, i) => <img key={i} src={f} alt={`Ref ${i + 1}`} className="w-20 h-20 object-cover rounded border border-border" />)}
-                  </div>
+                  <a href={fotoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline ml-2">
+                    {fotoUrl.length > 60 ? fotoUrl.slice(0, 60) + '...' : fotoUrl} ↗
+                  </a>
                 </div>
               )}
             </div>
