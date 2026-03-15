@@ -100,37 +100,43 @@ const ReportsPage = () => {
 
   const handleBulkProgressUpdate = () => {
     if (!selectedProgress) { toast.error('Selecione uma etapa de produção.'); return; }
-    selectedIds.forEach(id => updateOrderStatus(id, selectedProgress));
+    selectedIds.forEach(id => updateOrderStatus(id, selectedProgress, progressObservacao.trim() || undefined));
     toast.success(`${selectedIds.size} pedido(s) atualizado(s) para "${selectedProgress}".`);
     setShowProgressModal(false);
     setSelectedProgress('');
+    setProgressObservacao('');
   };
 
   // Barcode scan handler
   const handleScan = useCallback((code: string) => {
     const trimmed = code.trim();
     if (!trimmed) return;
-    // Try to find order by barcode value or numero
-    const match = allOrders.find(o => {
+    const source = isAdmin ? allOrders : orders;
+    const match = source.find(o => {
       const bv = orderBarcodeValue(o.numero);
       return bv === trimmed || o.numero === trimmed || trimmed.endsWith(o.numero.replace(/\D/g, ''));
     });
     if (match) {
-      setSelectedIds(prev => {
-        const next = new Set(prev);
-        if (!next.has(match.id)) {
-          next.add(match.id);
-          toast.success(`Pedido ${match.numero} selecionado.`);
-        } else {
-          toast.info(`Pedido ${match.numero} já está selecionado.`);
-        }
-        return next;
-      });
+      if (isAdmin) {
+        setSelectedIds(prev => {
+          const next = new Set(prev);
+          if (!next.has(match.id)) {
+            next.add(match.id);
+            toast.success(`Pedido ${match.numero} selecionado.`);
+          } else {
+            toast.info(`Pedido ${match.numero} já está selecionado.`);
+          }
+          return next;
+        });
+      } else {
+        navigate(`/pedido/${match.id}`);
+        toast.success(`Pedido ${match.numero} encontrado.`);
+      }
     } else {
       toast.error(`Pedido não encontrado para código: ${trimmed}`);
     }
     setScanValue('');
-  }, [allOrders]);
+  }, [allOrders, orders, isAdmin, navigate]);
 
   useEffect(() => {
     if (showScanner && scanInputRef.current) {
