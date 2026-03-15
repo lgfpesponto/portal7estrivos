@@ -407,12 +407,10 @@ const ReportsPage = () => {
           <button onClick={() => navigate('/pedido')} className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-bold text-sm hover:bg-primary/10 transition-colors">
             <FileText size={16} /> Fazer pedido
           </button>
-          {/* Admin: barcode scanner toggle */}
-          {isAdmin && (
-            <button onClick={() => setShowScanner(v => !v)} className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-bold text-sm hover:bg-primary/10 transition-colors">
-              <ScanBarcode size={16} /> {showScanner ? 'Fechar Scanner' : 'Escanear Código'}
-            </button>
-          )}
+          {/* Barcode scanner for all users */}
+          <button onClick={() => setShowScanner(v => !v)} className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-bold text-sm hover:bg-primary/10 transition-colors">
+            <ScanBarcode size={16} /> {showScanner ? 'Fechar Scanner' : 'Escanear Código'}
+          </button>
           {/* Admin bulk progress button */}
           {isAdmin && selectedIds.size > 0 && (
             <button onClick={() => setShowProgressModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg orange-gradient text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity ml-auto">
