@@ -1,9 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth, businessDaysRemaining, orderBarcodeValue } from '@/contexts/AuthContext';
+import { useAuth, businessDaysRemaining } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { ArrowLeft, CheckCircle2, Clock, History } from 'lucide-react';
-import { useEffect, useRef } from 'react';
-import JsBarcode from 'jsbarcode';
 import {
   MODELOS, ACESSORIOS, BORDADOS, COURO_PRECOS, SOLADO, COR_SOLA, COR_VIRA,
   CARIMBO, AREA_METAL, DESENVOLVIMENTO,
@@ -17,18 +15,6 @@ const OrderDetailPage = () => {
   const { orders, isAdmin } = useAuth();
   const navigate = useNavigate();
   const order = orders.find(o => o.id === id);
-  const barcodeRef = useRef<SVGSVGElement>(null);
-
-  useEffect(() => {
-    if (order && barcodeRef.current) {
-      try {
-        JsBarcode(barcodeRef.current, orderBarcodeValue(order.numero), {
-          format: 'CODE128', width: 1.5, height: 40, displayValue: true,
-          text: order.numero, fontSize: 12, margin: 5,
-        });
-      } catch { /* ignore */ }
-    }
-  }, [order]);
 
   if (!order) {
     return (
@@ -178,10 +164,6 @@ const OrderDetailPage = () => {
             </span>
           </div>
 
-          {/* Barcode */}
-          <div className="mb-6 flex justify-center">
-            <svg ref={barcodeRef}></svg>
-          </div>
 
           {/* Production History + Change History side by side */}
           <div className="grid md:grid-cols-2 gap-6 mb-8">
