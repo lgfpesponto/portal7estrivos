@@ -178,10 +178,6 @@ const OrderDetailPage = () => {
             </span>
           </div>
 
-          {/* Barcode */}
-          <div className="mb-6 flex justify-center">
-            <svg ref={barcodeRef}></svg>
-          </div>
 
           {/* Production History + Change History side by side */}
           <div className="grid md:grid-cols-2 gap-6 mb-8">
