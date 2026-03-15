@@ -176,6 +176,9 @@ const OrderPage = () => {
   const [observacao, setObservacao] = useState(df.observacao || '');
   const [fotoUrl, setFotoUrl] = useState(draftState?.fotos?.[0] || '');
   const [showMirror, setShowMirror] = useState(false);
+  const [laserOutroCanoText, setLaserOutroCanoText] = useState(df.laserOutroCanoText || '');
+  const [laserOutroGaspeaText, setLaserOutroGaspeaText] = useState(df.laserOutroGaspeaText || '');
+  const [laserOutroTaloneiraText, setLaserOutroTaloneiraText] = useState(df.laserOutroTaloneiraText || '');
 
   if (!isLoggedIn) {
     return (
@@ -262,6 +265,20 @@ const OrderPage = () => {
       toast.error(`Preencha os campos obrigatórios: ${missing.map(([, l]) => l).join(', ')}`);
       return;
     }
+    // Validate toggle descriptions (TEM requires description)
+    const toggleChecks: [boolean, string, string][] = [
+      [sobMedida, sobMedidaDesc, 'Sob Medida'],
+      [nomeBordado, nomeBordadoDesc, 'Nome Bordado'],
+      [pintura, pinturaDesc, 'Pintura'],
+      [estampa, estampaDesc, 'Estampa'],
+      [trice, triceDesc, 'Tricê'],
+      [tiras, tirasDesc, 'Tiras'],
+    ];
+    const missingDesc = toggleChecks.filter(([active, desc]) => active && !desc.trim());
+    if (missingDesc.length > 0) {
+      toast.error(`Preencha a descrição de: ${missingDesc.map(([,, l]) => l).join(', ')}`);
+      return;
+    }
     if (!fotoUrl.trim()) {
       toast.error('Cole o link da foto de referência!');
       return;
@@ -281,9 +298,9 @@ const OrderPage = () => {
       bordadoTaloneira: bordadoTaloneira.join(', '),
       corBordadoCano, corBordadoGaspea, corBordadoTaloneira,
       nomeBordadoDesc: nomeBordado ? nomeBordadoDesc : '',
-      laserCano: laserCano.join(', '), corGlitterCano,
-      laserGaspea: laserGaspea.join(', '), corGlitterGaspea,
-      laserTaloneira: laserTaloneira.join(', '), corGlitterTaloneira,
+      laserCano: laserCano.map(l => l === 'Outro' && laserOutroCanoText ? laserOutroCanoText : l).join(', '), corGlitterCano,
+      laserGaspea: laserGaspea.map(l => l === 'Outro' && laserOutroGaspeaText ? laserOutroGaspeaText : l).join(', '), corGlitterGaspea,
+      laserTaloneira: laserTaloneira.map(l => l === 'Outro' && laserOutroTaloneiraText ? laserOutroTaloneiraText : l).join(', '), corGlitterTaloneira,
       pintura: pintura ? 'Sim' : '', pinturaDesc,
       estampa: estampa ? 'Sim' : '', estampaDesc,
       corLinha, corBorrachinha,
@@ -322,6 +339,7 @@ const OrderPage = () => {
       laserCano: laserCano.join('||'), corGlitterCano,
       laserGaspea: laserGaspea.join('||'), corGlitterGaspea,
       laserTaloneira: laserTaloneira.join('||'), corGlitterTaloneira,
+      laserOutroCanoText, laserOutroGaspeaText, laserOutroTaloneiraText,
       pintura: String(pintura), pinturaDesc,
       estampa: String(estampa), estampaDesc,
       corLinha, corBorrachinha, corVivo,
@@ -477,12 +495,21 @@ const OrderPage = () => {
           {/* 15 Laser (split by cano/gáspea/taloneira + pintura) */}
           <Section title="Laser">
             <MultiSelect label="Laser do Cano (+R$50)" items={LASER_ITEMS} selected={laserCano} onChange={setLaserCano} />
+            {laserCano.includes('Outro') && (
+              <div><label className={cls.label}>Descreva o laser (Outro) - Cano</label><input type="text" value={laserOutroCanoText} onChange={e => setLaserOutroCanoText(e.target.value)} className={cls.input} placeholder="Nome do laser..." /></div>
+            )}
             <SelectField label="Cor Glitter/Tecido do Cano (+R$30)" value={corGlitterCano} onChange={setCorGlitterCano} options={COR_GLITTER} />
 
             <MultiSelect label="Laser da Gáspea (+R$50)" items={LASER_ITEMS} selected={laserGaspea} onChange={setLaserGaspea} />
+            {laserGaspea.includes('Outro') && (
+              <div><label className={cls.label}>Descreva o laser (Outro) - Gáspea</label><input type="text" value={laserOutroGaspeaText} onChange={e => setLaserOutroGaspeaText(e.target.value)} className={cls.input} placeholder="Nome do laser..." /></div>
+            )}
             <SelectField label="Cor Glitter/Tecido da Gáspea (+R$30)" value={corGlitterGaspea} onChange={setCorGlitterGaspea} options={COR_GLITTER} />
 
             <MultiSelect label="Laser da Taloneira (sem custo)" items={LASER_ITEMS} selected={laserTaloneira} onChange={setLaserTaloneira} />
+            {laserTaloneira.includes('Outro') && (
+              <div><label className={cls.label}>Descreva o laser (Outro) - Taloneira</label><input type="text" value={laserOutroTaloneiraText} onChange={e => setLaserOutroTaloneiraText(e.target.value)} className={cls.input} placeholder="Nome do laser..." /></div>
+            )}
             <SelectField label="Cor Glitter/Tecido da Taloneira (sem custo)" value={corGlitterTaloneira} onChange={setCorGlitterTaloneira} options={COR_GLITTER} />
 
             {/* Pintura inside Laser section */}

@@ -87,6 +87,8 @@ export const BORDADOS: { label: string; preco: number }[] = [
   { label: 'Bordado Variado R$20', preco: 20 },
   { label: 'Bordado Variado R$30', preco: 30 },
   { label: 'Bordado Variado R$40', preco: 40 },
+  { label: 'Bordado Variado R$50', preco: 50 },
+  { label: 'Bordado Variado R$15', preco: 15 },
 ];
 
 // ==================== LASER ====================
@@ -94,7 +96,7 @@ export const LASER_OPTIONS = [
   'Cruz','Bridão','Pipoco','Ouro','Florência Brilhante','Folhas',
   'Lara','Rodeio','Iluminada','Cruz Asas','Beca','Coração',
   'Cruz Circular','Cruz Zero','Borboleta','Livia','Luiza',
-  'Duquesa','Julia','Anjo','Pintura Cavalo',
+  'Duquesa','Julia','Anjo','Pintura Cavalo','Outro',
 ];
 export const LASER_CANO_PRECO = 50;
 export const LASER_GASPEA_PRECO = 50;

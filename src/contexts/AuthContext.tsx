@@ -81,7 +81,7 @@ export interface Order {
   diasRestantes: number;
   temLaser: boolean;
   fotos: string[];
-  historico: { data: string; hora: string; local: string; descricao: string }[];
+  historico: { data: string; hora: string; local: string; descricao: string; observacao?: string }[];
   alteracoes: OrderAlteracao[];
   laserCano?: string;
   corGlitterCano?: string;
@@ -163,7 +163,8 @@ interface AuthContextType {
   addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status' | 'alteracoes'> & { numeroPedido?: string }) => void;
   deleteOrder: (id: string) => void;
   updateOrder: (id: string, data: Partial<Order>) => void;
-  updateOrderStatus: (id: string, newStatus: string) => void;
+  updateOrderStatus: (id: string, newStatus: string, observacao?: string) => void;
+  isFernanda: boolean;
   recoverPassword: (cpfCnpj: string, digits: string) => boolean;
   allOrders: Order[];
 }
@@ -247,6 +248,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>(generateMockOrders());
 
   const isAdmin = user?.isAdmin === true;
+  const isFernanda = user?.id === 'admin-2';
 
   const login = useCallback((username: string, password: string) => {
     const found = registeredUsers.find(u => u.nomeUsuario === username && u.senha === password);
@@ -382,13 +384,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }));
   }, []);
 
-  const updateOrderStatus = useCallback((id: string, newStatus: string) => {
+  const updateOrderStatus = useCallback((id: string, newStatus: string, observacao?: string) => {
     const dataHoje = formatBrasiliaDate();
     const horaAgora = formatBrasiliaTime();
     setOrders(prev => prev.map(o => {
       if (o.id !== id) return o;
-      const newHistEntry = { data: dataHoje, hora: horaAgora, local: newStatus, descricao: `Pedido movido para ${newStatus}` };
-      const altEntry: OrderAlteracao = { data: dataHoje, hora: horaAgora, descricao: `Alterado progresso para ${newStatus}` };
+      const newHistEntry = { data: dataHoje, hora: horaAgora, local: newStatus, descricao: `Pedido movido para ${newStatus}`, observacao: observacao || undefined };
+      const altEntry: OrderAlteracao = { data: dataHoje, hora: horaAgora, descricao: `Alterado progresso para ${newStatus}${observacao ? ` — Obs: ${observacao}` : ''}` };
       return { ...o, status: newStatus, historico: [...o.historico, newHistEntry], alteracoes: [...(o.alteracoes || []), altEntry] };
     }));
   }, []);
@@ -396,7 +398,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const userOrders = user?.isAdmin ? orders : orders.filter(o => o.vendedor === user?.nomeCompleto);
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAdmin, login, register, logout, updateProfile, orders: userOrders, addOrder, deleteOrder, updateOrder, updateOrderStatus, recoverPassword, allOrders: orders }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAdmin, isFernanda, login, register, logout, updateProfile, orders: userOrders, addOrder, deleteOrder, updateOrder, updateOrderStatus, recoverPassword, allOrders: orders }}>
       {children}
     </AuthContext.Provider>
   );

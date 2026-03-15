@@ -180,6 +180,7 @@ const OrderDetailPage = () => {
                     <div className="pb-3">
                       <p className="text-sm font-semibold">{h.local}</p>
                       <p className="text-xs text-muted-foreground">{formatDateBR(h.data)} às {h.hora || '—'} — {h.descricao}</p>
+                      {h.observacao && <p className="text-xs text-primary italic mt-0.5">Observação: {h.observacao}</p>}
                     </div>
                   </div>
                 ))}
