@@ -2,9 +2,12 @@ import { useAuth, PRODUCTION_STATUSES, PRODUCTION_STATUSES_USER } from '@/contex
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Filter, FileText, Download, Printer, CheckCircle, StickyNote, Pencil, Trash2 } from 'lucide-react';
+import { Filter, FileText, Download, Printer, CheckCircle, StickyNote, Pencil, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
 
 const formatDateBR = (date: string, time?: string) => {
   const [y, m, d] = date.split('-');
@@ -12,7 +15,7 @@ const formatDateBR = (date: string, time?: string) => {
 };
 
 const ReportsPage = () => {
-  const { isLoggedIn, isAdmin, orders, allOrders, user, deleteOrder } = useAuth();
+  const { isLoggedIn, isAdmin, orders, allOrders, user, deleteOrder, updateOrderStatus } = useAuth();
   const navigate = useNavigate();
   const [filterDate, setFilterDate] = useState('');
   const [filterDateEnd, setFilterDateEnd] = useState('');
@@ -21,7 +24,10 @@ const ReportsPage = () => {
   const [filterVendedor, setFilterVendedor] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Applied filters (only update when user clicks "Filtrar")
+  // Bulk progress modal
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [selectedProgress, setSelectedProgress] = useState('');
+
   const [appliedFilters, setAppliedFilters] = useState({
     searchQuery: '',
     filterDate: '',
@@ -31,13 +37,7 @@ const ReportsPage = () => {
   });
 
   const applyFilters = () => {
-    setAppliedFilters({
-      searchQuery,
-      filterDate,
-      filterDateEnd,
-      filterStatus,
-      filterVendedor,
-    });
+    setAppliedFilters({ searchQuery, filterDate, filterDateEnd, filterStatus, filterVendedor });
     setSelectedIds(new Set());
   };
 
@@ -82,6 +82,14 @@ const ReportsPage = () => {
     ? filteredOrders.filter(o => selectedIds.has(o.id))
     : filteredOrders;
 
+  const handleBulkProgressUpdate = () => {
+    if (!selectedProgress) { toast.error('Selecione uma etapa de produção.'); return; }
+    selectedIds.forEach(id => updateOrderStatus(id, selectedProgress));
+    toast.success(`${selectedIds.size} pedido(s) atualizado(s) para "${selectedProgress}".`);
+    setShowProgressModal(false);
+    setSelectedProgress('');
+  };
+
   const generateReportPDF = () => {
     const doc = new jsPDF();
     const list = ordersToExport;
@@ -113,27 +121,26 @@ const ReportsPage = () => {
 
   const generateProductionSheetPDF = () => {
     const list = ordersToExport;
-    const doc = new jsPDF({ format: 'a5' });
+    const doc = new jsPDF({ format: 'a4', orientation: 'portrait' });
     const pw = doc.internal.pageSize.getWidth();
     const ph = doc.internal.pageSize.getHeight();
+    const halfW = pw / 2;
+    const margin = 10;
+    const colW = (halfW - margin * 2) / 2;
 
     list.forEach((order, idx) => {
       if (idx > 0) doc.addPage();
 
-      // Header
+      // ─── LEFT HALF: Description ───
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text('7ESTRIVOS', 10, 12);
+      doc.text('7ESTRIVOS', margin, 15);
       doc.setFontSize(9);
-      doc.text(`Código: ${order.numero}`, 10, 20);
-      doc.text(`Vendedor: ${order.vendedor}`, 10, 25);
-      doc.text(`Data: ${formatDateBR(order.dataCriacao, order.horaCriacao)}`, pw - 10, 20, { align: 'right' });
-      doc.text(`Prazo: ${order.temLaser ? '30' : '10'} dias úteis`, pw - 10, 25, { align: 'right' });
+      doc.text(`Código: ${order.numero}`, margin, 23);
+      doc.text(`Vendedor: ${order.vendedor}`, margin, 28);
+      doc.text(`Data: ${formatDateBR(order.dataCriacao, order.horaCriacao)}`, margin, 33);
+      doc.text(`Prazo: ${order.temLaser ? '30' : '10'} dias úteis`, margin, 38);
 
-      // Details - all filled fields from updated form
-      let y = 35;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
       const details: [string, string][] = [
         ['Modelo', order.modelo],
         ['Tamanho', order.tamanho ? `${order.tamanho}${order.genero ? ' — ' + order.genero : ''}` : ''],
@@ -141,23 +148,23 @@ const ReportsPage = () => {
         ['Acessórios', order.acessorios],
         ['Couro Cano', order.couroCano ? `${order.couroCano}${order.corCouroCano ? ' / ' + order.corCouroCano : ''}` : ''],
         ['Couro Gáspea', order.couroGaspea ? `${order.couroGaspea}${order.corCouroGaspea ? ' / ' + order.corCouroGaspea : ''}` : ''],
-        ['Couro Taloneira', order.couroTaloneira ? `${order.couroTaloneira}${order.corCouroTaloneira ? ' / ' + order.corCouroTaloneira : ''}` : ''],
+        ['Couro Talon.', order.couroTaloneira ? `${order.couroTaloneira}${order.corCouroTaloneira ? ' / ' + order.corCouroTaloneira : ''}` : ''],
+        ['Desenvolvimento', order.desenvolvimento],
         ['B. Cano', order.bordadoCano],
         ['Cor B. Cano', order.corBordadoCano || ''],
         ['B. Gáspea', order.bordadoGaspea],
         ['Cor B. Gáspea', order.corBordadoGaspea || ''],
-        ['B. Taloneira', order.bordadoTaloneira],
-        ['Cor B. Taloneira', order.corBordadoTaloneira || ''],
+        ['B. Talon.', order.bordadoTaloneira],
+        ['Cor B. Talon.', order.corBordadoTaloneira || ''],
         ['Nome Bordado', order.nomeBordadoDesc || order.personalizacaoNome || ''],
         ['Laser Cano', order.laserCano || ''],
         ['Glitter Cano', order.corGlitterCano || ''],
         ['Laser Gáspea', order.laserGaspea || ''],
         ['Glitter Gáspea', order.corGlitterGaspea || ''],
-        ['Laser Taloneira', order.laserTaloneira || ''],
-        ['Glitter Taloneira', order.corGlitterTaloneira || ''],
+        ['Laser Talon.', order.laserTaloneira || ''],
+        ['Glitter Talon.', order.corGlitterTaloneira || ''],
         ['Pintura', order.pintura === 'Sim' ? (order.pinturaDesc || 'Sim') : ''],
         ['Estampa', order.estampa === 'Sim' ? (order.estampaDesc ? `Sim — ${order.estampaDesc}` : 'Sim') : ''],
-        ['Desenvolvimento', order.desenvolvimento],
         ['Cor Linha', order.corLinha],
         ['Borrachinha', order.corBorrachinha],
         ['Cor Vivo', order.corVivo || ''],
@@ -170,6 +177,7 @@ const ReportsPage = () => {
         ['Tricê', order.trisce === 'Sim' ? (order.triceDesc || 'Sim') : ''],
         ['Tiras', order.tiras === 'Sim' ? (order.tirasDesc || 'Sim') : ''],
         ['Solado', order.solado],
+        ['Formato Bico', order.formatoBico || ''],
         ['Cor Sola', order.corSola || ''],
         ['Cor Vira', order.corVira || ''],
         ['Costura Atrás', order.costuraAtras === 'Sim' ? 'Sim' : ''],
@@ -177,47 +185,43 @@ const ReportsPage = () => {
         ['Adicional', order.adicionalDesc || ''],
       ].filter(([, v]) => v) as [string, string][];
 
-      details.forEach(([label, value]) => {
-        if (y > ph - 50) { doc.addPage(); y = 15; }
+      // Render in 2 columns on left half
+      let y = 46;
+      doc.setFontSize(7);
+      const itemsPerCol = Math.ceil(details.length / 2);
+      details.forEach(([label, value], i) => {
+        const col = i < itemsPerCol ? 0 : 1;
+        const row = i < itemsPerCol ? i : i - itemsPerCol;
+        const x = margin + col * colW;
+        const rowY = y + row * 6;
+        if (rowY > ph - 55) return; // safety
         doc.setFont('helvetica', 'bold');
-        doc.text(`${label}:`, 10, y);
+        doc.text(`${label}:`, x, rowY);
         doc.setFont('helvetica', 'normal');
-        const lines = doc.splitTextToSize(value, pw - 55);
-        doc.text(lines, 45, y);
-        y += Math.max(5, lines.length * 4);
+        const valLines = doc.splitTextToSize(value, colW - 25);
+        doc.text(valLines[0] || '', x + 22, rowY);
       });
 
-      if (order.observacao) {
-        if (y > ph - 50) { doc.addPage(); y = 15; }
-        y += 3;
+      // Observação below columns
+      const obsY = y + Math.max(itemsPerCol, details.length - itemsPerCol) * 6 + 4;
+      if (order.observacao && obsY < ph - 55) {
         doc.setFont('helvetica', 'bold');
-        doc.text('Observação:', 10, y);
+        doc.text('Obs:', margin, obsY);
         doc.setFont('helvetica', 'normal');
-        const obsLines = doc.splitTextToSize(order.observacao, pw - 20);
-        doc.text(obsLines, 10, y + 5);
-        y += 5 + obsLines.length * 4;
+        const obsLines = doc.splitTextToSize(order.observacao, halfW - margin * 2);
+        doc.text(obsLines, margin + 10, obsY);
       }
 
-      // Photos
+      // ─── RIGHT HALF: Photo ───
       if (order.fotos && order.fotos.length > 0) {
-        if (y > ph - 60) { doc.addPage(); y = 15; }
-        y += 3;
-        doc.setFont('helvetica', 'bold');
-        doc.text('Fotos de Referência:', 10, y);
-        y += 5;
-        let photoX = 10;
-        order.fotos.forEach((foto) => {
-          try {
-            if (photoX + 30 > pw - 10) { photoX = 10; y += 25; }
-            if (y > ph - 50) { doc.addPage(); y = 15; photoX = 10; }
-            doc.addImage(foto, 'JPEG', photoX, y, 25, 25);
-            photoX += 28;
-          } catch { /* skip invalid images */ }
-        });
-        y += 28;
+        try {
+          const photoW = halfW - margin * 2;
+          const photoH = photoW * 0.65;
+          doc.addImage(order.fotos[0], 'JPEG', halfW + margin, 15, photoW, photoH);
+        } catch { /* skip invalid */ }
       }
 
-      // Stubs (canhotos) at bottom of last page
+      // ─── BOTTOM: Production stubs ───
       const stubY = ph - 35;
       doc.setDrawColor(150);
       doc.line(5, stubY - 3, pw - 5, stubY - 3);
@@ -254,11 +258,6 @@ const ReportsPage = () => {
     toast.success('Pedido excluído com sucesso!');
   };
 
-  const handleEdit = (orderId: string) => {
-    const order = (isAdmin ? allOrders : orders).find(o => o.id === orderId);
-    if (order) navigate(`/pedido/${orderId}/editar`);
-  };
-
   if (!isLoggedIn) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -273,7 +272,7 @@ const ReportsPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-6 flex-wrap">
           <h1 className="text-3xl font-display font-bold">MEUS PEDIDOS</h1>
           <button onClick={() => navigate('/rascunhos')} className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-bold text-sm hover:bg-primary/10 transition-colors">
             <StickyNote size={16} /> Rascunhos
@@ -281,6 +280,12 @@ const ReportsPage = () => {
           <button onClick={() => navigate('/pedido')} className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-bold text-sm hover:bg-primary/10 transition-colors">
             <FileText size={16} /> Fazer pedido
           </button>
+          {/* Admin bulk progress button */}
+          {isAdmin && selectedIds.size > 0 && (
+            <button onClick={() => setShowProgressModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg orange-gradient text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity ml-auto">
+              <RefreshCw size={16} /> Mudar progresso de produção
+            </button>
+          )}
         </div>
 
         {/* Filters */}
@@ -384,7 +389,6 @@ const ReportsPage = () => {
               key={order.id}
               className="bg-card rounded-xl p-4 western-shadow hover:shadow-xl transition-shadow flex items-center gap-3"
             >
-              {/* Selection circle */}
               <button onClick={() => toggleSelect(order.id)} className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${selectedIds.has(order.id) ? 'bg-primary border-primary' : 'border-border hover:border-primary'}`}>
                 {selectedIds.has(order.id) && <CheckCircle size={14} className="text-primary-foreground" />}
               </button>
@@ -429,6 +433,30 @@ const ReportsPage = () => {
           <p className="text-center text-muted-foreground py-8">Nenhum pedido encontrado com esses filtros.</p>
         )}
       </motion.div>
+
+      {/* Bulk Progress Modal */}
+      <Dialog open={showProgressModal} onOpenChange={setShowProgressModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mudar Progresso de Produção</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-3">
+            Selecione a nova etapa para {selectedIds.size} pedido(s):
+          </p>
+          <select
+            value={selectedProgress}
+            onChange={e => setSelectedProgress(e.target.value)}
+            className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary outline-none"
+          >
+            <option value="">Selecione a etapa...</option>
+            {PRODUCTION_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <DialogFooter className="mt-4">
+            <button onClick={() => setShowProgressModal(false)} className="px-4 py-2 rounded-lg bg-muted text-foreground font-bold text-sm">Cancelar</button>
+            <button onClick={handleBulkProgressUpdate} className="px-4 py-2 rounded-lg orange-gradient text-primary-foreground font-bold text-sm hover:opacity-90">OK</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

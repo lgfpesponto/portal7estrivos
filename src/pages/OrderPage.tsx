@@ -13,7 +13,7 @@ import {
   COR_VIVO, DESENVOLVIMENTO, AREA_METAL, TIPO_METAL, COR_METAL,
   STRASS_PRECO, CRUZ_METAL_PRECO, BRIDAO_METAL_PRECO, SOLADO, COR_SOLA, COR_VIRA,
   CARIMBO, SOB_MEDIDA_PRECO, NOME_BORDADO_PRECO, ESTAMPA_PRECO,
-  PINTURA_PRECO, TRICE_PRECO, TIRAS_PRECO, COSTURA_ATRAS_PRECO,
+  PINTURA_PRECO, TRICE_PRECO, TIRAS_PRECO, COSTURA_ATRAS_PRECO, FORMATO_BICO,
 } from '@/lib/orderFieldsConfig';
 
 /* ───── helpers ───── */
@@ -82,91 +82,99 @@ const OrderPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const draftState = (location.state as { draft?: Draft })?.draft;
-  const [draftId, setDraftId] = useState(draftState?.id || '');
+  const draftId_init = draftState?.id || '';
+  const [draftId, setDraftId] = useState(draftId_init);
+
+  // Restore draft form data
+  const df = draftState?.form || {};
 
   /* form state */
   const [numeroPedido, setNumeroPedido] = useState(draftState?.numeroPedido || '');
-  const [tamanho, setTamanho] = useState('');
-  const [genero, setGenero] = useState('');
-  const [modelo, setModelo] = useState('');
-  const [sobMedida, setSobMedida] = useState(false);
-  const [sobMedidaDesc, setSobMedidaDesc] = useState('');
-  const [acessorios, setAcessorios] = useState<string[]>([]);
+  const [tamanho, setTamanho] = useState(df.tamanho || '');
+  const [genero, setGenero] = useState(df.genero || '');
+  const [modelo, setModelo] = useState(df.modelo || '');
+  const [sobMedida, setSobMedida] = useState(draftState?.sobMedida || false);
+  const [sobMedidaDesc, setSobMedidaDesc] = useState(df.sobMedidaDesc || '');
+  const [acessorios, setAcessorios] = useState<string[]>(df.acessorios ? df.acessorios.split('||') : []);
 
   // couros
-  const [tipoCouroCano, setTipoCouroCano] = useState('');
-  const [corCouroCano, setCorCouroCano] = useState('');
-  const [tipoCouroGaspea, setTipoCouroGaspea] = useState('');
-  const [corCouroGaspea, setCorCouroGaspea] = useState('');
-  const [tipoCouroTaloneira, setTipoCouroTaloneira] = useState('');
-  const [corCouroTaloneira, setCorCouroTaloneira] = useState('');
+  const [tipoCouroCano, setTipoCouroCano] = useState(df.tipoCouroCano || '');
+  const [corCouroCano, setCorCouroCano] = useState(df.corCouroCano || '');
+  const [tipoCouroGaspea, setTipoCouroGaspea] = useState(df.tipoCouroGaspea || '');
+  const [corCouroGaspea, setCorCouroGaspea] = useState(df.corCouroGaspea || '');
+  const [tipoCouroTaloneira, setTipoCouroTaloneira] = useState(df.tipoCouroTaloneira || '');
+  const [corCouroTaloneira, setCorCouroTaloneira] = useState(df.corCouroTaloneira || '');
+
+  // desenvolvimento (moved before bordados)
+  const [desenvolvimento, setDesenvolvimento] = useState(df.desenvolvimento || '');
 
   // bordados
-  const [bordadoCano, setBordadoCano] = useState<string[]>([]);
-  const [corBordadoCano, setCorBordadoCano] = useState('');
-  const [bordadoGaspea, setBordadoGaspea] = useState<string[]>([]);
-  const [corBordadoGaspea, setCorBordadoGaspea] = useState('');
-  const [bordadoTaloneira, setBordadoTaloneira] = useState<string[]>([]);
-  const [corBordadoTaloneira, setCorBordadoTaloneira] = useState('');
+  const [bordadoCano, setBordadoCano] = useState<string[]>(df.bordadoCano ? df.bordadoCano.split('||') : []);
+  const [corBordadoCano, setCorBordadoCano] = useState(df.corBordadoCano || '');
+  const [bordadoGaspea, setBordadoGaspea] = useState<string[]>(df.bordadoGaspea ? df.bordadoGaspea.split('||') : []);
+  const [corBordadoGaspea, setCorBordadoGaspea] = useState(df.corBordadoGaspea || '');
+  const [bordadoTaloneira, setBordadoTaloneira] = useState<string[]>(df.bordadoTaloneira ? df.bordadoTaloneira.split('||') : []);
+  const [corBordadoTaloneira, setCorBordadoTaloneira] = useState(df.corBordadoTaloneira || '');
 
   // nome bordado
-  const [nomeBordado, setNomeBordado] = useState(false);
-  const [nomeBordadoDesc, setNomeBordadoDesc] = useState('');
+  const [nomeBordado, setNomeBordado] = useState(df.nomeBordado === 'true');
+  const [nomeBordadoDesc, setNomeBordadoDesc] = useState(df.nomeBordadoDesc || '');
 
   // laser split by part
-  const [laserCano, setLaserCano] = useState<string[]>([]);
-  const [corGlitterCano, setCorGlitterCano] = useState('');
-  const [laserGaspea, setLaserGaspea] = useState<string[]>([]);
-  const [corGlitterGaspea, setCorGlitterGaspea] = useState('');
-  const [laserTaloneira, setLaserTaloneira] = useState<string[]>([]);
-  const [corGlitterTaloneira, setCorGlitterTaloneira] = useState('');
+  const [laserCano, setLaserCano] = useState<string[]>(df.laserCano ? df.laserCano.split('||') : []);
+  const [corGlitterCano, setCorGlitterCano] = useState(df.corGlitterCano || '');
+  const [laserGaspea, setLaserGaspea] = useState<string[]>(df.laserGaspea ? df.laserGaspea.split('||') : []);
+  const [corGlitterGaspea, setCorGlitterGaspea] = useState(df.corGlitterGaspea || '');
+  const [laserTaloneira, setLaserTaloneira] = useState<string[]>(df.laserTaloneira ? df.laserTaloneira.split('||') : []);
+  const [corGlitterTaloneira, setCorGlitterTaloneira] = useState(df.corGlitterTaloneira || '');
 
   // pintura (inside laser section)
-  const [pintura, setPintura] = useState(false);
-  const [pinturaDesc, setPinturaDesc] = useState('');
+  const [pintura, setPintura] = useState(df.pintura === 'true');
+  const [pinturaDesc, setPinturaDesc] = useState(df.pinturaDesc || '');
 
-  // estampa + desenvolvimento (repositioned)
-  const [estampa, setEstampa] = useState(false);
-  const [estampaDesc, setEstampaDesc] = useState('');
-  const [desenvolvimento, setDesenvolvimento] = useState('');
+  // estampa (repositioned before pesponto)
+  const [estampa, setEstampa] = useState(df.estampa === 'true');
+  const [estampaDesc, setEstampaDesc] = useState(df.estampaDesc || '');
 
-  const [corLinha, setCorLinha] = useState('');
-  const [corBorrachinha, setCorBorrachinha] = useState('');
-  const [corVivo, setCorVivo] = useState('');
+  // pesponto
+  const [corLinha, setCorLinha] = useState(df.corLinha || '');
+  const [corBorrachinha, setCorBorrachinha] = useState(df.corBorrachinha || '');
+  const [corVivo, setCorVivo] = useState(df.corVivo || '');
 
   // metais
-  const [areaMetal, setAreaMetal] = useState('');
-  const [tipoMetal, setTipoMetal] = useState<string[]>([]);
-  const [corMetal, setCorMetal] = useState('');
-  const [strass, setStrass] = useState(false);
-  const [strassQtd, setStrassQtd] = useState(0);
-  const [cruzMetal, setCruzMetal] = useState(false);
-  const [cruzMetalQtd, setCruzMetalQtd] = useState(0);
-  const [bridaoMetal, setBridaoMetal] = useState(false);
-  const [bridaoMetalQtd, setBridaoMetalQtd] = useState(0);
+  const [areaMetal, setAreaMetal] = useState(df.areaMetal || '');
+  const [tipoMetal, setTipoMetal] = useState<string[]>(df.tipoMetal ? df.tipoMetal.split('||') : []);
+  const [corMetal, setCorMetal] = useState(df.corMetal || '');
+  const [strass, setStrass] = useState(df.strass === 'true');
+  const [strassQtd, setStrassQtd] = useState(Number(df.strassQtd) || 0);
+  const [cruzMetal, setCruzMetal] = useState(df.cruzMetal === 'true');
+  const [cruzMetalQtd, setCruzMetalQtd] = useState(Number(df.cruzMetalQtd) || 0);
+  const [bridaoMetal, setBridaoMetal] = useState(df.bridaoMetal === 'true');
+  const [bridaoMetalQtd, setBridaoMetalQtd] = useState(Number(df.bridaoMetalQtd) || 0);
 
   // extras (tiras + tricê)
-  const [trice, setTrice] = useState(false);
-  const [triceDesc, setTriceDesc] = useState('');
-  const [tiras, setTiras] = useState(false);
-  const [tirasDesc, setTirasDesc] = useState('');
+  const [trice, setTrice] = useState(df.trice === 'true');
+  const [triceDesc, setTriceDesc] = useState(df.triceDesc || '');
+  const [tiras, setTiras] = useState(df.tiras === 'true');
+  const [tirasDesc, setTirasDesc] = useState(df.tirasDesc || '');
 
   // solados
-  const [solado, setSolado] = useState('');
-  const [corSola, setCorSola] = useState('');
-  const [corVira, setCorVira] = useState('');
-  const [costuraAtras, setCosturaAtras] = useState(false);
+  const [solado, setSolado] = useState(df.solado || '');
+  const [formatoBico, setFormatoBico] = useState(df.formatoBico || '');
+  const [corSola, setCorSola] = useState(df.corSola || '');
+  const [corVira, setCorVira] = useState(df.corVira || '');
+  const [costuraAtras, setCosturaAtras] = useState(df.costuraAtras === 'true');
 
   // carimbo
-  const [carimbo, setCarimbo] = useState('');
-  const [carimboDesc, setCarimboDesc] = useState('');
+  const [carimbo, setCarimbo] = useState(df.carimbo || '');
+  const [carimboDesc, setCarimboDesc] = useState(df.carimboDesc || '');
 
   // adicional
-  const [adicionalDesc, setAdicionalDesc] = useState('');
-  const [adicionalValor, setAdicionalValor] = useState(0);
+  const [adicionalDesc, setAdicionalDesc] = useState(df.adicionalDesc || '');
+  const [adicionalValor, setAdicionalValor] = useState(Number(df.adicionalValor) || 0);
 
-  const [observacao, setObservacao] = useState('');
-  const [fotos, setFotos] = useState<string[]>([]);
+  const [observacao, setObservacao] = useState(df.observacao || '');
+  const [fotos, setFotos] = useState<string[]>(draftState?.fotos || []);
   const [showMirror, setShowMirror] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -189,7 +197,6 @@ const OrderPage = () => {
   const bordadoPreco = [...bordadoCano, ...bordadoGaspea, ...bordadoTaloneira]
     .reduce((sum, b) => sum + (BORDADOS.find(x => x.label === b)?.preco || 0), 0);
 
-  // Laser pricing: cano +50, glitter cano +30, gáspea +50, glitter gáspea +30, taloneira free
   const laserCanoPreco = laserCano.length > 0 ? LASER_CANO_PRECO : 0;
   const glitterCanoPreco = corGlitterCano ? GLITTER_CANO_PRECO : 0;
   const laserGaspeaPreco = laserGaspea.length > 0 ? LASER_GASPEA_PRECO : 0;
@@ -227,15 +234,14 @@ const OrderPage = () => {
 
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  /* ───── photo upload ───── */
+  /* ───── photo upload (limit 1) ───── */
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (ev) => { if (ev.target?.result) setFotos(prev => [...prev, ev.target!.result as string]); };
-      reader.readAsDataURL(file);
-    });
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = (ev) => { if (ev.target?.result) setFotos([ev.target!.result as string]); };
+    reader.readAsDataURL(file);
     e.target.value = '';
   };
 
@@ -251,9 +257,9 @@ const OrderPage = () => {
       numeroPedido: numeroPedido.trim(),
       vendedor: user?.nomeCompleto || '',
       tamanho, genero, modelo, sobMedida, sobMedidaDesc,
-      solado, quantidade: 1, preco: total, temLaser: hasAnyLaser, fotos,
+      solado, formatoBico, quantidade: 1, preco: total, temLaser: hasAnyLaser, fotos,
       couroGaspea: tipoCouroGaspea, couroCano: tipoCouroCano, couroTaloneira: tipoCouroTaloneira,
-      corCouroGaspea: corCouroGaspea, corCouroCano: corCouroCano, corCouroTaloneira: corCouroTaloneira,
+      corCouroGaspea, corCouroCano, corCouroTaloneira,
       bordadoCano: bordadoCano.join(', '), bordadoGaspea: bordadoGaspea.join(', '),
       bordadoTaloneira: bordadoTaloneira.join(', '),
       corBordadoCano, corBordadoGaspea, corBordadoTaloneira,
@@ -263,7 +269,7 @@ const OrderPage = () => {
       laserTaloneira: laserTaloneira.join(', '), corGlitterTaloneira,
       pintura: pintura ? 'Sim' : '', pinturaDesc,
       estampa: estampa ? 'Sim' : '', estampaDesc,
-      corLinha, corBorrachinha: corBorrachinha,
+      corLinha, corBorrachinha,
       trisce: trice ? 'Sim' : 'Não', triceDesc,
       tiras: tiras ? 'Sim' : 'Não', tirasDesc,
       metais: areaMetal, tipoMetal: tipoMetal.join(', '), corMetal,
@@ -272,7 +278,7 @@ const OrderPage = () => {
       bridaoMetalQtd: bridaoMetal ? bridaoMetalQtd : 0,
       acessorios: acessorios.join(', '),
       desenvolvimento, observacao,
-      formatoBico: '', corVira, corVivo, corSola,
+      corVira, corVivo, corSola,
       costuraAtras: costuraAtras ? 'Sim' : '',
       carimbo, carimboDesc,
       adicionalDesc, adicionalValor: adicionalValor > 0 ? adicionalValor : 0,
@@ -287,7 +293,33 @@ const OrderPage = () => {
   const handleSaveDraft = () => {
     if (!user) return;
     const id = draftId || `draft-${Date.now()}`;
-    saveDraft({ id, userId: user.id, savedAt: new Date().toISOString(), form: {}, sobMedida, quantidade: 1, numeroPedido, fotos });
+    const form: Record<string, string> = {
+      tamanho, genero, modelo, sobMedidaDesc,
+      acessorios: acessorios.join('||'),
+      tipoCouroCano, corCouroCano, tipoCouroGaspea, corCouroGaspea, tipoCouroTaloneira, corCouroTaloneira,
+      desenvolvimento,
+      bordadoCano: bordadoCano.join('||'), corBordadoCano,
+      bordadoGaspea: bordadoGaspea.join('||'), corBordadoGaspea,
+      bordadoTaloneira: bordadoTaloneira.join('||'), corBordadoTaloneira,
+      nomeBordado: String(nomeBordado), nomeBordadoDesc,
+      laserCano: laserCano.join('||'), corGlitterCano,
+      laserGaspea: laserGaspea.join('||'), corGlitterGaspea,
+      laserTaloneira: laserTaloneira.join('||'), corGlitterTaloneira,
+      pintura: String(pintura), pinturaDesc,
+      estampa: String(estampa), estampaDesc,
+      corLinha, corBorrachinha, corVivo,
+      areaMetal, tipoMetal: tipoMetal.join('||'), corMetal,
+      strass: String(strass), strassQtd: String(strassQtd),
+      cruzMetal: String(cruzMetal), cruzMetalQtd: String(cruzMetalQtd),
+      bridaoMetal: String(bridaoMetal), bridaoMetalQtd: String(bridaoMetalQtd),
+      trice: String(trice), triceDesc,
+      tiras: String(tiras), tirasDesc,
+      solado, formatoBico, corSola, corVira, costuraAtras: String(costuraAtras),
+      carimbo, carimboDesc,
+      adicionalDesc, adicionalValor: String(adicionalValor),
+      observacao,
+    };
+    saveDraft({ id, userId: user.id, savedAt: new Date().toISOString(), form, sobMedida, quantidade: 1, numeroPedido, fotos });
     setDraftId(id);
     toast.success('Rascunho salvo!');
   };
@@ -309,6 +341,7 @@ const OrderPage = () => {
     ['Cor Couro Gáspea', corCouroGaspea],
     ['Tipo Couro Taloneira', tipoCouroTaloneira],
     ['Cor Couro Taloneira', corCouroTaloneira],
+    ['Desenvolvimento', desenvolvimento],
     ['Bordado Cano', bordadoCano.join(', ')],
     ['Cor Bordado Cano', corBordadoCano],
     ['Bordado Gáspea', bordadoGaspea.join(', ')],
@@ -324,7 +357,6 @@ const OrderPage = () => {
     ['Cor Glitter/Tecido Taloneira', corGlitterTaloneira],
     ['Pintura', pintura ? pinturaDesc || 'Sim' : ''],
     ['Estampa', estampa ? (estampaDesc ? `Sim — ${estampaDesc}` : 'Sim') : ''],
-    ['Desenvolvimento', desenvolvimento],
     ['Cor da Linha', corLinha],
     ['Cor Borrachinha', corBorrachinha],
     ['Cor do Vivo', corVivo],
@@ -337,6 +369,7 @@ const OrderPage = () => {
     ['Tricê', trice ? triceDesc || 'Sim' : ''],
     ['Tiras', tiras ? tirasDesc || 'Sim' : ''],
     ['Solado', solado],
+    ['Formato do Bico', formatoBico],
     ['Cor da Sola', corSola],
     ['Cor da Vira', corVira],
     ['Costura Atrás', costuraAtras ? 'Sim' : ''],
@@ -405,6 +438,9 @@ const OrderPage = () => {
             </div>
           </Section>
 
+          {/* Desenvolvimento (moved before Bordados) */}
+          <SelectField label="Desenvolvimento" value={desenvolvimento} onChange={setDesenvolvimento} options={DESENVOLVIMENTO} />
+
           {/* 8-13 Bordados */}
           <Section title="Bordados">
             <MultiSelect label="Bordado do Cano" items={BORDADOS} selected={bordadoCano} onChange={setBordadoCano} />
@@ -418,7 +454,7 @@ const OrderPage = () => {
           </Section>
 
           {/* 14 Nome Bordado */}
-          <ToggleField label="Nome Bordado (+R$50)" value={nomeBordado} onChange={setNomeBordado} textValue={nomeBordadoDesc} onTextChange={setNomeBordadoDesc} textPlaceholder="Nome, cor, local..." />
+          <ToggleField label={`Nome Bordado (+R$${NOME_BORDADO_PRECO})`} value={nomeBordado} onChange={setNomeBordado} textValue={nomeBordadoDesc} onTextChange={setNomeBordadoDesc} textPlaceholder="Nome, cor, local..." />
 
           {/* 15 Laser (split by cano/gáspea/taloneira + pintura) */}
           <Section title="Laser">
@@ -435,20 +471,20 @@ const OrderPage = () => {
             <ToggleField label={`Pintura (+R$${PINTURA_PRECO})`} value={pintura} onChange={setPintura} textValue={pinturaDesc} onTextChange={setPinturaDesc} textPlaceholder="Cor da tinta..." />
           </Section>
 
-          {/* Estampa + Desenvolvimento (repositioned before cor da linha) */}
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-3">
-              <ToggleField label={`Estampa (+R$${ESTAMPA_PRECO})`} value={estampa} onChange={setEstampa} textValue={estampaDesc} onTextChange={setEstampaDesc} textPlaceholder="Descreva a estampa..." />
-            </div>
-            <SelectField label="Desenvolvimento" value={desenvolvimento} onChange={setDesenvolvimento} options={DESENVOLVIMENTO} />
-          </div>
+          {/* Divider after Pintura/Laser, before Estampa */}
+          <hr className="border-border" />
 
-          {/* Cor da Linha, Borrachinha, Vivo */}
-          <div className="grid sm:grid-cols-3 gap-4">
-            <SelectField label="Cor da Linha" value={corLinha} onChange={setCorLinha} options={COR_LINHA} />
-            <SelectField label="Cor da Borrachinha" value={corBorrachinha} onChange={setCorBorrachinha} options={COR_BORRACHINHA} />
-            <SelectField label="Cor do Vivo" value={corVivo} onChange={setCorVivo} options={COR_VIVO} />
-          </div>
+          {/* Estampa */}
+          <ToggleField label={`Estampa (+R$${ESTAMPA_PRECO})`} value={estampa} onChange={setEstampa} textValue={estampaDesc} onTextChange={setEstampaDesc} textPlaceholder="Descreva a estampa..." />
+
+          {/* Pesponto */}
+          <Section title="Pesponto">
+            <div className="grid sm:grid-cols-3 gap-4">
+              <SelectField label="Cor da Linha" value={corLinha} onChange={setCorLinha} options={COR_LINHA} />
+              <SelectField label="Cor da Borrachinha" value={corBorrachinha} onChange={setCorBorrachinha} options={COR_BORRACHINHA} />
+              <SelectField label="Cor do Vivo" value={corVivo} onChange={setCorVivo} options={COR_VIVO} />
+            </div>
+          </Section>
 
           {/* Metais */}
           <Section title="Metais">
@@ -494,8 +530,9 @@ const OrderPage = () => {
 
           {/* Solados */}
           <Section title="Solados">
-            <div className="grid sm:grid-cols-3 gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <SelectField label="Tipo de Solado" value={solado} onChange={setSolado} options={SOLADO} />
+              <SelectField label="Formato do Bico" value={formatoBico} onChange={setFormatoBico} options={FORMATO_BICO} />
               <SelectField label="Cor da Sola" value={corSola} onChange={setCorSola} options={COR_SOLA} />
               <SelectField label="Cor da Vira" value={corVira} onChange={setCorVira} options={COR_VIRA} />
             </div>
@@ -533,19 +570,19 @@ const OrderPage = () => {
             <textarea value={observacao} onChange={e => setObservacao(e.target.value)} rows={3} className={cls.input + ' min-h-[80px]'} />
           </div>
 
-          {/* Fotos */}
+          {/* Fotos (limit 1) */}
           <div>
-            <label className={cls.label}>Fotos de Referência</label>
-            <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" />
+            <label className={cls.label}>Foto de Referência (máx. 1)</label>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
             <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 bg-muted border border-border rounded-lg text-sm font-semibold hover:border-primary transition-colors">
-              <Upload size={16} /> Adicionar Fotos
+              <Upload size={16} /> {fotos.length > 0 ? 'Substituir Foto' : 'Adicionar Foto'}
             </button>
             {fotos.length > 0 && (
               <div className="flex flex-wrap gap-3 mt-3">
                 {fotos.map((foto, i) => (
                   <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border border-border">
                     <img src={foto} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => setFotos(prev => prev.filter((_, idx) => idx !== i))} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center"><X size={12} /></button>
+                    <button type="button" onClick={() => setFotos([])} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center"><X size={12} /></button>
                   </div>
                 ))}
               </div>
@@ -597,7 +634,7 @@ const OrderPage = () => {
               </div>
               {fotos.length > 0 && (
                 <div className="mt-3">
-                  <span className="text-xs font-semibold">Fotos de Referência:</span>
+                  <span className="text-xs font-semibold">Foto de Referência:</span>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {fotos.map((f, i) => <img key={i} src={f} alt={`Ref ${i + 1}`} className="w-20 h-20 object-cover rounded border border-border" />)}
                   </div>

@@ -61,29 +61,21 @@ export interface Order {
   temLaser: boolean;
   fotos: string[];
   historico: { data: string; local: string; descricao: string }[];
-  // Laser split by part
   laserCano?: string;
   corGlitterCano?: string;
   laserGaspea?: string;
   corGlitterGaspea?: string;
   laserTaloneira?: string;
   corGlitterTaloneira?: string;
-  // Estampa
   estampa?: string;
   estampaDesc?: string;
-  // Pintura
   pintura?: string;
   pinturaDesc?: string;
-  // Costura atrás
   costuraAtras?: string;
-  // Cor sola
   corSola?: string;
-  // Carimbo
   carimbo?: string;
   carimboDesc?: string;
-  // Cor vivo
   corVivo?: string;
-  // Adicional
   adicionalDesc?: string;
   adicionalValor?: number;
 }
@@ -143,6 +135,7 @@ interface AuthContextType {
   addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status'> & { numeroPedido?: string }) => void;
   deleteOrder: (id: string) => void;
   updateOrder: (id: string, data: Partial<Order>) => void;
+  updateOrderStatus: (id: string, newStatus: string) => void;
   recoverPassword: (cpfCnpj: string, digits: string) => boolean;
   allOrders: Order[];
 }
@@ -296,10 +289,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, ...data } : o));
   }, []);
 
+  const updateOrderStatus = useCallback((id: string, newStatus: string) => {
+    setOrders(prev => prev.map(o => {
+      if (o.id !== id) return o;
+      const now = new Date();
+      const newHistEntry = { data: now.toISOString().split('T')[0], local: newStatus, descricao: `Pedido movido para ${newStatus}` };
+      return { ...o, status: newStatus, historico: [...o.historico, newHistEntry] };
+    }));
+  }, []);
+
   const userOrders = user?.isAdmin ? orders : orders.filter(o => o.vendedor === user?.nomeCompleto);
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAdmin, login, register, logout, updateProfile, orders: userOrders, addOrder, deleteOrder, updateOrder, recoverPassword, allOrders: orders }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAdmin, login, register, logout, updateProfile, orders: userOrders, addOrder, deleteOrder, updateOrder, updateOrderStatus, recoverPassword, allOrders: orders }}>
       {children}
     </AuthContext.Provider>
   );
