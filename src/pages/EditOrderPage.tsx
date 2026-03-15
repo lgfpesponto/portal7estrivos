@@ -145,8 +145,7 @@ const EditOrderPage = () => {
   const [adicionalDesc, setAdicionalDesc] = useState('');
   const [adicionalValor, setAdicionalValor] = useState(0);
   const [observacao, setObservacao] = useState('');
-  const [fotos, setFotos] = useState<string[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fotoUrl, setFotoUrl] = useState('');
 
   useEffect(() => {
     if (!order) return;
