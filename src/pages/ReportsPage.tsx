@@ -424,7 +424,7 @@ const ReportsPage = () => {
         const numW = doc.getTextWidth(orderNumClean);
         doc.text(orderNumClean, sx + (singleStubW - numW) / 2, stubTop + 22);
       });
-    });
+    }
 
     doc.save('fichas-producao.pdf');
   };
