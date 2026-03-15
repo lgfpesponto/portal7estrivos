@@ -146,6 +146,9 @@ const EditOrderPage = () => {
   const [adicionalValor, setAdicionalValor] = useState(0);
   const [observacao, setObservacao] = useState('');
   const [fotoUrl, setFotoUrl] = useState('');
+  const [laserOutroCanoText, setLaserOutroCanoText] = useState('');
+  const [laserOutroGaspeaText, setLaserOutroGaspeaText] = useState('');
+  const [laserOutroTaloneiraText, setLaserOutroTaloneiraText] = useState('');
 
   useEffect(() => {
     if (!order) return;
