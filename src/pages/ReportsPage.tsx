@@ -6,6 +6,7 @@ import { Filter, FileText, Download, Printer, CheckCircle, StickyNote, Pencil, T
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import JsBarcode from 'jsbarcode';
+import QRCode from 'qrcode';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
