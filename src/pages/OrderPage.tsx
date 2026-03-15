@@ -319,7 +319,8 @@ const OrderPage = () => {
       adicionalDesc, adicionalValor: String(adicionalValor),
       observacao,
     };
-    saveDraft({ id, userId: user.id, savedAt: new Date().toISOString(), form, sobMedida, quantidade: 1, numeroPedido, fotos });
+    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    saveDraft({ id, userId: user.id, savedAt: now.toISOString(), form, sobMedida, quantidade: 1, numeroPedido, fotos });
     setDraftId(id);
     toast.success('Rascunho salvo!');
   };
