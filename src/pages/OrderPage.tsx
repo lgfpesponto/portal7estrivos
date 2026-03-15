@@ -443,9 +443,9 @@ const OrderPage = () => {
 
           {/* 3-4 Tamanho + Gênero + Modelo */}
           <div className="grid sm:grid-cols-3 gap-4">
-            <SelectField label="Tamanho" value={tamanho} onChange={setTamanho} options={TAMANHOS} />
-            <SelectField label="Gênero" value={genero} onChange={setGenero} options={GENEROS} />
-            <SelectField label="Modelo" value={modelo} onChange={setModelo} options={MODELOS} />
+            <SelectField label="Tamanho" value={tamanho} onChange={setTamanho} options={TAMANHOS} required />
+            <SelectField label="Gênero" value={genero} onChange={setGenero} options={GENEROS} required />
+            <SelectField label="Modelo" value={modelo} onChange={setModelo} options={MODELOS} required />
           </div>
 
           {/* 5 Sob Medida */}
