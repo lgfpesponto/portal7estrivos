@@ -398,7 +398,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const userOrders = user?.isAdmin ? orders : orders.filter(o => o.vendedor === user?.nomeCompleto);
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAdmin, login, register, logout, updateProfile, orders: userOrders, addOrder, deleteOrder, updateOrder, updateOrderStatus, recoverPassword, allOrders: orders }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, isAdmin, isFernanda, login, register, logout, updateProfile, orders: userOrders, addOrder, deleteOrder, updateOrder, updateOrderStatus, recoverPassword, allOrders: orders }}>
       {children}
     </AuthContext.Provider>
   );

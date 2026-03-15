@@ -96,7 +96,7 @@ export const LASER_OPTIONS = [
   'Cruz','Bridão','Pipoco','Ouro','Florência Brilhante','Folhas',
   'Lara','Rodeio','Iluminada','Cruz Asas','Beca','Coração',
   'Cruz Circular','Cruz Zero','Borboleta','Livia','Luiza',
-  'Duquesa','Julia','Anjo','Pintura Cavalo',
+  'Duquesa','Julia','Anjo','Pintura Cavalo','Outro',
 ];
 export const LASER_CANO_PRECO = 50;
 export const LASER_GASPEA_PRECO = 50;
