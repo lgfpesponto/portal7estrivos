@@ -15,18 +15,6 @@ const OrderDetailPage = () => {
   const { orders, isAdmin } = useAuth();
   const navigate = useNavigate();
   const order = orders.find(o => o.id === id);
-  const barcodeRef = useRef<SVGSVGElement>(null);
-
-  useEffect(() => {
-    if (order && barcodeRef.current) {
-      try {
-        JsBarcode(barcodeRef.current, orderBarcodeValue(order.numero), {
-          format: 'CODE128', width: 1.5, height: 40, displayValue: true,
-          text: order.numero, fontSize: 12, margin: 5,
-        });
-      } catch { /* ignore */ }
-    }
-  }, [order]);
 
   if (!order) {
     return (
