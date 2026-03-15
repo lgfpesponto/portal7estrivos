@@ -248,7 +248,34 @@ const OrderPage = () => {
   /* ───── submit ───── */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!numeroPedido.trim()) { toast.error('Preencha o Número do Pedido!'); return; }
+    const required: [string, string][] = [
+      [numeroPedido.trim(), 'Número do Pedido'],
+      [tamanho, 'Tamanho'],
+      [genero, 'Gênero'],
+      [modelo, 'Modelo'],
+      [tipoCouroCano, 'Tipo do Couro do Cano'],
+      [corCouroCano, 'Cor do Couro do Cano'],
+      [tipoCouroGaspea, 'Tipo do Couro da Gáspea'],
+      [corCouroGaspea, 'Cor do Couro da Gáspea'],
+      [tipoCouroTaloneira, 'Tipo do Couro da Taloneira'],
+      [corCouroTaloneira, 'Cor do Couro da Taloneira'],
+      [corLinha, 'Cor da Linha'],
+      [corBorrachinha, 'Cor da Borrachinha'],
+      [corVivo, 'Cor do Vivo'],
+      [solado, 'Tipo do Solado'],
+      [formatoBico, 'Formato do Bico'],
+      [corSola, 'Cor da Sola'],
+      [corVira, 'Cor da Vira'],
+    ];
+    const missing = required.filter(([val]) => !val);
+    if (missing.length > 0) {
+      toast.error(`Preencha os campos obrigatórios: ${missing.map(([, l]) => l).join(', ')}`);
+      return;
+    }
+    if (fotos.length === 0) {
+      toast.error('Adicione uma foto de referência!');
+      return;
+    }
     setShowMirror(true);
   };
 
