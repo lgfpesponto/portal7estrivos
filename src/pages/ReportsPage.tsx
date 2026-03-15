@@ -29,7 +29,7 @@ function barcodeDataUrl(value: string, opts?: { width?: number; height?: number 
 }
 
 const ReportsPage = () => {
-  const { isLoggedIn, isAdmin, orders, allOrders, user, deleteOrder, updateOrderStatus } = useAuth();
+  const { isLoggedIn, isAdmin, isFernanda, orders, allOrders, user, deleteOrder, updateOrderStatus } = useAuth();
   const navigate = useNavigate();
   const [filterDate, setFilterDate] = useState('');
   const [filterDateEnd, setFilterDateEnd] = useState('');
@@ -41,6 +41,7 @@ const ReportsPage = () => {
   // Bulk progress modal
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [selectedProgress, setSelectedProgress] = useState('');
+  const [progressObservacao, setProgressObservacao] = useState('');
 
   // Barcode scanner
   const [showScanner, setShowScanner] = useState(false);
