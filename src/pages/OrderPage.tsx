@@ -174,9 +174,8 @@ const OrderPage = () => {
   const [adicionalValor, setAdicionalValor] = useState(Number(df.adicionalValor) || 0);
 
   const [observacao, setObservacao] = useState(df.observacao || '');
-  const [fotos, setFotos] = useState<string[]>(draftState?.fotos || []);
+  const [fotoUrl, setFotoUrl] = useState(draftState?.fotos?.[0] || '');
   const [showMirror, setShowMirror] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isLoggedIn) {
     return (
