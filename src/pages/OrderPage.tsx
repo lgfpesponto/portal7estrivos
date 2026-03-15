@@ -262,8 +262,8 @@ const OrderPage = () => {
       toast.error(`Preencha os campos obrigatórios: ${missing.map(([, l]) => l).join(', ')}`);
       return;
     }
-    if (fotos.length === 0) {
-      toast.error('Adicione uma foto de referência!');
+    if (!fotoUrl.trim()) {
+      toast.error('Cole o link da foto de referência!');
       return;
     }
     setShowMirror(true);
