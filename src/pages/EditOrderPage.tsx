@@ -207,7 +207,7 @@ const EditOrderPage = () => {
     setAdicionalDesc(order.adicionalDesc || '');
     setAdicionalValor(order.adicionalValor || 0);
     setObservacao(order.observacao || '');
-    setFotos(order.fotos || []);
+    setFotoUrl(order.fotos?.[0] || '');
   }, [order]);
 
   if (!isAdmin) return <div className="min-h-[60vh] flex items-center justify-center"><p className="text-muted-foreground">Acesso restrito ao administrador.</p></div>;
