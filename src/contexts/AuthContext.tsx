@@ -81,7 +81,7 @@ export interface Order {
   diasRestantes: number;
   temLaser: boolean;
   fotos: string[];
-  historico: { data: string; hora: string; local: string; descricao: string }[];
+  historico: { data: string; hora: string; local: string; descricao: string; observacao?: string }[];
   alteracoes: OrderAlteracao[];
   laserCano?: string;
   corGlitterCano?: string;
