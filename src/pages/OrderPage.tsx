@@ -339,6 +339,7 @@ const OrderPage = () => {
       laserCano: laserCano.join('||'), corGlitterCano,
       laserGaspea: laserGaspea.join('||'), corGlitterGaspea,
       laserTaloneira: laserTaloneira.join('||'), corGlitterTaloneira,
+      laserOutroCanoText, laserOutroGaspeaText, laserOutroTaloneiraText,
       pintura: String(pintura), pinturaDesc,
       estampa: String(estampa), estampaDesc,
       corLinha, corBorrachinha, corVivo,
