@@ -408,9 +408,9 @@ const OrderPage = () => {
   ].filter(([, v]) => v) as [string, string][];
 
   /* ───── select helper ───── */
-  const SelectField = ({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] | { label: string; preco: number }[] }) => (
+  const SelectField = ({ label, value, onChange, options, required: req }: { label: string; value: string; onChange: (v: string) => void; options: string[] | { label: string; preco: number }[]; required?: boolean }) => (
     <div>
-      <label className={cls.label}>{label}</label>
+      <label className={cls.label}>{label}{req && <span className="text-destructive ml-0.5">*</span>}</label>
       <select value={value} onChange={e => onChange(e.target.value)} className={cls.select}>
         <option value="">Selecione...</option>
         {options.map(o => {
