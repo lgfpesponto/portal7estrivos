@@ -537,22 +537,26 @@ const ReportsPage = () => {
           )}
         </div>
 
-        {/* Select All */}
-        <div className="flex items-center gap-3 mb-3">
-          <button onClick={toggleSelectAll} className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedIds.size === filteredOrders.length && filteredOrders.length > 0 ? 'bg-primary border-primary' : 'border-border hover:border-primary'}`}>
-            {selectedIds.size === filteredOrders.length && filteredOrders.length > 0 && <CheckCircle size={14} className="text-primary-foreground" />}
-          </button>
-          <span className="text-sm font-semibold">Selecionar todos</span>
-          {selectedIds.size > 0 && <span className="text-xs text-muted-foreground">({selectedIds.size} selecionado{selectedIds.size > 1 ? 's' : ''})</span>}
-        </div>
+        {/* Select All - admin only */}
+        {isAdmin && (
+          <div className="flex items-center gap-3 mb-3">
+            <button onClick={toggleSelectAll} className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedIds.size === filteredOrders.length && filteredOrders.length > 0 ? 'bg-primary border-primary' : 'border-border hover:border-primary'}`}>
+              {selectedIds.size === filteredOrders.length && filteredOrders.length > 0 && <CheckCircle size={14} className="text-primary-foreground" />}
+            </button>
+            <span className="text-sm font-semibold">Selecionar todos</span>
+            {selectedIds.size > 0 && <span className="text-xs text-muted-foreground">({selectedIds.size} selecionado{selectedIds.size > 1 ? 's' : ''})</span>}
+          </div>
+        )}
 
         {/* Orders list */}
         <div className="space-y-3">
           {filteredOrders.map(order => (
             <div key={order.id} className="bg-card rounded-xl p-4 western-shadow hover:shadow-xl transition-shadow flex items-center gap-3">
-              <button onClick={() => toggleSelect(order.id)} className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${selectedIds.has(order.id) ? 'bg-primary border-primary' : 'border-border hover:border-primary'}`}>
-                {selectedIds.has(order.id) && <CheckCircle size={14} className="text-primary-foreground" />}
-              </button>
+              {isAdmin && (
+                <button onClick={() => toggleSelect(order.id)} className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${selectedIds.has(order.id) ? 'bg-primary border-primary' : 'border-border hover:border-primary'}`}>
+                  {selectedIds.has(order.id) && <CheckCircle size={14} className="text-primary-foreground" />}
+                </button>
+              )}
 
               <div className="flex-1 cursor-pointer" onClick={() => navigate(`/pedido/${order.id}`)}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
