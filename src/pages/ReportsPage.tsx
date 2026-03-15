@@ -165,14 +165,15 @@ const ReportsPage = () => {
     doc.save('relatorio-pedidos.pdf');
   };
 
-  const generateProductionSheetPDF = () => {
+  const generateProductionSheetPDF = async () => {
     const list = ordersToExport;
     const doc = new jsPDF({ format: 'a4', orientation: 'portrait' });
     const pw = doc.internal.pageSize.getWidth(); // 210mm
     const contentH = 148.5; // A5 height (half A4)
     const m = 6; // margin
 
-    list.forEach((order, idx) => {
+    for (let idx = 0; idx < list.length; idx++) {
+      const order = list[idx];
       if (idx > 0) doc.addPage();
 
       // ─── Outer border ───
