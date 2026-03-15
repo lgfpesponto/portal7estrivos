@@ -233,16 +233,7 @@ const OrderPage = () => {
 
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  /* ───── photo upload (limit 1) ───── */
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    const file = files[0];
-    const reader = new FileReader();
-    reader.onload = (ev) => { if (ev.target?.result) setFotos([ev.target!.result as string]); };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
+  const fotos = fotoUrl.trim() ? [fotoUrl.trim()] : [];
 
   /* ───── submit ───── */
   const handleSubmit = (e: React.FormEvent) => {
