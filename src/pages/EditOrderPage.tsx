@@ -12,7 +12,7 @@ import {
   COR_VIVO, DESENVOLVIMENTO, AREA_METAL, TIPO_METAL, COR_METAL,
   STRASS_PRECO, CRUZ_METAL_PRECO, BRIDAO_METAL_PRECO, SOLADO, COR_SOLA, COR_VIRA,
   CARIMBO, SOB_MEDIDA_PRECO, NOME_BORDADO_PRECO, ESTAMPA_PRECO,
-  PINTURA_PRECO, TRICE_PRECO, TIRAS_PRECO, COSTURA_ATRAS_PRECO,
+  PINTURA_PRECO, TRICE_PRECO, TIRAS_PRECO, COSTURA_ATRAS_PRECO, FORMATO_BICO,
 } from '@/lib/orderFieldsConfig';
 
 const cls = {
@@ -100,6 +100,7 @@ const EditOrderPage = () => {
   const [corCouroGaspea, setCorCouroGaspea] = useState('');
   const [tipoCouroTaloneira, setTipoCouroTaloneira] = useState('');
   const [corCouroTaloneira, setCorCouroTaloneira] = useState('');
+  const [desenvolvimento, setDesenvolvimento] = useState('');
   const [bordadoCano, setBordadoCano] = useState<string[]>([]);
   const [corBordadoCano, setCorBordadoCano] = useState('');
   const [bordadoGaspea, setBordadoGaspea] = useState<string[]>([]);
@@ -118,7 +119,6 @@ const EditOrderPage = () => {
   const [pinturaDesc, setPinturaDesc] = useState('');
   const [estampa, setEstampa] = useState(false);
   const [estampaDesc, setEstampaDesc] = useState('');
-  const [desenvolvimento, setDesenvolvimento] = useState('');
   const [corLinha, setCorLinha] = useState('');
   const [corBorrachinha, setCorBorrachinha] = useState('');
   const [corVivo, setCorVivo] = useState('');
@@ -136,6 +136,7 @@ const EditOrderPage = () => {
   const [tiras, setTiras] = useState(false);
   const [tirasDesc, setTirasDesc] = useState('');
   const [solado, setSolado] = useState('');
+  const [formatoBico, setFormatoBico] = useState('');
   const [corSola, setCorSola] = useState('');
   const [corVira, setCorVira] = useState('');
   const [costuraAtras, setCosturaAtras] = useState(false);
@@ -162,6 +163,7 @@ const EditOrderPage = () => {
     setCorCouroGaspea(order.corCouroGaspea || '');
     setTipoCouroTaloneira(order.couroTaloneira || '');
     setCorCouroTaloneira(order.corCouroTaloneira || '');
+    setDesenvolvimento(order.desenvolvimento || '');
     setBordadoCano(order.bordadoCano ? order.bordadoCano.split(', ').filter(Boolean) : []);
     setCorBordadoCano(order.corBordadoCano || '');
     setBordadoGaspea(order.bordadoGaspea ? order.bordadoGaspea.split(', ').filter(Boolean) : []);
@@ -180,7 +182,6 @@ const EditOrderPage = () => {
     setPinturaDesc(order.pinturaDesc || '');
     setEstampa(order.estampa === 'Sim');
     setEstampaDesc(order.estampaDesc || '');
-    setDesenvolvimento(order.desenvolvimento || '');
     setCorLinha(order.corLinha || '');
     setCorBorrachinha(order.corBorrachinha || '');
     setCorVivo(order.corVivo || '');
@@ -198,8 +199,9 @@ const EditOrderPage = () => {
     setTiras(order.tiras === 'Sim');
     setTirasDesc(order.tirasDesc || '');
     setSolado(order.solado || '');
+    setFormatoBico(order.formatoBico || '');
     setCorSola(order.corSola || '');
-    setCorVira(order.corVira || order.formatoBico || '');
+    setCorVira(order.corVira || '');
     setCosturaAtras(order.costuraAtras === 'Sim');
     setCarimbo(order.carimbo || '');
     setCarimboDesc(order.carimboDesc || '');
@@ -212,7 +214,6 @@ const EditOrderPage = () => {
   if (!isAdmin) return <div className="min-h-[60vh] flex items-center justify-center"><p className="text-muted-foreground">Acesso restrito ao administrador.</p></div>;
   if (!order) return <div className="min-h-[60vh] flex items-center justify-center"><p className="text-muted-foreground">Pedido não encontrado.</p></div>;
 
-  // Price calc (same logic as OrderPage)
   const modeloPreco = MODELOS.find(m => m.label === modelo)?.preco || 0;
   const acessoriosPreco = acessorios.reduce((sum, a) => sum + (ACESSORIOS.find(x => x.label === a)?.preco || 0), 0);
   const couroPreco = [tipoCouroCano, tipoCouroGaspea, tipoCouroTaloneira].reduce((sum, t) => sum + (COURO_PRECOS[t] || 0), 0);
@@ -243,12 +244,11 @@ const EditOrderPage = () => {
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (ev) => { if (ev.target?.result) setFotos(prev => [...prev, ev.target!.result as string]); };
-      reader.readAsDataURL(file);
-    });
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = (ev) => { if (ev.target?.result) setFotos([ev.target!.result as string]); };
+    reader.readAsDataURL(file);
     e.target.value = '';
   };
 
@@ -256,7 +256,7 @@ const EditOrderPage = () => {
     e.preventDefault();
     updateOrder(order.id, {
       numero: numeroPedido, tamanho, genero, modelo, sobMedida, sobMedidaDesc,
-      solado, quantidade: 1, preco: total, temLaser: hasAnyLaser, fotos,
+      solado, formatoBico, quantidade: 1, preco: total, temLaser: hasAnyLaser, fotos,
       couroGaspea: tipoCouroGaspea, couroCano: tipoCouroCano, couroTaloneira: tipoCouroTaloneira,
       corCouroGaspea, corCouroCano, corCouroTaloneira,
       bordadoCano: bordadoCano.join(', '), bordadoGaspea: bordadoGaspea.join(', '),
@@ -274,7 +274,7 @@ const EditOrderPage = () => {
       strassQtd: strass ? strassQtd : 0, cruzMetalQtd: cruzMetal ? cruzMetalQtd : 0,
       bridaoMetalQtd: bridaoMetal ? bridaoMetalQtd : 0,
       acessorios: acessorios.join(', '), desenvolvimento, observacao,
-      formatoBico: '', corVira, corVivo, corSola,
+      corVira, corVivo, corSola,
       costuraAtras: costuraAtras ? 'Sim' : '', carimbo, carimboDesc,
       adicionalDesc, adicionalValor: adicionalValor > 0 ? adicionalValor : 0,
       personalizacaoNome: nomeBordado ? nomeBordadoDesc : '', personalizacaoBordado: '',
@@ -323,6 +323,9 @@ const EditOrderPage = () => {
             </div>
           </Section>
 
+          {/* Desenvolvimento before Bordados */}
+          <SelectField label="Desenvolvimento" value={desenvolvimento} onChange={setDesenvolvimento} options={DESENVOLVIMENTO} />
+
           <Section title="Bordados">
             <MultiSelect label="Bordado do Cano" items={BORDADOS} selected={bordadoCano} onChange={setBordadoCano} />
             <div><label className={cls.label}>Cor do Bordado do Cano</label><input type="text" value={corBordadoCano} onChange={e => setCorBordadoCano(e.target.value)} className={cls.input} /></div>
@@ -332,7 +335,7 @@ const EditOrderPage = () => {
             <div><label className={cls.label}>Cor do Bordado da Taloneira</label><input type="text" value={corBordadoTaloneira} onChange={e => setCorBordadoTaloneira(e.target.value)} className={cls.input} /></div>
           </Section>
 
-          <ToggleField label="Nome Bordado (+R$50)" value={nomeBordado} onChange={setNomeBordado} textValue={nomeBordadoDesc} onTextChange={setNomeBordadoDesc} textPlaceholder="Nome, cor, local..." />
+          <ToggleField label={`Nome Bordado (+R$${NOME_BORDADO_PRECO})`} value={nomeBordado} onChange={setNomeBordado} textValue={nomeBordadoDesc} onTextChange={setNomeBordadoDesc} textPlaceholder="Nome, cor, local..." />
 
           <Section title="Laser">
             <MultiSelect label="Laser do Cano (+R$50)" items={LASER_ITEMS} selected={laserCano} onChange={setLaserCano} />
@@ -344,18 +347,17 @@ const EditOrderPage = () => {
             <ToggleField label={`Pintura (+R$${PINTURA_PRECO})`} value={pintura} onChange={setPintura} textValue={pinturaDesc} onTextChange={setPinturaDesc} textPlaceholder="Cor da tinta..." />
           </Section>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-3">
-              <ToggleField label={`Estampa (+R$${ESTAMPA_PRECO})`} value={estampa} onChange={setEstampa} textValue={estampaDesc} onTextChange={setEstampaDesc} textPlaceholder="Descreva a estampa..." />
-            </div>
-            <SelectField label="Desenvolvimento" value={desenvolvimento} onChange={setDesenvolvimento} options={DESENVOLVIMENTO} />
-          </div>
+          <hr className="border-border" />
 
-          <div className="grid sm:grid-cols-3 gap-4">
-            <SelectField label="Cor da Linha" value={corLinha} onChange={setCorLinha} options={COR_LINHA} />
-            <SelectField label="Cor da Borrachinha" value={corBorrachinha} onChange={setCorBorrachinha} options={COR_BORRACHINHA} />
-            <SelectField label="Cor do Vivo" value={corVivo} onChange={setCorVivo} options={COR_VIVO} />
-          </div>
+          <ToggleField label={`Estampa (+R$${ESTAMPA_PRECO})`} value={estampa} onChange={setEstampa} textValue={estampaDesc} onTextChange={setEstampaDesc} textPlaceholder="Descreva a estampa..." />
+
+          <Section title="Pesponto">
+            <div className="grid sm:grid-cols-3 gap-4">
+              <SelectField label="Cor da Linha" value={corLinha} onChange={setCorLinha} options={COR_LINHA} />
+              <SelectField label="Cor da Borrachinha" value={corBorrachinha} onChange={setCorBorrachinha} options={COR_BORRACHINHA} />
+              <SelectField label="Cor do Vivo" value={corVivo} onChange={setCorVivo} options={COR_VIVO} />
+            </div>
+          </Section>
 
           <Section title="Metais">
             <div className="grid sm:grid-cols-3 gap-4">
@@ -397,8 +399,9 @@ const EditOrderPage = () => {
           </Section>
 
           <Section title="Solados">
-            <div className="grid sm:grid-cols-3 gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <SelectField label="Tipo de Solado" value={solado} onChange={setSolado} options={SOLADO} />
+              <SelectField label="Formato do Bico" value={formatoBico} onChange={setFormatoBico} options={FORMATO_BICO} />
               <SelectField label="Cor da Sola" value={corSola} onChange={setCorSola} options={COR_SOLA} />
               <SelectField label="Cor da Vira" value={corVira} onChange={setCorVira} options={COR_VIRA} />
             </div>
@@ -434,17 +437,17 @@ const EditOrderPage = () => {
           </div>
 
           <div>
-            <label className={cls.label}>Fotos de Referência</label>
-            <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" />
+            <label className={cls.label}>Foto de Referência (máx. 1)</label>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
             <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 bg-muted border border-border rounded-lg text-sm font-semibold hover:border-primary transition-colors">
-              <Upload size={16} /> Adicionar Fotos
+              <Upload size={16} /> {fotos.length > 0 ? 'Substituir Foto' : 'Adicionar Foto'}
             </button>
             {fotos.length > 0 && (
               <div className="flex flex-wrap gap-3 mt-3">
                 {fotos.map((foto, i) => (
                   <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border border-border">
                     <img src={foto} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => setFotos(prev => prev.filter((_, idx) => idx !== i))} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center"><X size={12} /></button>
+                    <button type="button" onClick={() => setFotos([])} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center"><X size={12} /></button>
                   </div>
                 ))}
               </div>

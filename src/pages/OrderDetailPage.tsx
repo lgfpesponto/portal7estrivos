@@ -12,7 +12,7 @@ import {
 
 const OrderDetailPage = () => {
   const { id } = useParams();
-  const { orders } = useAuth();
+  const { orders, isAdmin } = useAuth();
   const navigate = useNavigate();
   const order = orders.find(o => o.id === id);
 
@@ -37,10 +37,10 @@ const OrderDetailPage = () => {
   const daysLeft = businessDaysRemaining(createdDate, totalBizDays);
 
   // Build details list (only filled fields)
+  // For non-admin: hide vendedor. For admin: vendedor shown in header instead.
   const details: [string, string][] = [
     ['Modelo', order.modelo],
     ['Tamanho', order.tamanho ? `${order.tamanho}${order.genero ? ' — ' + order.genero : ''}` : ''],
-    ['Vendedor', order.vendedor],
     ['Sob Medida', order.sobMedida ? `Sim${order.sobMedidaDesc ? ' — ' + order.sobMedidaDesc : ''}` : ''],
     ['Acessórios', order.acessorios],
     ['Tipo Couro Cano', order.couroCano],
@@ -49,6 +49,7 @@ const OrderDetailPage = () => {
     ['Cor Couro Gáspea', order.corCouroGaspea || ''],
     ['Tipo Couro Taloneira', order.couroTaloneira],
     ['Cor Couro Taloneira', order.corCouroTaloneira || ''],
+    ['Desenvolvimento', order.desenvolvimento],
     ['Bordado Cano', order.bordadoCano],
     ['Cor Bordado Cano', order.corBordadoCano || ''],
     ['Bordado Gáspea', order.bordadoGaspea],
@@ -64,7 +65,6 @@ const OrderDetailPage = () => {
     ['Cor Glitter/Tecido Taloneira', order.corGlitterTaloneira || ''],
     ['Pintura', order.pintura === 'Sim' ? (order.pinturaDesc || 'Sim') : ''],
     ['Estampa', order.estampa === 'Sim' ? (order.estampaDesc ? `Sim — ${order.estampaDesc}` : 'Sim') : ''],
-    ['Desenvolvimento', order.desenvolvimento],
     ['Cor da Linha', order.corLinha],
     ['Cor Borrachinha', order.corBorrachinha],
     ['Cor do Vivo', order.corVivo || ''],
@@ -77,8 +77,9 @@ const OrderDetailPage = () => {
     ['Tricê', order.trisce === 'Sim' ? (order.triceDesc || 'Sim') : ''],
     ['Tiras', order.tiras === 'Sim' ? (order.tirasDesc || 'Sim') : ''],
     ['Solado', order.solado],
+    ['Formato do Bico', order.formatoBico || ''],
     ['Cor da Sola', order.corSola || ''],
-    ['Cor da Vira', order.corVira || order.formatoBico || ''],
+    ['Cor da Vira', order.corVira || ''],
     ['Costura Atrás', order.costuraAtras === 'Sim' ? 'Sim' : ''],
     ['Carimbo a Fogo', order.carimbo ? `${order.carimbo}${order.carimboDesc ? ' — ' + order.carimboDesc : ''}` : ''],
     ['Adicional', order.adicionalDesc ? `${order.adicionalDesc}${order.adicionalValor ? ` — ${formatCurrency(order.adicionalValor)}` : ''}` : ''],
@@ -103,6 +104,10 @@ const OrderDetailPage = () => {
     if (t && COURO_PRECOS[t]) priceItems.push(['Couro: ' + t, COURO_PRECOS[t]]);
   });
 
+  // Desenvolvimento
+  const desenvP = DESENVOLVIMENTO.find(d => d.label === order.desenvolvimento)?.preco;
+  if (desenvP) priceItems.push(['Desenvolvimento: ' + order.desenvolvimento, desenvP]);
+
   // Bordados
   [order.bordadoCano, order.bordadoGaspea, order.bordadoTaloneira].forEach(bStr => {
     if (bStr) bStr.split(', ').filter(Boolean).forEach(b => {
@@ -122,9 +127,6 @@ const OrderDetailPage = () => {
   if (order.pintura === 'Sim') priceItems.push(['Pintura', PINTURA_PRECO]);
   if (order.estampa === 'Sim') priceItems.push(['Estampa', ESTAMPA_PRECO]);
 
-  const desenvP = DESENVOLVIMENTO.find(d => d.label === order.desenvolvimento)?.preco;
-  if (desenvP) priceItems.push(['Desenvolvimento: ' + order.desenvolvimento, desenvP]);
-
   const areaP = AREA_METAL.find(a => a.label === order.metais)?.preco;
   if (areaP) priceItems.push(['Área Metal: ' + order.metais, areaP]);
   if (order.strassQtd) priceItems.push([`Strass (${order.strassQtd} un.)`, order.strassQtd * STRASS_PRECO]);
@@ -138,8 +140,8 @@ const OrderDetailPage = () => {
   if (soladoP) priceItems.push(['Solado: ' + order.solado, soladoP]);
   const corSolaP = COR_SOLA.find(c => c.label === order.corSola)?.preco;
   if (corSolaP) priceItems.push(['Cor Sola: ' + order.corSola, corSolaP]);
-  const corViraP = COR_VIRA.find(c => c.label === (order.corVira || order.formatoBico))?.preco;
-  if (corViraP) priceItems.push(['Cor Vira: ' + (order.corVira || order.formatoBico), corViraP]);
+  const corViraP = COR_VIRA.find(c => c.label === order.corVira)?.preco;
+  if (corViraP) priceItems.push(['Cor Vira: ' + order.corVira, corViraP]);
   if (order.costuraAtras === 'Sim') priceItems.push(['Costura Atrás', COSTURA_ATRAS_PRECO]);
 
   const carimboP = CARIMBO.find(c => c.label === order.carimbo)?.preco;
@@ -156,9 +158,12 @@ const OrderDetailPage = () => {
         </button>
 
         <div className="bg-card rounded-xl p-6 md:p-8 western-shadow">
-          {/* 1 - Número do pedido + valor */}
+          {/* 1 - Número do pedido + valor + vendedor (admin only) */}
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl font-display font-bold">{order.numero}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-display font-bold">{order.numero}</h1>
+              {isAdmin && <span className="text-sm text-muted-foreground">— {order.vendedor}</span>}
+            </div>
             <span className="text-2xl font-bold text-primary">{formatCurrency(order.preco * order.quantidade)}</span>
           </div>
           <p className="text-sm text-muted-foreground mb-1">
@@ -213,7 +218,7 @@ const OrderDetailPage = () => {
           {/* Fotos */}
           {order.fotos && order.fotos.length > 0 && (
             <div className="mb-6">
-              <h2 className="text-lg font-display font-bold mb-3">Fotos de Referência</h2>
+              <h2 className="text-lg font-display font-bold mb-3">Foto de Referência</h2>
               <div className="flex flex-wrap gap-3">
                 {order.fotos.map((f, i) => (
                   <img key={i} src={f} alt={`Ref ${i + 1}`} className="w-24 h-24 object-cover rounded-lg border border-border" />

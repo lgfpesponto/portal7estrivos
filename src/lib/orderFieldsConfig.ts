@@ -27,9 +27,9 @@ export const GENEROS = ['Feminino', 'Masculino'];
 
 // ==================== ACESSÓRIOS ====================
 export const ACESSORIOS: { label: string; preco: number }[] = [
-  { label: 'Kit Faca', preco: 80 },
-  { label: 'Kit Canivete', preco: 70 },
-  { label: 'Kit Cantil', preco: 50 },
+  { label: 'Kit Faca', preco: 70 },
+  { label: 'Kit Canivete', preco: 60 },
+  { label: 'Kit Cantil', preco: 40 },
   { label: 'Bolso', preco: 50 },
   { label: 'Zíper', preco: 40 },
 ];
@@ -94,7 +94,7 @@ export const LASER_OPTIONS = [
   'Cruz','Bridão','Pipoco','Ouro','Florência Brilhante','Folhas',
   'Lara','Rodeio','Iluminada','Cruz Asas','Beca','Coração',
   'Cruz Circular','Cruz Zero','Borboleta','Livia','Luiza',
-  'Duquesa','Julia','Anjo',
+  'Duquesa','Julia','Anjo','Pintura Cavalo',
 ];
 export const LASER_CANO_PRECO = 50;
 export const LASER_GASPEA_PRECO = 50;
@@ -148,6 +148,9 @@ export const SOLADO: { label: string; preco: number }[] = [
   { label: 'Infantil', preco: 0 },
 ];
 
+// ==================== FORMATO DO BICO ====================
+export const FORMATO_BICO = ['Quadrado', 'Redondo', 'Fino Ponta Redonda', 'Fino Ponta Quadrada'];
+
 // ==================== COR DA SOLA ====================
 export const COR_SOLA: { label: string; preco: number }[] = [
   { label: 'Marrom', preco: 20 },
@@ -167,15 +170,15 @@ export const COR_VIRA: { label: string; preco: number }[] = [
 
 // ==================== CARIMBO A FOGO ====================
 export const CARIMBO: { label: string; preco: number }[] = [
-  { label: 'Até 3 Carimbos', preco: 30 },
-  { label: 'Até 6 Carimbos', preco: 60 },
+  { label: 'Até 3 Carimbos', preco: 20 },
+  { label: 'Até 6 Carimbos', preco: 40 },
 ];
 
 // ==================== FIXED VALUES ====================
 export const SOB_MEDIDA_PRECO = 50;
-export const NOME_BORDADO_PRECO = 50;
+export const NOME_BORDADO_PRECO = 40;
 export const ESTAMPA_PRECO = 30;
 export const PINTURA_PRECO = 15;
-export const TRICE_PRECO = 15;
-export const TIRAS_PRECO = 10;
+export const TRICE_PRECO = 20;
+export const TIRAS_PRECO = 15;
 export const COSTURA_ATRAS_PRECO = 20;
