@@ -600,7 +600,7 @@ const OrderPage = () => {
 
           {/* Fotos (limit 1) */}
           <div>
-            <label className={cls.label}>Foto de Referência (máx. 1)</label>
+            <label className={cls.label}>Foto de Referência (máx. 1)<span className="text-destructive ml-0.5">*</span></label>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
             <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 bg-muted border border-border rounded-lg text-sm font-semibold hover:border-primary transition-colors">
               <Upload size={16} /> {fotos.length > 0 ? 'Substituir Foto' : 'Adicionar Foto'}
