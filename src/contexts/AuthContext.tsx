@@ -248,6 +248,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>(generateMockOrders());
 
   const isAdmin = user?.isAdmin === true;
+  const isFernanda = user?.id === 'admin-2';
 
   const login = useCallback((username: string, password: string) => {
     const found = registeredUsers.find(u => u.nomeUsuario === username && u.senha === password);
