@@ -457,12 +457,12 @@ const OrderPage = () => {
           {/* 7 Couros */}
           <Section title="Couros">
             <div className="grid sm:grid-cols-2 gap-4">
-              <SelectField label="Tipo Couro do Cano" value={tipoCouroCano} onChange={setTipoCouroCano} options={TIPOS_COURO} />
-              <SelectField label="Cor Couro do Cano" value={corCouroCano} onChange={setCorCouroCano} options={CORES_COURO} />
-              <SelectField label="Tipo Couro da Gáspea" value={tipoCouroGaspea} onChange={setTipoCouroGaspea} options={TIPOS_COURO} />
-              <SelectField label="Cor Couro da Gáspea" value={corCouroGaspea} onChange={setCorCouroGaspea} options={CORES_COURO} />
-              <SelectField label="Tipo Couro da Taloneira" value={tipoCouroTaloneira} onChange={setTipoCouroTaloneira} options={TIPOS_COURO} />
-              <SelectField label="Cor Couro da Taloneira" value={corCouroTaloneira} onChange={setCorCouroTaloneira} options={CORES_COURO} />
+              <SelectField label="Tipo Couro do Cano" value={tipoCouroCano} onChange={setTipoCouroCano} options={TIPOS_COURO} required />
+              <SelectField label="Cor Couro do Cano" value={corCouroCano} onChange={setCorCouroCano} options={CORES_COURO} required />
+              <SelectField label="Tipo Couro da Gáspea" value={tipoCouroGaspea} onChange={setTipoCouroGaspea} options={TIPOS_COURO} required />
+              <SelectField label="Cor Couro da Gáspea" value={corCouroGaspea} onChange={setCorCouroGaspea} options={CORES_COURO} required />
+              <SelectField label="Tipo Couro da Taloneira" value={tipoCouroTaloneira} onChange={setTipoCouroTaloneira} options={TIPOS_COURO} required />
+              <SelectField label="Cor Couro da Taloneira" value={corCouroTaloneira} onChange={setCorCouroTaloneira} options={CORES_COURO} required />
             </div>
           </Section>
 
