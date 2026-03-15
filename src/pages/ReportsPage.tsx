@@ -167,137 +167,249 @@ const ReportsPage = () => {
   const generateProductionSheetPDF = () => {
     const list = ordersToExport;
     const doc = new jsPDF({ format: 'a4', orientation: 'portrait' });
-    const pw = doc.internal.pageSize.getWidth();
-    const ph = doc.internal.pageSize.getHeight();
-    const halfW = pw / 2;
-    const margin = 10;
-    const colW = (halfW - margin * 2) / 2;
+    const pw = doc.internal.pageSize.getWidth(); // 210mm
+    const contentH = 148.5; // A5 height (half A4)
+    const m = 6; // margin
 
     list.forEach((order, idx) => {
       if (idx > 0) doc.addPage();
 
-      // ─── LEFT HALF: Description ───
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('7ESTRIVOS', margin, 15);
+      // ─── Outer border ───
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.3);
+      doc.rect(m, m, pw - m * 2, contentH - m * 2);
+
+      // ─── HEADER ───
+      const hx = m + 3;
+      let hy = m + 5;
       doc.setFontSize(9);
-      doc.text(`Código: ${order.numero}`, margin, 23);
-      doc.text(`Vendedor: ${order.vendedor}`, margin, 28);
-      doc.text(`Data: ${formatDateBR(order.dataCriacao, order.horaCriacao)}`, margin, 33);
-      doc.text(`Prazo: ${order.temLaser ? '30' : '10'} dias úteis`, margin, 38);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Código: `, hx, hy);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${order.numero.replace('7E-', '')}`, hx + doc.getTextWidth('Código: '), hy);
+      hy += 4.5;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Vendedor: `, hx, hy);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${order.vendedor}`, hx + doc.getTextWidth('Vendedor: '), hy);
+      hy += 4.5;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Data e hora: `, hx, hy);
+      doc.setFont('helvetica', 'normal');
+      const dateStr = `${order.dataCriacao.slice(8, 10)}/${order.dataCriacao.slice(5, 7)} ${order.horaCriacao}`;
+      doc.text(dateStr, hx + doc.getTextWidth('Data e hora: '), hy);
 
-      // Barcode in header area (left side, below header info)
-      const bcVal = orderBarcodeValue(order.numero);
-      const bcUrl = barcodeDataUrl(bcVal, { width: 1, height: 25 });
-      if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', margin, 40, 60, 12); } catch {}
+      // Header divider line
+      const headerBottom = m + 22;
+      doc.setLineWidth(0.3);
+      doc.line(m, headerBottom, pw - m, headerBottom);
+
+      // ─── Layout areas ───
+      const descTop = headerBottom;
+      const stubH = 28;
+      const stubTop = contentH - m - stubH;
+      const descBottom = stubTop;
+      // Photo takes right portion
+      const photoX = pw * 0.48;
+      // Vertical divider between description and photo
+      doc.line(photoX, headerBottom, photoX, descBottom);
+      // Horizontal line above stubs
+      doc.line(m, stubTop, pw - m, stubTop);
+
+      // ─── DESCRIPTION (2 columns, left of photo) ───
+      const descW = photoX - m - 3;
+      const colW = descW / 2;
+
+      // Build detail lines with abbreviations
+      const details: string[] = [];
+
+      // Tamanho + Gênero
+      if (order.tamanho) {
+        details.push(`**Tamanho:** ${order.tamanho}${order.genero ? ' ' + order.genero.substring(0, 3).toLowerCase() + '.' : ''}`);
       }
-      doc.setFontSize(6);
-      doc.text(order.numero, margin, 55);
+      // Modelo
+      if (order.modelo) {
+        const modeloAbr = order.modelo.toLowerCase().replace('tradicional', 'trad.').replace('feminino', 'fem.');
+        details.push(`**Modelo:** ${modeloAbr}`);
+      }
+      // Couro - merged type + color
+      if (order.couroCano) {
+        const tipo = order.couroCano.toLowerCase().replace('crazy horse', 'horse');
+        details.push(`**C. cano:** ${tipo}${order.corCouroCano ? ' ' + order.corCouroCano.toLowerCase() : ''}`);
+      }
+      if (order.couroGaspea) {
+        const tipo = order.couroGaspea.toLowerCase().replace('crazy horse', 'horse');
+        details.push(`**C. gáspea:** ${tipo}${order.corCouroGaspea ? ' ' + order.corCouroGaspea.toLowerCase() : ''}`);
+      }
+      if (order.couroTaloneira) {
+        const tipo = order.couroTaloneira.toLowerCase().replace('crazy horse', 'horse');
+        details.push(`**C. taloneira:** ${tipo}${order.corCouroTaloneira ? ' ' + order.corCouroTaloneira.toLowerCase() : ''}`);
+      }
+      // Bordado - merged type + color
+      if (order.bordadoCano) {
+        const bord = order.bordadoCano.toLowerCase().replace('florão básico', 'florão b.');
+        details.push(`**B. cano:** ${bord}${order.corBordadoCano ? ' ' + order.corBordadoCano.toLowerCase() : ''}`);
+      }
+      if (order.bordadoGaspea) {
+        const bord = order.bordadoGaspea.toLowerCase().replace('florão básico', 'florão b.');
+        details.push(`**B. gáspea:** ${bord}${order.corBordadoGaspea ? ' ' + order.corBordadoGaspea.toLowerCase() : ''}`);
+      }
+      if (order.bordadoTaloneira) {
+        const bord = order.bordadoTaloneira.toLowerCase().replace('florão básico', 'florão b.');
+        details.push(`**B. taloneira:** ${bord}${order.corBordadoTaloneira ? ' ' + order.corBordadoTaloneira.toLowerCase() : ''}`);
+      }
+      // Nome bordado
+      if (order.nomeBordadoDesc || order.personalizacaoNome) {
+        details.push(`**Nome bordado:** ${order.nomeBordadoDesc || order.personalizacaoNome}`);
+      }
+      // Laser - merged with glitter
+      if (order.laserCano) {
+        details.push(`**L. cano:** ${order.laserCano.toLowerCase()}${order.corGlitterCano ? ' ' + order.corGlitterCano.toLowerCase() : ''}`);
+      }
+      if (order.laserGaspea) {
+        details.push(`**L. gáspea:** ${order.laserGaspea.toLowerCase()}${order.corGlitterGaspea ? ' ' + order.corGlitterGaspea.toLowerCase() : ''}`);
+      }
+      if (order.laserTaloneira) {
+        details.push(`**L. taloneira:** ${order.laserTaloneira.toLowerCase()}${order.corGlitterTaloneira ? ' ' + order.corGlitterTaloneira.toLowerCase() : ''}`);
+      }
+      // Estampa
+      if (order.estampa === 'Sim' && order.estampaDesc) {
+        details.push(`**L. estampa:** ${order.estampaDesc.toLowerCase()}`);
+      }
+      // Pintura
+      if (order.pintura === 'Sim') {
+        details.push(`**Pintura:** ${order.pinturaDesc || 'sim'}`);
+      }
+      // Linha
+      if (order.corLinha) details.push(`**Linha:** ${order.corLinha.toLowerCase()}`);
+      // Borrachinha
+      if (order.corBorrachinha) details.push(`**Borrachinha:** ${order.corBorrachinha.toLowerCase()}`);
+      // Vivo
+      if (order.corVivo) details.push(`**Vivo:** ${order.corVivo.toLowerCase()}`);
+      // Metal - merged
+      if (order.metais) {
+        let metalStr = order.metais.toLowerCase();
+        if (order.tipoMetal) metalStr += ', ' + order.tipoMetal.toLowerCase();
+        if (order.corMetal) metalStr += ', ' + order.corMetal.toLowerCase();
+        details.push(`**Metal:** ${metalStr}`);
+      }
+      // Strass
+      if (order.strassQtd) details.push(`**Strass:** ${order.strassQtd} un.`);
+      // Cruz Metal
+      if (order.cruzMetalQtd) details.push(`**Cruz metal:** ${order.cruzMetalQtd} un.`);
+      // Bridão Metal
+      if (order.bridaoMetalQtd) details.push(`**Bridão metal:** ${order.bridaoMetalQtd} un.`);
+      // Tricê
+      if (order.trisce === 'Sim') details.push(`**Tricê:** ${order.triceDesc ? order.triceDesc.toLowerCase() : 'sim'}`);
+      // Tiras
+      if (order.tiras === 'Sim') details.push(`**Tiras:** ${order.tirasDesc ? order.tirasDesc.toLowerCase() : 'sim'}`);
+      // Solado + Cor sola + Formato bico - grouped
+      if (order.solado) {
+        let solaStr = order.solado.toLowerCase();
+        if (order.corSola) solaStr += ' ' + order.corSola.toLowerCase();
+        details.push(`**Sola:** ${solaStr}`);
+      }
+      if (order.formatoBico) {
+        details.push(`**Bico:** ${order.formatoBico.toLowerCase()}`);
+      }
+      if (order.corVira) details.push(`**Vira:** ${order.corVira.toLowerCase()}`);
+      // Costura atrás
+      if (order.costuraAtras === 'Sim') details.push(`**Costura atrás:** sim`);
+      // Carimbo
+      if (order.carimbo) {
+        details.push(`**Carimbo:** ${order.carimbo.toLowerCase()}${order.carimboDesc ? ' ' + order.carimboDesc : ''}`);
+      }
+      // Acessórios
+      if (order.acessorios) details.push(`**Acessórios:** ${order.acessorios.toLowerCase()}`);
+      // Sob medida
+      if (order.sobMedida) details.push(`**Sob medida:** ${order.sobMedidaDesc || 'sim'}`);
+      // Desenvolvimento
+      if (order.desenvolvimento) details.push(`**Desenvolvimento:** ${order.desenvolvimento.toLowerCase()}`);
+      // Adicional
+      if (order.adicionalDesc) details.push(`**Adicional:** ${order.adicionalDesc}`);
+      // Observação
+      if (order.observacao) details.push(`**Obs:** ${order.observacao}`);
 
-      const details: [string, string][] = [
-        ['Modelo', order.modelo],
-        ['Tamanho', order.tamanho ? `${order.tamanho}${order.genero ? ' — ' + order.genero : ''}` : ''],
-        ['Sob Medida', order.sobMedida ? `Sim${order.sobMedidaDesc ? ' — ' + order.sobMedidaDesc : ''}` : ''],
-        ['Acessórios', order.acessorios],
-        ['Couro Cano', order.couroCano ? `${order.couroCano}${order.corCouroCano ? ' / ' + order.corCouroCano : ''}` : ''],
-        ['Couro Gáspea', order.couroGaspea ? `${order.couroGaspea}${order.corCouroGaspea ? ' / ' + order.corCouroGaspea : ''}` : ''],
-        ['Couro Talon.', order.couroTaloneira ? `${order.couroTaloneira}${order.corCouroTaloneira ? ' / ' + order.corCouroTaloneira : ''}` : ''],
-        ['Desenvolvimento', order.desenvolvimento],
-        ['B. Cano', order.bordadoCano],
-        ['Cor B. Cano', order.corBordadoCano || ''],
-        ['B. Gáspea', order.bordadoGaspea],
-        ['Cor B. Gáspea', order.corBordadoGaspea || ''],
-        ['B. Talon.', order.bordadoTaloneira],
-        ['Cor B. Talon.', order.corBordadoTaloneira || ''],
-        ['Nome Bordado', order.nomeBordadoDesc || order.personalizacaoNome || ''],
-        ['Laser Cano', order.laserCano || ''],
-        ['Glitter Cano', order.corGlitterCano || ''],
-        ['Laser Gáspea', order.laserGaspea || ''],
-        ['Glitter Gáspea', order.corGlitterGaspea || ''],
-        ['Laser Talon.', order.laserTaloneira || ''],
-        ['Glitter Talon.', order.corGlitterTaloneira || ''],
-        ['Pintura', order.pintura === 'Sim' ? (order.pinturaDesc || 'Sim') : ''],
-        ['Estampa', order.estampa === 'Sim' ? (order.estampaDesc ? `Sim — ${order.estampaDesc}` : 'Sim') : ''],
-        ['Cor Linha', order.corLinha],
-        ['Borrachinha', order.corBorrachinha],
-        ['Cor Vivo', order.corVivo || ''],
-        ['Metal', order.metais],
-        ['Tipo Metal', order.tipoMetal || ''],
-        ['Cor Metal', order.corMetal || ''],
-        ['Strass', order.strassQtd ? `${order.strassQtd} un.` : ''],
-        ['Cruz Metal', order.cruzMetalQtd ? `${order.cruzMetalQtd} un.` : ''],
-        ['Bridão Metal', order.bridaoMetalQtd ? `${order.bridaoMetalQtd} un.` : ''],
-        ['Tricê', order.trisce === 'Sim' ? (order.triceDesc || 'Sim') : ''],
-        ['Tiras', order.tiras === 'Sim' ? (order.tirasDesc || 'Sim') : ''],
-        ['Solado', order.solado],
-        ['Formato Bico', order.formatoBico || ''],
-        ['Cor Sola', order.corSola || ''],
-        ['Cor Vira', order.corVira || ''],
-        ['Costura Atrás', order.costuraAtras === 'Sim' ? 'Sim' : ''],
-        ['Carimbo', order.carimbo ? `${order.carimbo}${order.carimboDesc ? ' — ' + order.carimboDesc : ''}` : ''],
-        ['Adicional', order.adicionalDesc || ''],
-      ].filter(([, v]) => v) as [string, string][];
+      // Render details in 2 columns
+      doc.setFontSize(8);
+      const lineH = 5;
+      const startY = descTop + 5;
+      const maxLines = Math.floor((descBottom - startY - 2) / lineH);
+      const col1X = m + 3;
+      const col2X = m + 3 + colW;
 
-      // Render in 2 columns on left half
-      let y = 60;
-      doc.setFontSize(7);
-      const itemsPerCol = Math.ceil(details.length / 2);
-      details.forEach(([label, value], i) => {
-        const col = i < itemsPerCol ? 0 : 1;
-        const row = i < itemsPerCol ? i : i - itemsPerCol;
-        const x = margin + col * colW;
-        const rowY = y + row * 6;
-        if (rowY > ph - 55) return;
-        doc.setFont('helvetica', 'bold');
-        doc.text(`${label}:`, x, rowY);
-        doc.setFont('helvetica', 'normal');
-        const valLines = doc.splitTextToSize(value, colW - 25);
-        doc.text(valLines[0] || '', x + 22, rowY);
+      let lineIdx = 0;
+      details.forEach((detail) => {
+        if (lineIdx >= maxLines * 2) return; // overflow protection
+        const col = lineIdx < maxLines ? 0 : 1;
+        const row = lineIdx < maxLines ? lineIdx : lineIdx - maxLines;
+        const x = col === 0 ? col1X : col2X;
+        const y = startY + row * lineH;
+
+        // Parse **bold:** normal pattern
+        const match = detail.match(/^\*\*(.+?)\*\*\s*(.*)$/);
+        if (match) {
+          doc.setFont('helvetica', 'bold');
+          doc.text(match[1], x, y);
+          doc.setFont('helvetica', 'normal');
+          const labelW = doc.getTextWidth(match[1] + ' ');
+          const availW = colW - labelW - 2;
+          const valText = doc.splitTextToSize(match[2], availW);
+          doc.text(valText[0] || '', x + labelW, y);
+          // If text wraps, count extra lines
+          if (valText.length > 1) {
+            for (let vi = 1; vi < valText.length && lineIdx + vi < maxLines * 2; vi++) {
+              const extraY = y + vi * lineH;
+              doc.text(valText[vi], x + labelW, extraY);
+              lineIdx++;
+            }
+          }
+        } else {
+          doc.text(detail, x, y);
+        }
+        lineIdx++;
       });
 
-      // Observação below columns
-      const obsY = y + Math.max(itemsPerCol, details.length - itemsPerCol) * 6 + 4;
-      if (order.observacao && obsY < ph - 55) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('Obs:', margin, obsY);
-        doc.setFont('helvetica', 'normal');
-        const obsLines = doc.splitTextToSize(order.observacao, halfW - margin * 2);
-        doc.text(obsLines, margin + 10, obsY);
-      }
-
-      // ─── RIGHT HALF: Photo ───
+      // ─── PHOTO (right side, between header and stubs) ───
       if (order.fotos && order.fotos.length > 0) {
         try {
-          const photoW = halfW - margin * 2;
-          const photoH = photoW * 0.65;
-          doc.addImage(order.fotos[0], 'JPEG', halfW + margin, 15, photoW, photoH);
+          const photoW = pw - m - photoX - 3;
+          const photoH = descBottom - headerBottom - 4;
+          doc.addImage(order.fotos[0], 'JPEG', photoX + 2, headerBottom + 2, photoW, photoH);
         } catch { /* skip invalid */ }
       }
 
-      // ─── BOTTOM: Production stubs (simplified: stage name + barcode only) ───
-      const stubY = ph - 35;
-      doc.setDrawColor(150);
-      doc.line(5, stubY - 3, pw - 5, stubY - 3);
+      // ─── STUBS (bottom) ───
+      const stubs = ['CORTE', 'BORDADO / LASER', 'PESPONTO', 'EXPEDIÇÃO'];
+      const stubAreaW = pw - m * 2;
+      const singleStubW = stubAreaW / 4;
+      const bcVal = orderBarcodeValue(order.numero);
+      const bcUrl = barcodeDataUrl(bcVal, { width: 1, height: 30 });
+      const orderNumClean = order.numero.replace('7E-', '');
 
-      const stubs = ['CORTE', 'BORDADO OU LASER', 'PESPONTO', 'EXPEDIÇÃO'];
-      const stubW = (pw - 10) / 4;
       stubs.forEach((stub, i) => {
-        const x = 5 + i * stubW;
-        doc.setFontSize(7);
+        const sx = m + i * singleStubW;
+        // Vertical dividers between stubs
+        if (i > 0) {
+          doc.setDrawColor(0);
+          doc.setLineWidth(0.3);
+          doc.line(sx, stubTop, sx, contentH - m);
+        }
+        // Stage name centered
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        doc.text(stub, x + 2, stubY + 2);
-        // Barcode in stub
+        const textW = doc.getTextWidth(stub);
+        doc.text(stub, sx + (singleStubW - textW) / 2, stubTop + 5);
+        // Barcode centered
         if (bcUrl) {
-          try { doc.addImage(bcUrl, 'PNG', x + 2, stubY + 4, stubW - 6, 10); } catch {}
+          const bcW = singleStubW - 10;
+          try { doc.addImage(bcUrl, 'PNG', sx + 5, stubTop + 7, bcW, 10); } catch {}
         }
-        doc.setFontSize(5);
-        doc.setFont('helvetica', 'normal');
-        doc.text(order.numero, x + 2, stubY + 17);
-        if (i < 3) {
-          doc.setDrawColor(180);
-          doc.line(x + stubW, stubY - 3, x + stubW, stubY + 30);
-        }
+        // Order number below barcode, centered, larger
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        const numW = doc.getTextWidth(orderNumClean);
+        doc.text(orderNumClean, sx + (singleStubW - numW) / 2, stubTop + 22);
       });
     });
 
