@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, formatBrasiliaDate, formatBrasiliaTime } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
