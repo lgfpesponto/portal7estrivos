@@ -3,7 +3,6 @@ import { useAuth, businessDaysRemaining } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { ArrowLeft, CheckCircle2, Clock, History } from 'lucide-react';
 import {
-import {
   MODELOS, ACESSORIOS, BORDADOS, COURO_PRECOS, SOLADO, COR_SOLA, COR_VIRA,
   CARIMBO, AREA_METAL, DESENVOLVIMENTO,
   SOB_MEDIDA_PRECO, NOME_BORDADO_PRECO, ESTAMPA_PRECO, PINTURA_PRECO,
