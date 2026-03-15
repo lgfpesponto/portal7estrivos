@@ -616,6 +616,15 @@ const ReportsPage = () => {
             <option value="">Selecione a etapa...</option>
             {PRODUCTION_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
+          <div className="mt-3">
+            <label className="block text-xs font-semibold mb-1">Observação (opcional)</label>
+            <textarea
+              value={progressObservacao}
+              onChange={e => setProgressObservacao(e.target.value)}
+              placeholder="Ex: pedido priorizado..."
+              className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary outline-none min-h-[60px]"
+            />
+          </div>
           <DialogFooter className="mt-4">
             <button onClick={() => setShowProgressModal(false)} className="px-4 py-2 rounded-lg bg-muted text-foreground font-bold text-sm">Cancelar</button>
             <button onClick={handleBulkProgressUpdate} className="px-4 py-2 rounded-lg orange-gradient text-primary-foreground font-bold text-sm hover:opacity-90">OK</button>

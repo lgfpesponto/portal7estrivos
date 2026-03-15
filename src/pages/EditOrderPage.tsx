@@ -333,10 +333,19 @@ const EditOrderPage = () => {
 
           <Section title="Laser">
             <MultiSelect label="Laser do Cano (+R$50)" items={LASER_ITEMS} selected={laserCano} onChange={setLaserCano} />
+            {laserCano.includes('Outro') && (
+              <div><label className={cls.label}>Descreva o laser (Outro) - Cano</label><input type="text" value={laserOutroCanoText} onChange={e => setLaserOutroCanoText(e.target.value)} className={cls.input} placeholder="Nome do laser..." /></div>
+            )}
             <SelectField label="Cor Glitter/Tecido do Cano (+R$30)" value={corGlitterCano} onChange={setCorGlitterCano} options={COR_GLITTER} />
             <MultiSelect label="Laser da Gáspea (+R$50)" items={LASER_ITEMS} selected={laserGaspea} onChange={setLaserGaspea} />
+            {laserGaspea.includes('Outro') && (
+              <div><label className={cls.label}>Descreva o laser (Outro) - Gáspea</label><input type="text" value={laserOutroGaspeaText} onChange={e => setLaserOutroGaspeaText(e.target.value)} className={cls.input} placeholder="Nome do laser..." /></div>
+            )}
             <SelectField label="Cor Glitter/Tecido da Gáspea (+R$30)" value={corGlitterGaspea} onChange={setCorGlitterGaspea} options={COR_GLITTER} />
             <MultiSelect label="Laser da Taloneira (sem custo)" items={LASER_ITEMS} selected={laserTaloneira} onChange={setLaserTaloneira} />
+            {laserTaloneira.includes('Outro') && (
+              <div><label className={cls.label}>Descreva o laser (Outro) - Taloneira</label><input type="text" value={laserOutroTaloneiraText} onChange={e => setLaserOutroTaloneiraText(e.target.value)} className={cls.input} placeholder="Nome do laser..." /></div>
+            )}
             <SelectField label="Cor Glitter/Tecido da Taloneira (sem custo)" value={corGlitterTaloneira} onChange={setCorGlitterTaloneira} options={COR_GLITTER} />
             <ToggleField label={`Pintura (+R$${PINTURA_PRECO})`} value={pintura} onChange={setPintura} textValue={pinturaDesc} onTextChange={setPinturaDesc} textPlaceholder="Cor da tinta..." />
           </Section>
