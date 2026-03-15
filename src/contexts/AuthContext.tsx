@@ -384,13 +384,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }));
   }, []);
 
-  const updateOrderStatus = useCallback((id: string, newStatus: string) => {
+  const updateOrderStatus = useCallback((id: string, newStatus: string, observacao?: string) => {
     const dataHoje = formatBrasiliaDate();
     const horaAgora = formatBrasiliaTime();
     setOrders(prev => prev.map(o => {
       if (o.id !== id) return o;
-      const newHistEntry = { data: dataHoje, hora: horaAgora, local: newStatus, descricao: `Pedido movido para ${newStatus}` };
-      const altEntry: OrderAlteracao = { data: dataHoje, hora: horaAgora, descricao: `Alterado progresso para ${newStatus}` };
+      const newHistEntry = { data: dataHoje, hora: horaAgora, local: newStatus, descricao: `Pedido movido para ${newStatus}`, observacao: observacao || undefined };
+      const altEntry: OrderAlteracao = { data: dataHoje, hora: horaAgora, descricao: `Alterado progresso para ${newStatus}${observacao ? ` — Obs: ${observacao}` : ''}` };
       return { ...o, status: newStatus, historico: [...o.historico, newHistEntry], alteracoes: [...(o.alteracoes || []), altEntry] };
     }));
   }, []);
