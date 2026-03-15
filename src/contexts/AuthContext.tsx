@@ -163,7 +163,8 @@ interface AuthContextType {
   addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status' | 'alteracoes'> & { numeroPedido?: string }) => void;
   deleteOrder: (id: string) => void;
   updateOrder: (id: string, data: Partial<Order>) => void;
-  updateOrderStatus: (id: string, newStatus: string) => void;
+  updateOrderStatus: (id: string, newStatus: string, observacao?: string) => void;
+  isFernanda: boolean;
   recoverPassword: (cpfCnpj: string, digits: string) => boolean;
   allOrders: Order[];
 }
