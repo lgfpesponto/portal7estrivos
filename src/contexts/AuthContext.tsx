@@ -1,5 +1,20 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
+/** Get current date/time in Brasília timezone */
+function nowBrasilia(): Date {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+}
+
+export function formatBrasiliaDate(): string {
+  const d = nowBrasilia();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export function formatBrasiliaTime(): string {
+  const d = nowBrasilia();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
 export interface User {
   id: string;
   nomeCompleto: string;
@@ -8,6 +23,12 @@ export interface User {
   email: string;
   cpfCnpj: string;
   isAdmin?: boolean;
+}
+
+export interface OrderAlteracao {
+  data: string;
+  hora: string;
+  descricao: string;
 }
 
 export interface Order {
@@ -60,7 +81,8 @@ export interface Order {
   diasRestantes: number;
   temLaser: boolean;
   fotos: string[];
-  historico: { data: string; local: string; descricao: string }[];
+  historico: { data: string; hora: string; local: string; descricao: string }[];
+  alteracoes: OrderAlteracao[];
   laserCano?: string;
   corGlitterCano?: string;
   laserGaspea?: string;
@@ -111,7 +133,7 @@ function addBusinessDays(startDate: Date, days: number): Date {
 
 export function businessDaysRemaining(startDate: Date, totalBusinessDays: number): number {
   const deadline = addBusinessDays(startDate, totalBusinessDays);
-  const now = new Date();
+  const now = nowBrasilia();
   if (now >= deadline) return 0;
   let count = 0;
   const d = new Date(now);
@@ -123,6 +145,12 @@ export function businessDaysRemaining(startDate: Date, totalBusinessDays: number
   return count;
 }
 
+/** Format barcode content from order number: pad to 10 digits */
+export function orderBarcodeValue(numero: string): string {
+  const digits = numero.replace(/\D/g, '');
+  return digits.padStart(10, '0');
+}
+
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
@@ -132,7 +160,7 @@ interface AuthContextType {
   logout: () => void;
   updateProfile: (data: Partial<Omit<User, 'id' | 'isAdmin'>>) => void;
   orders: Order[];
-  addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status'> & { numeroPedido?: string }) => void;
+  addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status' | 'alteracoes'> & { numeroPedido?: string }) => void;
   deleteOrder: (id: string) => void;
   updateOrder: (id: string, data: Partial<Order>) => void;
   updateOrderStatus: (id: string, newStatus: string) => void;
@@ -145,7 +173,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const generateMockOrders = (): Order[] => {
   const models = ["Bota Tradicional", "Bota Feminino", "Coturno", "Capota", "Botina"];
   const statuses = ["Em aberto", "Corte", "Bordado 7Estrivos", "Montagem", "Revisão", "Expedição", "Entregue", "Pago"];
-  const vendedores = ["Revendedor Demo", "Samuel", "Carlos", "Fernanda"];
+  const vendedores = ["Revendedor Demo", "Samuel", "Carlos", "Fernanda ADM"];
 
   return Array.from({ length: 12 }, (_, i) => {
     const statusIdx = Math.floor(Math.random() * statuses.length);
@@ -198,8 +226,16 @@ const generateMockOrders = (): Order[] => {
       historico: PRODUCTION_STATUSES.slice(0, statusIdx + 1).map((s, j) => {
         const d = new Date(createdDate);
         d.setDate(d.getDate() + j * 2);
-        return { data: d.toISOString().split('T')[0], local: s, descricao: `Pedido movido para ${s}` };
+        const h = Math.floor(Math.random() * 14) + 6;
+        const m = Math.floor(Math.random() * 60);
+        return {
+          data: d.toISOString().split('T')[0],
+          hora: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
+          local: s,
+          descricao: `Pedido movido para ${s}`,
+        };
       }),
+      alteracoes: [],
     };
   });
 };
@@ -227,6 +263,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         telefone: '(16) 99114-9227',
         email: 'lgfpesponto@gmail.com',
         cpfCnpj: '02139487000113',
+        isAdmin: true,
+      });
+      return true;
+    }
+    if (username.toLowerCase() === 'fernanda' && password === 'admin123') {
+      setUser({
+        id: 'admin-2',
+        nomeCompleto: 'Fernanda ADM',
+        nomeUsuario: 'fernanda',
+        telefone: '',
+        email: 'fernanda@7estrivos.com',
+        cpfCnpj: '',
         isAdmin: true,
       });
       return true;
@@ -264,19 +312,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return digits === '123' || registeredUsers.some(u => u.cpfCnpj.startsWith(digits));
   }, []);
 
-  const addOrder = useCallback((orderData: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status'> & { numeroPedido?: string }) => {
+  const addOrder = useCallback((orderData: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status' | 'alteracoes'> & { numeroPedido?: string }) => {
     const { numeroPedido, ...rest } = orderData;
-    const now = new Date();
+    const dataHoje = formatBrasiliaDate();
+    const horaAgora = formatBrasiliaTime();
     const totalBizDays = rest.temLaser ? 30 : 10;
     const newOrder: Order = {
       ...rest,
       id: `order-${Date.now()}`,
-      numero: numeroPedido || `7E-${now.getFullYear()}${String(orders.length + 1).padStart(4, '0')}`,
-      dataCriacao: now.toISOString().split('T')[0],
-      horaCriacao: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+      numero: numeroPedido || `7E-${dataHoje.slice(0, 4)}${String(orders.length + 1).padStart(4, '0')}`,
+      dataCriacao: dataHoje,
+      horaCriacao: horaAgora,
       diasRestantes: totalBizDays,
       status: 'Em aberto',
-      historico: [{ data: now.toISOString().split('T')[0], local: 'Em aberto', descricao: 'Pedido criado' }],
+      historico: [{ data: dataHoje, hora: horaAgora, local: 'Em aberto', descricao: 'Pedido criado' }],
+      alteracoes: [],
     };
     setOrders(prev => [newOrder, ...prev]);
   }, [orders.length]);
@@ -286,15 +336,60 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const updateOrder = useCallback((id: string, data: Partial<Order>) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, ...data } : o));
+    const dataHoje = formatBrasiliaDate();
+    const horaAgora = formatBrasiliaTime();
+    setOrders(prev => prev.map(o => {
+      if (o.id !== id) return o;
+      // Build change descriptions
+      const changes: OrderAlteracao[] = [];
+      const fieldLabels: Record<string, string> = {
+        modelo: 'Modelo', tamanho: 'Tamanho', genero: 'Gênero', solado: 'Solado',
+        couroCano: 'Couro do Cano', couroGaspea: 'Couro da Gáspea', couroTaloneira: 'Couro da Taloneira',
+        corCouroCano: 'Cor Couro Cano', corCouroGaspea: 'Cor Couro Gáspea', corCouroTaloneira: 'Cor Couro Taloneira',
+        bordadoCano: 'Bordado Cano', bordadoGaspea: 'Bordado Gáspea', bordadoTaloneira: 'Bordado Taloneira',
+        corBordadoCano: 'Cor Bordado Cano', corBordadoGaspea: 'Cor Bordado Gáspea', corBordadoTaloneira: 'Cor Bordado Taloneira',
+        nomeBordadoDesc: 'Nome Bordado', laserCano: 'Laser Cano', laserGaspea: 'Laser Gáspea',
+        laserTaloneira: 'Laser Taloneira', corGlitterCano: 'Glitter Cano', corGlitterGaspea: 'Glitter Gáspea',
+        corGlitterTaloneira: 'Glitter Taloneira', pintura: 'Pintura', pinturaDesc: 'Cor Pintura',
+        estampa: 'Estampa', estampaDesc: 'Descrição Estampa', corLinha: 'Cor da Linha',
+        corBorrachinha: 'Cor Borrachinha', corVivo: 'Cor do Vivo', metais: 'Área Metal',
+        tipoMetal: 'Tipo Metal', corMetal: 'Cor Metal', observacao: 'Observação',
+        desenvolvimento: 'Desenvolvimento', acessorios: 'Acessórios', corVira: 'Cor Vira',
+        corSola: 'Cor Sola', costuraAtras: 'Costura Atrás', carimbo: 'Carimbo',
+        carimboDesc: 'Descrição Carimbo', adicionalDesc: 'Adicional', formatoBico: 'Formato Bico',
+        preco: 'Valor total',
+      };
+      for (const key of Object.keys(data)) {
+        if (key === 'historico' || key === 'alteracoes') continue;
+        const oldVal = String((o as any)[key] ?? '');
+        const newVal = String((data as any)[key] ?? '');
+        if (oldVal !== newVal) {
+          const label = fieldLabels[key] || key;
+          if (oldVal && newVal) {
+            changes.push({ data: dataHoje, hora: horaAgora, descricao: `Alterado ${label} de "${oldVal}" para "${newVal}"` });
+          } else if (newVal) {
+            changes.push({ data: dataHoje, hora: horaAgora, descricao: `Adicionado ${label}: "${newVal}"` });
+          } else {
+            changes.push({ data: dataHoje, hora: horaAgora, descricao: `Removido ${label}` });
+          }
+        }
+      }
+      // Check fotos change
+      if (data.fotos && JSON.stringify(data.fotos) !== JSON.stringify(o.fotos)) {
+        changes.push({ data: dataHoje, hora: horaAgora, descricao: 'Foto de referência alterada' });
+      }
+      return { ...o, ...data, alteracoes: [...(o.alteracoes || []), ...changes] };
+    }));
   }, []);
 
   const updateOrderStatus = useCallback((id: string, newStatus: string) => {
+    const dataHoje = formatBrasiliaDate();
+    const horaAgora = formatBrasiliaTime();
     setOrders(prev => prev.map(o => {
       if (o.id !== id) return o;
-      const now = new Date();
-      const newHistEntry = { data: now.toISOString().split('T')[0], local: newStatus, descricao: `Pedido movido para ${newStatus}` };
-      return { ...o, status: newStatus, historico: [...o.historico, newHistEntry] };
+      const newHistEntry = { data: dataHoje, hora: horaAgora, local: newStatus, descricao: `Pedido movido para ${newStatus}` };
+      const altEntry: OrderAlteracao = { data: dataHoje, hora: horaAgora, descricao: `Alterado progresso para ${newStatus}` };
+      return { ...o, status: newStatus, historico: [...o.historico, newHistEntry], alteracoes: [...(o.alteracoes || []), altEntry] };
     }));
   }, []);
 

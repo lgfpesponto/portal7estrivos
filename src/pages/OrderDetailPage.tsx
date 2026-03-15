@@ -1,7 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth, businessDaysRemaining } from '@/contexts/AuthContext';
+import { useAuth, businessDaysRemaining, orderBarcodeValue } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CheckCircle2, Clock } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock, History } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import JsBarcode from 'jsbarcode';
 import {
   MODELOS, ACESSORIOS, BORDADOS, COURO_PRECOS, SOLADO, COR_SOLA, COR_VIRA,
   CARIMBO, AREA_METAL, DESENVOLVIMENTO,
@@ -15,6 +17,18 @@ const OrderDetailPage = () => {
   const { orders, isAdmin } = useAuth();
   const navigate = useNavigate();
   const order = orders.find(o => o.id === id);
+  const barcodeRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (order && barcodeRef.current) {
+      try {
+        JsBarcode(barcodeRef.current, orderBarcodeValue(order.numero), {
+          format: 'CODE128', width: 1.5, height: 40, displayValue: true,
+          text: order.numero, fontSize: 12, margin: 5,
+        });
+      } catch { /* ignore */ }
+    }
+  }, [order]);
 
   if (!order) {
     return (
@@ -37,7 +51,6 @@ const OrderDetailPage = () => {
   const daysLeft = businessDaysRemaining(createdDate, totalBizDays);
 
   // Build details list (only filled fields)
-  // For non-admin: hide vendedor. For admin: vendedor shown in header instead.
   const details: [string, string][] = [
     ['Modelo', order.modelo],
     ['Tamanho', order.tamanho ? `${order.tamanho}${order.genero ? ' — ' + order.genero : ''}` : ''],
@@ -90,52 +103,37 @@ const OrderDetailPage = () => {
   const modeloP = MODELOS.find(m => m.label === order.modelo)?.preco;
   if (modeloP) priceItems.push(['Modelo: ' + order.modelo, modeloP]);
   if (order.sobMedida) priceItems.push(['Sob Medida', SOB_MEDIDA_PRECO]);
-
-  // Acessórios
   if (order.acessorios) {
     order.acessorios.split(', ').filter(Boolean).forEach(a => {
       const p = ACESSORIOS.find(x => x.label === a)?.preco;
       if (p) priceItems.push([a, p]);
     });
   }
-
-  // Couros
   [order.couroCano, order.couroGaspea, order.couroTaloneira].forEach(t => {
     if (t && COURO_PRECOS[t]) priceItems.push(['Couro: ' + t, COURO_PRECOS[t]]);
   });
-
-  // Desenvolvimento
   const desenvP = DESENVOLVIMENTO.find(d => d.label === order.desenvolvimento)?.preco;
   if (desenvP) priceItems.push(['Desenvolvimento: ' + order.desenvolvimento, desenvP]);
-
-  // Bordados
   [order.bordadoCano, order.bordadoGaspea, order.bordadoTaloneira].forEach(bStr => {
     if (bStr) bStr.split(', ').filter(Boolean).forEach(b => {
       const p = BORDADOS.find(x => x.label === b)?.preco;
       if (p) priceItems.push([b, p]);
     });
   });
-
   if (order.nomeBordadoDesc || order.personalizacaoNome) priceItems.push(['Nome Bordado', NOME_BORDADO_PRECO]);
-
-  // Laser
   if (order.laserCano) priceItems.push(['Laser Cano', LASER_CANO_PRECO]);
   if (order.corGlitterCano) priceItems.push(['Glitter/Tecido Cano', GLITTER_CANO_PRECO]);
   if (order.laserGaspea) priceItems.push(['Laser Gáspea', LASER_GASPEA_PRECO]);
   if (order.corGlitterGaspea) priceItems.push(['Glitter/Tecido Gáspea', GLITTER_GASPEA_PRECO]);
-
   if (order.pintura === 'Sim') priceItems.push(['Pintura', PINTURA_PRECO]);
   if (order.estampa === 'Sim') priceItems.push(['Estampa', ESTAMPA_PRECO]);
-
   const areaP = AREA_METAL.find(a => a.label === order.metais)?.preco;
   if (areaP) priceItems.push(['Área Metal: ' + order.metais, areaP]);
   if (order.strassQtd) priceItems.push([`Strass (${order.strassQtd} un.)`, order.strassQtd * STRASS_PRECO]);
   if (order.cruzMetalQtd) priceItems.push([`Cruz metal (${order.cruzMetalQtd} un.)`, order.cruzMetalQtd * CRUZ_METAL_PRECO]);
   if (order.bridaoMetalQtd) priceItems.push([`Bridão metal (${order.bridaoMetalQtd} un.)`, order.bridaoMetalQtd * BRIDAO_METAL_PRECO]);
-
   if (order.trisce === 'Sim') priceItems.push(['Tricê', TRICE_PRECO]);
   if (order.tiras === 'Sim') priceItems.push(['Tiras', TIRAS_PRECO]);
-
   const soladoP = SOLADO.find(s => s.label === order.solado)?.preco;
   if (soladoP) priceItems.push(['Solado: ' + order.solado, soladoP]);
   const corSolaP = COR_SOLA.find(c => c.label === order.corSola)?.preco;
@@ -143,12 +141,12 @@ const OrderDetailPage = () => {
   const corViraP = COR_VIRA.find(c => c.label === order.corVira)?.preco;
   if (corViraP) priceItems.push(['Cor Vira: ' + order.corVira, corViraP]);
   if (order.costuraAtras === 'Sim') priceItems.push(['Costura Atrás', COSTURA_ATRAS_PRECO]);
-
   const carimboP = CARIMBO.find(c => c.label === order.carimbo)?.preco;
   if (carimboP) priceItems.push([order.carimbo!, carimboP]);
   if (order.adicionalValor && order.adicionalValor > 0) priceItems.push(['Adicional: ' + (order.adicionalDesc || ''), order.adicionalValor]);
-
   const totalCalc = priceItems.reduce((s, [, v]) => s + v, 0);
+
+  const alteracoes = order.alteracoes || [];
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -158,7 +156,7 @@ const OrderDetailPage = () => {
         </button>
 
         <div className="bg-card rounded-xl p-6 md:p-8 western-shadow">
-          {/* 1 - Número do pedido + valor + vendedor (admin only) */}
+          {/* Header: order number + vendedor (admin only) + value */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-display font-bold">{order.numero}</h1>
@@ -170,7 +168,7 @@ const OrderDetailPage = () => {
             {formatDateBR(order.dataCriacao)} — {order.horaCriacao || ''}
           </p>
           {/* Days remaining */}
-          <div className="flex items-center gap-2 mb-6">
+          <div className="flex items-center gap-2 mb-4">
             <Clock size={14} className="text-primary" />
             <span className="text-sm font-semibold">
               {daysLeft > 0 ? `${daysLeft} dias úteis restantes` : 'Prazo atingido ✓'}
@@ -180,24 +178,53 @@ const OrderDetailPage = () => {
             </span>
           </div>
 
-          {/* 2 - Histórico de Produção */}
-          <h2 className="text-lg font-display font-bold mb-3">Histórico de Produção</h2>
-          <div className="space-y-3 mb-8">
-            {order.historico.map((h, i) => (
-              <div key={i} className="flex gap-3">
-                <div className="flex flex-col items-center">
-                  <CheckCircle2 size={18} className="text-primary flex-shrink-0" />
-                  {i < order.historico.length - 1 && <div className="w-0.5 h-full bg-border mt-1" />}
-                </div>
-                <div className="pb-3">
-                  <p className="text-sm font-semibold">{h.local}</p>
-                  <p className="text-xs text-muted-foreground">{formatDateBR(h.data)} — {h.descricao}</p>
-                </div>
-              </div>
-            ))}
+          {/* Barcode */}
+          <div className="mb-6 flex justify-center">
+            <svg ref={barcodeRef}></svg>
           </div>
 
-          {/* 3 - Detalhes da Bota */}
+          {/* Production History + Change History side by side */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {/* Histórico de Produção */}
+            <div>
+              <h2 className="text-lg font-display font-bold mb-3">Histórico de Produção</h2>
+              <div className="space-y-3">
+                {order.historico.map((h, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <CheckCircle2 size={18} className="text-primary flex-shrink-0" />
+                      {i < order.historico.length - 1 && <div className="w-0.5 h-full bg-border mt-1" />}
+                    </div>
+                    <div className="pb-3">
+                      <p className="text-sm font-semibold">{h.local}</p>
+                      <p className="text-xs text-muted-foreground">{formatDateBR(h.data)} às {h.hora || '—'} — {h.descricao}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Histórico de Alterações */}
+            <div>
+              <h2 className="text-lg font-display font-bold mb-3 flex items-center gap-2">
+                <History size={18} /> Histórico de Alterações
+              </h2>
+              {alteracoes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma alteração registrada.</p>
+              ) : (
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                  {alteracoes.map((a, i) => (
+                    <div key={i} className="border-b border-border/30 pb-2">
+                      <p className="text-xs text-muted-foreground">{formatDateBR(a.data)} às {a.hora}</p>
+                      <p className="text-sm">{a.descricao}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Detalhes da Bota */}
           <h2 className="text-lg font-display font-bold mb-3">Detalhes da Bota</h2>
           <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 mb-6">
             {details.map(([label, value]) => (
@@ -227,7 +254,7 @@ const OrderDetailPage = () => {
             </div>
           )}
 
-          {/* 14 - Lista detalhada com valores */}
+          {/* Composição do Pedido */}
           <h2 className="text-lg font-display font-bold mb-3">Composição do Pedido</h2>
           <div className="border border-border rounded-lg p-4 mb-2">
             {priceItems.map(([label, value], i) => (

@@ -1,10 +1,11 @@
-import { useAuth, PRODUCTION_STATUSES, PRODUCTION_STATUSES_USER } from '@/contexts/AuthContext';
+import { useAuth, PRODUCTION_STATUSES, PRODUCTION_STATUSES_USER, orderBarcodeValue } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Filter, FileText, Download, Printer, CheckCircle, StickyNote, Pencil, Trash2, RefreshCw } from 'lucide-react';
+import { Filter, FileText, Download, Printer, CheckCircle, StickyNote, Pencil, Trash2, RefreshCw, ScanBarcode } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
+import JsBarcode from 'jsbarcode';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -13,6 +14,18 @@ const formatDateBR = (date: string, time?: string) => {
   const [y, m, d] = date.split('-');
   return `${d}/${m}/${y}${time ? ` — ${time}` : ''}`;
 };
+
+/** Generate barcode as data URL for PDF embedding */
+function barcodeDataUrl(value: string, opts?: { width?: number; height?: number }): string {
+  const canvas = document.createElement('canvas');
+  try {
+    JsBarcode(canvas, value, {
+      format: 'CODE128', width: opts?.width ?? 1, height: opts?.height ?? 30,
+      displayValue: false, margin: 2,
+    });
+    return canvas.toDataURL('image/png');
+  } catch { return ''; }
+}
 
 const ReportsPage = () => {
   const { isLoggedIn, isAdmin, orders, allOrders, user, deleteOrder, updateOrderStatus } = useAuth();
@@ -28,12 +41,13 @@ const ReportsPage = () => {
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [selectedProgress, setSelectedProgress] = useState('');
 
+  // Barcode scanner
+  const [showScanner, setShowScanner] = useState(false);
+  const scanInputRef = useRef<HTMLInputElement>(null);
+  const [scanValue, setScanValue] = useState('');
+
   const [appliedFilters, setAppliedFilters] = useState({
-    searchQuery: '',
-    filterDate: '',
-    filterDateEnd: '',
-    filterStatus: '',
-    filterVendedor: '',
+    searchQuery: '', filterDate: '', filterDateEnd: '', filterStatus: '', filterVendedor: '',
   });
 
   const applyFilters = () => {
@@ -90,13 +104,45 @@ const ReportsPage = () => {
     setSelectedProgress('');
   };
 
+  // Barcode scan handler
+  const handleScan = useCallback((code: string) => {
+    const trimmed = code.trim();
+    if (!trimmed) return;
+    // Try to find order by barcode value or numero
+    const match = allOrders.find(o => {
+      const bv = orderBarcodeValue(o.numero);
+      return bv === trimmed || o.numero === trimmed || trimmed.endsWith(o.numero.replace(/\D/g, ''));
+    });
+    if (match) {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        if (!next.has(match.id)) {
+          next.add(match.id);
+          toast.success(`Pedido ${match.numero} selecionado.`);
+        } else {
+          toast.info(`Pedido ${match.numero} já está selecionado.`);
+        }
+        return next;
+      });
+    } else {
+      toast.error(`Pedido não encontrado para código: ${trimmed}`);
+    }
+    setScanValue('');
+  }, [allOrders]);
+
+  useEffect(() => {
+    if (showScanner && scanInputRef.current) {
+      scanInputRef.current.focus();
+    }
+  }, [showScanner]);
+
   const generateReportPDF = () => {
     const doc = new jsPDF();
     const list = ordersToExport;
     doc.setFontSize(18);
     doc.text('Relatório de Pedidos — 7ESTRIVOS', 14, 20);
     doc.setFontSize(10);
-    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 28);
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`, 14, 28);
 
     let y = 38;
     list.forEach((o, i) => {
@@ -115,7 +161,6 @@ const ReportsPage = () => {
     doc.setFont('helvetica', 'bold');
     doc.text(`Total de Pedidos: ${list.length}`, 14, y + 5);
     doc.text(`Valor Total: ${formatCurrency(list.reduce((s, o) => s + o.preco * o.quantidade, 0))}`, 14, y + 12);
-
     doc.save('relatorio-pedidos.pdf');
   };
 
@@ -140,6 +185,15 @@ const ReportsPage = () => {
       doc.text(`Vendedor: ${order.vendedor}`, margin, 28);
       doc.text(`Data: ${formatDateBR(order.dataCriacao, order.horaCriacao)}`, margin, 33);
       doc.text(`Prazo: ${order.temLaser ? '30' : '10'} dias úteis`, margin, 38);
+
+      // Barcode in header area (left side, below header info)
+      const bcVal = orderBarcodeValue(order.numero);
+      const bcUrl = barcodeDataUrl(bcVal, { width: 1, height: 25 });
+      if (bcUrl) {
+        try { doc.addImage(bcUrl, 'PNG', margin, 40, 60, 12); } catch {}
+      }
+      doc.setFontSize(6);
+      doc.text(order.numero, margin, 55);
 
       const details: [string, string][] = [
         ['Modelo', order.modelo],
@@ -186,7 +240,7 @@ const ReportsPage = () => {
       ].filter(([, v]) => v) as [string, string][];
 
       // Render in 2 columns on left half
-      let y = 46;
+      let y = 60;
       doc.setFontSize(7);
       const itemsPerCol = Math.ceil(details.length / 2);
       details.forEach(([label, value], i) => {
@@ -194,7 +248,7 @@ const ReportsPage = () => {
         const row = i < itemsPerCol ? i : i - itemsPerCol;
         const x = margin + col * colW;
         const rowY = y + row * 6;
-        if (rowY > ph - 55) return; // safety
+        if (rowY > ph - 55) return;
         doc.setFont('helvetica', 'bold');
         doc.text(`${label}:`, x, rowY);
         doc.setFont('helvetica', 'normal');
@@ -221,7 +275,7 @@ const ReportsPage = () => {
         } catch { /* skip invalid */ }
       }
 
-      // ─── BOTTOM: Production stubs ───
+      // ─── BOTTOM: Production stubs (simplified: stage name + barcode only) ───
       const stubY = ph - 35;
       doc.setDrawColor(150);
       doc.line(5, stubY - 3, pw - 5, stubY - 3);
@@ -233,11 +287,13 @@ const ReportsPage = () => {
         doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
         doc.text(stub, x + 2, stubY + 2);
+        // Barcode in stub
+        if (bcUrl) {
+          try { doc.addImage(bcUrl, 'PNG', x + 2, stubY + 4, stubW - 6, 10); } catch {}
+        }
+        doc.setFontSize(5);
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6);
-        doc.text(`PEDIDO: ${order.numero}`, x + 2, stubY + 7);
-        doc.text(`VENDEDOR: ${order.vendedor}`, x + 2, stubY + 11);
-        doc.text(`DATA: ${formatDateBR(order.dataCriacao, order.horaCriacao)}`, x + 2, stubY + 15);
+        doc.text(order.numero, x + 2, stubY + 17);
         if (i < 3) {
           doc.setDrawColor(180);
           doc.line(x + stubW, stubY - 3, x + stubW, stubY + 30);
@@ -280,6 +336,12 @@ const ReportsPage = () => {
           <button onClick={() => navigate('/pedido')} className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-bold text-sm hover:bg-primary/10 transition-colors">
             <FileText size={16} /> Fazer pedido
           </button>
+          {/* Admin: barcode scanner toggle */}
+          {isAdmin && (
+            <button onClick={() => setShowScanner(v => !v)} className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-bold text-sm hover:bg-primary/10 transition-colors">
+              <ScanBarcode size={16} /> {showScanner ? 'Fechar Scanner' : 'Escanear Código'}
+            </button>
+          )}
           {/* Admin bulk progress button */}
           {isAdmin && selectedIds.size > 0 && (
             <button onClick={() => setShowProgressModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg orange-gradient text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity ml-auto">
@@ -287,6 +349,39 @@ const ReportsPage = () => {
             </button>
           )}
         </div>
+
+        {/* Barcode scanner input (admin only) */}
+        {isAdmin && showScanner && (
+          <div className="bg-card rounded-xl p-4 western-shadow mb-4">
+            <div className="flex items-center gap-3">
+              <ScanBarcode size={20} className="text-primary flex-shrink-0" />
+              <div className="flex-1">
+                <label className="block text-xs font-semibold mb-1">Escaneie ou digite o código de barras do pedido</label>
+                <input
+                  ref={scanInputRef}
+                  type="text"
+                  value={scanValue}
+                  onChange={e => setScanValue(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleScan(scanValue);
+                    }
+                  }}
+                  placeholder="Escaneie o código de barras aqui..."
+                  className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                  autoFocus
+                />
+              </div>
+              <button onClick={() => handleScan(scanValue)} className="orange-gradient text-primary-foreground px-4 py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity">
+                Buscar
+              </button>
+            </div>
+            {selectedIds.size > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">{selectedIds.size} pedido(s) selecionado(s)</p>
+            )}
+          </div>
+        )}
 
         {/* Filters */}
         <div className="bg-card rounded-xl p-4 western-shadow mb-6">
@@ -385,10 +480,7 @@ const ReportsPage = () => {
         {/* Orders list */}
         <div className="space-y-3">
           {filteredOrders.map(order => (
-            <div
-              key={order.id}
-              className="bg-card rounded-xl p-4 western-shadow hover:shadow-xl transition-shadow flex items-center gap-3"
-            >
+            <div key={order.id} className="bg-card rounded-xl p-4 western-shadow hover:shadow-xl transition-shadow flex items-center gap-3">
               <button onClick={() => toggleSelect(order.id)} className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${selectedIds.has(order.id) ? 'bg-primary border-primary' : 'border-border hover:border-primary'}`}>
                 {selectedIds.has(order.id) && <CheckCircle size={14} className="text-primary-foreground" />}
               </button>

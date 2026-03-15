@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, formatBrasiliaDate, formatBrasiliaTime } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -319,7 +319,8 @@ const OrderPage = () => {
       adicionalDesc, adicionalValor: String(adicionalValor),
       observacao,
     };
-    saveDraft({ id, userId: user.id, savedAt: new Date().toISOString(), form, sobMedida, quantidade: 1, numeroPedido, fotos });
+    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    saveDraft({ id, userId: user.id, savedAt: now.toISOString(), form, sobMedida, quantidade: 1, numeroPedido, fotos });
     setDraftId(id);
     toast.success('Rascunho salvo!');
   };
