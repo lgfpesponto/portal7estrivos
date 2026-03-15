@@ -1,9 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth, businessDaysRemaining, orderBarcodeValue } from '@/contexts/AuthContext';
+import { useAuth, businessDaysRemaining } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { ArrowLeft, CheckCircle2, Clock, History } from 'lucide-react';
-import { useEffect, useRef } from 'react';
-import JsBarcode from 'jsbarcode';
+import {
 import {
   MODELOS, ACESSORIOS, BORDADOS, COURO_PRECOS, SOLADO, COR_SOLA, COR_VIRA,
   CARIMBO, AREA_METAL, DESENVOLVIMENTO,
