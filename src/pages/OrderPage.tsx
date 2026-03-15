@@ -588,22 +588,28 @@ const OrderPage = () => {
             <textarea value={observacao} onChange={e => setObservacao(e.target.value)} rows={3} className={cls.input + ' min-h-[80px]'} />
           </div>
 
-          {/* Fotos (limit 1) */}
+          {/* Link da Foto */}
           <div>
-            <label className={cls.label}>Foto de Referência (máx. 1)<span className="text-destructive ml-0.5">*</span></label>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-            <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 bg-muted border border-border rounded-lg text-sm font-semibold hover:border-primary transition-colors">
-              <Upload size={16} /> {fotos.length > 0 ? 'Substituir Foto' : 'Adicionar Foto'}
-            </button>
-            {fotos.length > 0 && (
-              <div className="flex flex-wrap gap-3 mt-3">
-                {fotos.map((foto, i) => (
-                  <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border border-border">
-                    <img src={foto} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => setFotos([])} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center"><X size={12} /></button>
-                  </div>
-                ))}
-              </div>
+            <label className={cls.label}>Link da Foto de Referência (Google Drive)<span className="text-destructive ml-0.5">*</span></label>
+            <div className="flex items-center gap-2">
+              <Link2 size={16} className="text-muted-foreground flex-shrink-0" />
+              <input
+                type="url"
+                value={fotoUrl}
+                onChange={e => setFotoUrl(e.target.value)}
+                placeholder="Cole o link do Google Drive aqui..."
+                className={cls.input}
+              />
+              {fotoUrl && (
+                <button type="button" onClick={() => setFotoUrl('')} className="text-destructive hover:text-destructive/80">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            {fotoUrl && (
+              <a href={fotoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline mt-1 inline-block">
+                Abrir link ↗
+              </a>
             )}
           </div>
 
