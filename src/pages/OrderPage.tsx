@@ -265,6 +265,20 @@ const OrderPage = () => {
       toast.error(`Preencha os campos obrigatórios: ${missing.map(([, l]) => l).join(', ')}`);
       return;
     }
+    // Validate toggle descriptions (TEM requires description)
+    const toggleChecks: [boolean, string, string][] = [
+      [sobMedida, sobMedidaDesc, 'Sob Medida'],
+      [nomeBordado, nomeBordadoDesc, 'Nome Bordado'],
+      [pintura, pinturaDesc, 'Pintura'],
+      [estampa, estampaDesc, 'Estampa'],
+      [trice, triceDesc, 'Tricê'],
+      [tiras, tirasDesc, 'Tiras'],
+    ];
+    const missingDesc = toggleChecks.filter(([active, desc]) => active && !desc.trim());
+    if (missingDesc.length > 0) {
+      toast.error(`Preencha a descrição de: ${missingDesc.map(([,, l]) => l).join(', ')}`);
+      return;
+    }
     if (!fotoUrl.trim()) {
       toast.error('Cole o link da foto de referência!');
       return;
