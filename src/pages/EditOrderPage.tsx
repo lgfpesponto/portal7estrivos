@@ -241,15 +241,7 @@ const EditOrderPage = () => {
 
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    const file = files[0];
-    const reader = new FileReader();
-    reader.onload = (ev) => { if (ev.target?.result) setFotos([ev.target!.result as string]); };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
+  const fotos = fotoUrl.trim() ? [fotoUrl.trim()] : [];
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
