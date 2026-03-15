@@ -656,12 +656,12 @@ const OrderPage = () => {
                   </div>
                 ))}
               </div>
-              {fotos.length > 0 && (
+              {fotoUrl && (
                 <div className="mt-3">
                   <span className="text-xs font-semibold">Foto de Referência:</span>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {fotos.map((f, i) => <img key={i} src={f} alt={`Ref ${i + 1}`} className="w-20 h-20 object-cover rounded border border-border" />)}
-                  </div>
+                  <a href={fotoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline ml-2">
+                    {fotoUrl.length > 60 ? fotoUrl.slice(0, 60) + '...' : fotoUrl} ↗
+                  </a>
                 </div>
               )}
             </div>

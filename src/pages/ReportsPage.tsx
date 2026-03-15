@@ -370,8 +370,19 @@ const ReportsPage = () => {
         lineIdx++;
       });
 
-      // ─── PHOTO (right side, between header and stubs) ───
-      if (order.fotos && order.fotos.length > 0) {
+      // ─── QR CODE (right side, between header and stubs) ───
+      if (order.fotos && order.fotos.length > 0 && order.fotos[0].startsWith('http')) {
+        try {
+          const qrSize = Math.min(pw - m - photoX - 6, descBottom - headerBottom - 10);
+          const qrX = photoX + 2 + ((pw - m - photoX - 3 - qrSize) / 2);
+          const qrY = headerBottom + 2;
+          const qrDataUrl = await QRCode.toDataURL(order.fotos[0], { width: 200, margin: 1 });
+          doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+          doc.setFontSize(6);
+          doc.setFont('helvetica', 'normal');
+          doc.text('Escaneie para ver a foto', qrX + qrSize / 2, qrY + qrSize + 3, { align: 'center' });
+        } catch { /* skip invalid */ }
+      } else if (order.fotos && order.fotos.length > 0) {
         try {
           const photoW = pw - m - photoX - 3;
           const photoH = descBottom - headerBottom - 4;

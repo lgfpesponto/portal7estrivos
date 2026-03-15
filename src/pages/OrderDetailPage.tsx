@@ -228,9 +228,15 @@ const OrderDetailPage = () => {
           {order.fotos && order.fotos.length > 0 && (
             <div className="mb-6">
               <h2 className="text-lg font-display font-bold mb-3">Foto de Referência</h2>
-              <div className="flex flex-wrap gap-3">
+              <div className="space-y-2">
                 {order.fotos.map((f, i) => (
-                  <img key={i} src={f} alt={`Ref ${i + 1}`} className="w-24 h-24 object-cover rounded-lg border border-border" />
+                  f.startsWith('http') ? (
+                    <a key={i} href={f} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline break-all block">
+                      {f} ↗
+                    </a>
+                  ) : (
+                    <img key={i} src={f} alt={`Ref ${i + 1}`} className="w-24 h-24 object-cover rounded-lg border border-border" />
+                  )
                 ))}
               </div>
             </div>
