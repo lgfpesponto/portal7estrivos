@@ -436,7 +436,7 @@ const OrderPage = () => {
               <input type="text" value={user?.nomeCompleto || ''} readOnly className={cls.input + ' opacity-70'} />
             </div>
             <div>
-              <label className={cls.label}>Número do Pedido *</label>
+              <label className={cls.label}>Número do Pedido<span className="text-destructive ml-0.5">*</span></label>
               <input type="text" value={numeroPedido} onChange={e => setNumeroPedido(e.target.value)} placeholder="Ex: 7E-20250001" required className={cls.input} />
             </div>
           </div>
