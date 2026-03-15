@@ -87,6 +87,8 @@ export const BORDADOS: { label: string; preco: number }[] = [
   { label: 'Bordado Variado R$20', preco: 20 },
   { label: 'Bordado Variado R$30', preco: 30 },
   { label: 'Bordado Variado R$40', preco: 40 },
+  { label: 'Bordado Variado R$50', preco: 50 },
+  { label: 'Bordado Variado R$15', preco: 15 },
 ];
 
 // ==================== LASER ====================
