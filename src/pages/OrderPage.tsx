@@ -408,9 +408,9 @@ const OrderPage = () => {
   ].filter(([, v]) => v) as [string, string][];
 
   /* ───── select helper ───── */
-  const SelectField = ({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] | { label: string; preco: number }[] }) => (
+  const SelectField = ({ label, value, onChange, options, required: req }: { label: string; value: string; onChange: (v: string) => void; options: string[] | { label: string; preco: number }[]; required?: boolean }) => (
     <div>
-      <label className={cls.label}>{label}</label>
+      <label className={cls.label}>{label}{req && <span className="text-destructive ml-0.5">*</span>}</label>
       <select value={value} onChange={e => onChange(e.target.value)} className={cls.select}>
         <option value="">Selecione...</option>
         {options.map(o => {
@@ -436,16 +436,16 @@ const OrderPage = () => {
               <input type="text" value={user?.nomeCompleto || ''} readOnly className={cls.input + ' opacity-70'} />
             </div>
             <div>
-              <label className={cls.label}>Número do Pedido *</label>
+              <label className={cls.label}>Número do Pedido<span className="text-destructive ml-0.5">*</span></label>
               <input type="text" value={numeroPedido} onChange={e => setNumeroPedido(e.target.value)} placeholder="Ex: 7E-20250001" required className={cls.input} />
             </div>
           </div>
 
           {/* 3-4 Tamanho + Gênero + Modelo */}
           <div className="grid sm:grid-cols-3 gap-4">
-            <SelectField label="Tamanho" value={tamanho} onChange={setTamanho} options={TAMANHOS} />
-            <SelectField label="Gênero" value={genero} onChange={setGenero} options={GENEROS} />
-            <SelectField label="Modelo" value={modelo} onChange={setModelo} options={MODELOS} />
+            <SelectField label="Tamanho" value={tamanho} onChange={setTamanho} options={TAMANHOS} required />
+            <SelectField label="Gênero" value={genero} onChange={setGenero} options={GENEROS} required />
+            <SelectField label="Modelo" value={modelo} onChange={setModelo} options={MODELOS} required />
           </div>
 
           {/* 5 Sob Medida */}
@@ -457,12 +457,12 @@ const OrderPage = () => {
           {/* 7 Couros */}
           <Section title="Couros">
             <div className="grid sm:grid-cols-2 gap-4">
-              <SelectField label="Tipo Couro do Cano" value={tipoCouroCano} onChange={setTipoCouroCano} options={TIPOS_COURO} />
-              <SelectField label="Cor Couro do Cano" value={corCouroCano} onChange={setCorCouroCano} options={CORES_COURO} />
-              <SelectField label="Tipo Couro da Gáspea" value={tipoCouroGaspea} onChange={setTipoCouroGaspea} options={TIPOS_COURO} />
-              <SelectField label="Cor Couro da Gáspea" value={corCouroGaspea} onChange={setCorCouroGaspea} options={CORES_COURO} />
-              <SelectField label="Tipo Couro da Taloneira" value={tipoCouroTaloneira} onChange={setTipoCouroTaloneira} options={TIPOS_COURO} />
-              <SelectField label="Cor Couro da Taloneira" value={corCouroTaloneira} onChange={setCorCouroTaloneira} options={CORES_COURO} />
+              <SelectField label="Tipo Couro do Cano" value={tipoCouroCano} onChange={setTipoCouroCano} options={TIPOS_COURO} required />
+              <SelectField label="Cor Couro do Cano" value={corCouroCano} onChange={setCorCouroCano} options={CORES_COURO} required />
+              <SelectField label="Tipo Couro da Gáspea" value={tipoCouroGaspea} onChange={setTipoCouroGaspea} options={TIPOS_COURO} required />
+              <SelectField label="Cor Couro da Gáspea" value={corCouroGaspea} onChange={setCorCouroGaspea} options={CORES_COURO} required />
+              <SelectField label="Tipo Couro da Taloneira" value={tipoCouroTaloneira} onChange={setTipoCouroTaloneira} options={TIPOS_COURO} required />
+              <SelectField label="Cor Couro da Taloneira" value={corCouroTaloneira} onChange={setCorCouroTaloneira} options={CORES_COURO} required />
             </div>
           </Section>
 
@@ -508,9 +508,9 @@ const OrderPage = () => {
           {/* Pesponto */}
           <Section title="Pesponto">
             <div className="grid sm:grid-cols-3 gap-4">
-              <SelectField label="Cor da Linha" value={corLinha} onChange={setCorLinha} options={COR_LINHA} />
-              <SelectField label="Cor da Borrachinha" value={corBorrachinha} onChange={setCorBorrachinha} options={COR_BORRACHINHA} />
-              <SelectField label="Cor do Vivo" value={corVivo} onChange={setCorVivo} options={COR_VIVO} />
+              <SelectField label="Cor da Linha" value={corLinha} onChange={setCorLinha} options={COR_LINHA} required />
+              <SelectField label="Cor da Borrachinha" value={corBorrachinha} onChange={setCorBorrachinha} options={COR_BORRACHINHA} required />
+              <SelectField label="Cor do Vivo" value={corVivo} onChange={setCorVivo} options={COR_VIVO} required />
             </div>
           </Section>
 
@@ -559,10 +559,10 @@ const OrderPage = () => {
           {/* Solados */}
           <Section title="Solados">
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <SelectField label="Tipo de Solado" value={solado} onChange={setSolado} options={SOLADO} />
-              <SelectField label="Formato do Bico" value={formatoBico} onChange={setFormatoBico} options={FORMATO_BICO} />
-              <SelectField label="Cor da Sola" value={corSola} onChange={setCorSola} options={COR_SOLA} />
-              <SelectField label="Cor da Vira" value={corVira} onChange={setCorVira} options={COR_VIRA} />
+              <SelectField label="Tipo de Solado" value={solado} onChange={setSolado} options={SOLADO} required />
+              <SelectField label="Formato do Bico" value={formatoBico} onChange={setFormatoBico} options={FORMATO_BICO} required />
+              <SelectField label="Cor da Sola" value={corSola} onChange={setCorSola} options={COR_SOLA} required />
+              <SelectField label="Cor da Vira" value={corVira} onChange={setCorVira} options={COR_VIRA} required />
             </div>
             <ToggleField label={`Costura Atrás (+R$${COSTURA_ATRAS_PRECO})`} value={costuraAtras} onChange={setCosturaAtras} />
           </Section>
@@ -600,7 +600,7 @@ const OrderPage = () => {
 
           {/* Fotos (limit 1) */}
           <div>
-            <label className={cls.label}>Foto de Referência (máx. 1)</label>
+            <label className={cls.label}>Foto de Referência (máx. 1)<span className="text-destructive ml-0.5">*</span></label>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
             <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 bg-muted border border-border rounded-lg text-sm font-semibold hover:border-primary transition-colors">
               <Upload size={16} /> {fotos.length > 0 ? 'Substituir Foto' : 'Adicionar Foto'}
