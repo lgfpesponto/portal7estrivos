@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth, Order } from '@/contexts/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Upload, X, Save, ArrowLeft } from 'lucide-react';
+import { Link2, X, Save, ArrowLeft } from 'lucide-react';
 import {
   MODELOS, TAMANHOS, GENEROS, ACESSORIOS, TIPOS_COURO, CORES_COURO, COURO_PRECOS,
   BORDADOS, LASER_OPTIONS, LASER_CANO_PRECO, LASER_GASPEA_PRECO,
