@@ -419,8 +419,8 @@ const ReportsPage = () => {
           )}
         </div>
 
-        {/* Barcode scanner input (admin only) */}
-        {isAdmin && showScanner && (
+        {/* Barcode scanner for all users */}
+        {showScanner && (
           <div className="bg-card rounded-xl p-4 western-shadow mb-4">
             <div className="flex items-center gap-3">
               <ScanBarcode size={20} className="text-primary flex-shrink-0" />
@@ -446,7 +446,7 @@ const ReportsPage = () => {
                 Buscar
               </button>
             </div>
-            {selectedIds.size > 0 && (
+            {isAdmin && selectedIds.size > 0 && (
               <p className="text-xs text-muted-foreground mt-2">{selectedIds.size} pedido(s) selecionado(s)</p>
             )}
           </div>
