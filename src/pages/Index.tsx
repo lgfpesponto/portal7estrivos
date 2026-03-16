@@ -1,11 +1,12 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Eye, BarChart3, DollarSign, AlertCircle, AlignStartVertical } from 'lucide-react';
+import { ShoppingBag, Eye, BarChart3, DollarSign, AlertCircle, AlignStartVertical, FileText } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import SpecializedReports from '@/components/SpecializedReports';
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
@@ -13,7 +14,7 @@ const fadeIn = {
 };
 
 const Index = () => {
-  const { isLoggedIn, isAdmin, orders, allOrders } = useAuth();
+  const { isLoggedIn, isAdmin, isFernanda, orders, allOrders } = useAuth();
   const [chartPeriod, setChartPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano'>('mes');
   const [receberVendedor, setReceberVendedor] = useState<string>('todos');
 
@@ -25,11 +26,10 @@ const Index = () => {
   }, [sourceOrders]);
 
   const PRODUCTION_STATUSES_IN_PROD = [
-  'Aguardando', 'Corte', 'Sem bordado',
-  'Bordado Dinei', 'Bordado Sandro', 'Bordado 7Estrivos',
-  'Pesponto 01', 'Pesponto 02', 'Pesponto 03', 'Pesponto 04', 'Pesponto 05',
-  'Pespontando', 'Montagem', 'Revisão', 'Expedição'];
-
+    'Aguardando', 'Corte', 'Sem bordado',
+    'Bordado Dinei', 'Bordado Sandro', 'Bordado 7Estrivos',
+    'Pesponto 01', 'Pesponto 02', 'Pesponto 03', 'Pesponto 04', 'Pesponto 05',
+    'Pespontando', 'Montagem', 'Revisão', 'Expedição'];
 
   const financialData = useMemo(() => {
     const filtered = sourceOrders.filter((o) => (o.status === 'Entregue' || o.status === 'Cobrado') && (receberVendedor === 'todos' || o.vendedor === receberVendedor));
@@ -42,7 +42,7 @@ const Index = () => {
   }, [sourceOrders]);
 
   const chartData = useMemo(() => {
-    const data: {name: string;botas: number;}[] = [];
+    const data: { name: string; botas: number }[] = [];
     const now = new Date();
 
     if (chartPeriod === 'dia') {
@@ -78,9 +78,140 @@ const Index = () => {
 
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+  // ── Fernanda ADM: only reports, no charts ──
+  const renderFernandaDashboard = () => (
+    <section className="container mx-auto px-4 py-8">
+      <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0}>
+        <SpecializedReports reports={['escalacao', 'forro', 'pesponto', 'bordados', 'expedicao']} />
+      </motion.div>
+    </section>
+  );
+
+  // ── 7Estrivos ADM: full dashboard + reports ──
+  const renderAdminDashboard = () => (
+    <section className="container mx-auto px-4 py-8">
+      <div className="grid lg:grid-cols-2 gap-8">
+        {/* Left column */}
+        <div className="space-y-6">
+          {/* Sales chart */}
+          <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-display font-bold flex items-center gap-2">
+                <BarChart3 className="text-primary" size={22} /> Botas Vendidas
+              </h2>
+            </div>
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {(['dia', 'semana', 'mes', 'ano'] as const).map((p) =>
+                <button key={p} onClick={() => setChartPeriod(p)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-colors ${chartPeriod === p ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-primary/10'}`}>
+                  {p === 'mes' ? 'Mês' : p}
+                </button>
+              )}
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(30 20% 80%)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
+                  <YAxis tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
+                  <Tooltip formatter={(v: number) => [v, 'Botas']} />
+                  <Line type="monotone" dataKey="botas" stroke="hsl(25 85% 48%)" strokeWidth={3} dot={{ fill: 'hsl(25 85% 48%)', r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Right column */}
+        <div className="space-y-6">
+          {/* A receber */}
+          <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-display font-bold flex items-center gap-2">
+                <DollarSign className="text-primary" size={22} /> A receber
+              </h2>
+              <Select value={receberVendedor} onValueChange={setReceberVendedor}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Todos vendedores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos vendedores</SelectItem>
+                  {vendedores.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="bg-muted rounded-lg p-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Valor a Receber</p>
+              <p className="text-3xl font-bold text-primary mt-1">{formatCurrency(financialData.aReceber)}</p>
+            </div>
+          </motion.div>
+
+          {/* Botas na produção */}
+          <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={1} className="bg-card rounded-xl p-6 western-shadow">
+            <h2 className="text-xl font-display font-bold flex items-center gap-2 mb-4">
+              <AlignStartVertical className="text-primary" size={22} /> Botas na produção
+            </h2>
+            <div className="bg-muted rounded-lg p-4 mb-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total em produção</p>
+              <p className="text-3xl font-bold text-primary mt-1">{botasProducao} {botasProducao === 1 ? 'bota' : 'botas'}</p>
+            </div>
+            <Progress value={botasProducao > 0 ? Math.min(botasProducao / Math.max(sourceOrders.reduce((s, o) => s + o.quantidade, 0), 1) * 100, 100) : 0} className="h-3" />
+            <p className="text-xs text-muted-foreground mt-2">{botasProducao} de {sourceOrders.reduce((s, o) => s + o.quantidade, 0)} botas totais estão em produção</p>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Specialized reports section */}
+      <div className="mt-8">
+        <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={2}>
+          <SpecializedReports reports={['escalacao', 'forro', 'pesponto', 'bordados', 'expedicao', 'cobranca']} />
+        </motion.div>
+      </div>
+    </section>
+  );
+
+  // ── Revendedor: pendente + produção ──
+  const renderVendedorDashboard = () => (
+    <section className="container mx-auto px-4 py-8">
+      <div className="grid lg:grid-cols-2 gap-8">
+        <div className="space-y-6">
+          {/* Pendente */}
+          <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
+            <h2 className="text-xl font-display font-bold flex items-center gap-2 mb-4">
+              <AlertCircle className="text-primary" size={22} /> Pendente
+            </h2>
+            <div className="bg-muted rounded-lg p-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Valor Pendente</p>
+              <p className="text-3xl font-bold text-primary mt-1">{formatCurrency(financialData.aReceber)}</p>
+            </div>
+          </motion.div>
+
+          {/* Botas na produção */}
+          <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={1} className="bg-card rounded-xl p-6 western-shadow">
+            <h2 className="text-xl font-display font-bold flex items-center gap-2 mb-4">
+              <AlignStartVertical className="text-primary" size={22} /> Botas na produção
+            </h2>
+            <div className="bg-muted rounded-lg p-4 mb-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total em produção</p>
+              <p className="text-3xl font-bold text-primary mt-1">{botasProducao} {botasProducao === 1 ? 'bota' : 'botas'}</p>
+            </div>
+            <Progress value={botasProducao > 0 ? Math.min(botasProducao / Math.max(sourceOrders.reduce((s, o) => s + o.quantidade, 0), 1) * 100, 100) : 0} className="h-3" />
+            <p className="text-xs text-muted-foreground mt-2">{botasProducao} de {sourceOrders.reduce((s, o) => s + o.quantidade, 0)} botas totais estão em produção</p>
+          </motion.div>
+        </div>
+
+        <div className="space-y-6">
+          <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={2}>
+            <SpecializedReports reports={['expedicao', 'cobranca']} />
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+
   return (
     <div className="min-h-screen">
-      {/* Hero - solid orange */}
+      {/* Hero */}
       <section className="relative overflow-hidden flex items-center bg-primary" style={{ minHeight: '320px' }}>
         <div className="relative z-10 container mx-auto px-4 py-12">
           <motion.div initial="hidden" animate="visible" className="max-w-lg">
@@ -103,102 +234,12 @@ const Index = () => {
       </section>
 
       {/* Dashboard content */}
-      {isLoggedIn ?
-      <section className="container mx-auto px-4 py-8">
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Left column */}
-            <div className="space-y-6">
-              {/* Sales chart - quantity */}
-              <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-display font-bold flex items-center gap-2">
-                    <BarChart3 className="text-primary" size={22} /> Botas Vendidas
-                  </h2>
-                </div>
-                <div className="flex gap-2 mb-4 flex-wrap">
-                  {(['dia', 'semana', 'mes', 'ano'] as const).map((p) =>
-                <button
-                  key={p}
-                  onClick={() => setChartPeriod(p)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-colors ${
-                  chartPeriod === p ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-primary/10'}`
-                  }>
-                  
-                      {p === 'mes' ? 'Mês' : p}
-                    </button>
-                )}
-                </div>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(30 20% 80%)" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
-                      <YAxis tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
-                      <Tooltip formatter={(v: number) => [v, 'Botas']} />
-                      <Line type="monotone" dataKey="botas" stroke="hsl(25 85% 48%)" strokeWidth={3} dot={{ fill: 'hsl(25 85% 48%)', r: 5 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </motion.div>
-
-            </div>
-
-            {/* Right column */}
-            <div className="space-y-6">
-              {isAdmin ? (
-            /* Admin: A receber com filtro por vendedor */
-            <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-display font-bold flex items-center gap-2">
-                      <DollarSign className="text-primary" size={22} /> A receber
-                    </h2>
-                    <Select value={receberVendedor} onValueChange={setReceberVendedor}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Todos vendedores" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="todos">Todos vendedores</SelectItem>
-                        {vendedores.map((v) =>
-                    <SelectItem key={v} value={v}>{v}</SelectItem>
-                    )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="bg-muted rounded-lg p-4">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Valor a Receber</p>
-                    <p className="text-3xl font-bold text-primary mt-1">{formatCurrency(financialData.aReceber)}</p>
-                  </div>
-                </motion.div>) : (
-
-            /* Revendedor: Pendente sem filtro */
-            <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
-                  <h2 className="text-xl font-display font-bold flex items-center gap-2 mb-4">
-                    <AlertCircle className="text-primary" size={22} /> Pendente
-                  </h2>
-                  <div className="bg-muted rounded-lg p-4">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Valor Pendente</p>
-                    <p className="text-3xl font-bold text-primary mt-1">{formatCurrency(financialData.aReceber)}</p>
-                  </div>
-                </motion.div>)
-            }
-
-              {/* Botas na produção */}
-              <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={1} className="bg-card rounded-xl p-6 western-shadow">
-                <h2 className="text-xl font-display font-bold flex items-center gap-2 mb-4">
-                  <AlignStartVertical className="text-primary" size={22} /> Botas na produção
-                </h2>
-                <div className="bg-muted rounded-lg p-4 mb-4">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total em produção</p>
-                  <p className="text-3xl font-bold text-primary mt-1">{botasProducao} {botasProducao === 1 ? 'bota' : 'botas'}</p>
-                </div>
-                <Progress value={botasProducao > 0 ? Math.min(botasProducao / Math.max(sourceOrders.reduce((s, o) => s + o.quantidade, 0), 1) * 100, 100) : 0} className="h-3" />
-                <p className="text-xs text-muted-foreground mt-2">{botasProducao} de {sourceOrders.reduce((s, o) => s + o.quantidade, 0)} botas totais estão em produção</p>
-              </motion.div>
-            </div>
-          </div>
-        </section> :
-
-      <section className="container mx-auto px-4 py-12 text-center">
+      {isLoggedIn ? (
+        isFernanda ? renderFernandaDashboard() :
+        isAdmin ? renderAdminDashboard() :
+        renderVendedorDashboard()
+      ) : (
+        <section className="container mx-auto px-4 py-12 text-center">
           <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0}>
             <h2 className="text-2xl font-display font-bold mb-4">Faça login para acessar o dashboard</h2>
             <p className="text-muted-foreground mb-6">Acesse sua conta de revendedor para ver vendas, pedidos e relatórios.</p>
@@ -207,9 +248,9 @@ const Index = () => {
             </Link>
           </motion.div>
         </section>
-      }
-    </div>);
-
+      )}
+    </div>
+  );
 };
 
 export default Index;

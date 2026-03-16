@@ -506,27 +506,23 @@ const ReportsPage = () => {
             <p className="text-2xl font-bold text-primary">{formatCurrency(totalValue)}</p>
           </div>
           <div className="bg-card rounded-xl p-4 western-shadow flex items-center justify-center">
-            {isAdmin ? (
-              <div className="relative">
-                <button onClick={() => setShowReportOptions(!showReportOptions)} className="orange-gradient text-primary-foreground px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity">
-                  <FileText size={16} /> GERAR RELATÓRIO
-                </button>
-                {showReportOptions && (
-                  <div className="absolute top-full left-0 mt-2 bg-card border border-border rounded-lg western-shadow p-2 z-20 min-w-[200px]">
-                    <button onClick={() => { generateReportPDF(); setShowReportOptions(false); }} className="w-full text-left px-3 py-2 text-sm font-semibold hover:bg-muted rounded-md flex items-center gap-2">
-                      <Download size={14} /> Relatório por Filtros
-                    </button>
+            <div className="relative">
+              <button onClick={() => setShowReportOptions(!showReportOptions)} className="orange-gradient text-primary-foreground px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity">
+                <FileText size={16} /> GERAR RELATÓRIO
+              </button>
+              {showReportOptions && (
+                <div className="absolute top-full left-0 mt-2 bg-card border border-border rounded-lg western-shadow p-2 z-20 min-w-[200px]">
+                  <button onClick={() => { generateReportPDF(); setShowReportOptions(false); }} className="w-full text-left px-3 py-2 text-sm font-semibold hover:bg-muted rounded-md flex items-center gap-2">
+                    <Download size={14} /> Relatório por Filtros
+                  </button>
+                  {isAdmin && (
                     <button onClick={() => { navigate('/relatorio-pecas'); setShowReportOptions(false); }} className="w-full text-left px-3 py-2 text-sm font-semibold hover:bg-muted rounded-md flex items-center gap-2">
                       <FileText size={14} /> Relatório por Peças
                     </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button onClick={generateReportPDF} className="orange-gradient text-primary-foreground px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity">
-                <FileText size={16} /> GERAR RELATÓRIO
-              </button>
-            )}
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           {isAdmin && (
             <div className="bg-card rounded-xl p-4 western-shadow flex items-center justify-center">
