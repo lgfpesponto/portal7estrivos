@@ -174,202 +174,260 @@ const ReportsPage = () => {
 
   const generateProductionSheetPDF = async () => {
     const list = ordersToExport;
-    const doc = new jsPDF({ format: 'a5', orientation: 'portrait' });
-    const pw = doc.internal.pageSize.getWidth();
-    const ph = doc.internal.pageSize.getHeight();
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [148.5, 210] });
+    const pw = 210;
+    const ph = 148.5;
     const m = 5;
 
     for (let idx = 0; idx < list.length; idx++) {
       const order = list[idx];
       if (idx > 0) doc.addPage();
 
-      // ─── Outer border ───
-      doc.setDrawColor(0);
-      doc.setLineWidth(0.3);
-      doc.rect(m, m, pw - m * 2, ph - m * 2);
-
       const orderNumClean = order.numero.replace('7E-', '');
 
-      // ─── HEADER ───
-      const hx = m + 3;
-      let hy = m + 5;
+      // ─── HEADER TOP LEFT ───
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('7ESTRIVOS', m + 2, m + 7);
+
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
+      const hx = m + 2;
+      let hy = m + 13;
       doc.text('Código: ', hx, hy);
       doc.setFont('helvetica', 'normal');
       doc.text(orderNumClean, hx + doc.getTextWidth('Código: '), hy);
-      hy += 4.5;
+      hy += 5;
       doc.setFont('helvetica', 'bold');
       doc.text('Vendedor: ', hx, hy);
       doc.setFont('helvetica', 'normal');
       doc.text(order.vendedor, hx + doc.getTextWidth('Vendedor: '), hy);
-      hy += 4.5;
+      hy += 5;
       doc.setFont('helvetica', 'bold');
       doc.text('Data e hora: ', hx, hy);
       doc.setFont('helvetica', 'normal');
       const dateStr = `${order.dataCriacao.slice(8, 10)}/${order.dataCriacao.slice(5, 7)} ${order.horaCriacao}`;
       doc.text(dateStr, hx + doc.getTextWidth('Data e hora: '), hy);
 
-      // ─── QR Code top right ───
-      const qrSize = 18;
-      const qrX = pw - m - qrSize - 2;
-      const qrY = m + 2;
+      // ─── QR CODE TOP RIGHT ───
+      const qrSize = 35;
+      const qrX = pw - qrSize - m - 2;
+      const qrY = m + 3;
       if (order.fotos && order.fotos.length > 0 && order.fotos[0].startsWith('http')) {
         try {
-          const qrDataUrl = await QRCode.toDataURL(order.fotos[0], { width: 200, margin: 1 });
+          const qrDataUrl = await QRCode.toDataURL(order.fotos[0], { width: 300, margin: 1 });
           doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-          doc.setFontSize(5);
-          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.setFont('helvetica', 'bold');
           doc.text('ESCANEIE PARA', qrX + qrSize / 2, qrY + qrSize + 2.5, { align: 'center' });
-          doc.text('VER A FOTO', qrX + qrSize / 2, qrY + qrSize + 5, { align: 'center' });
+          doc.text('VER A FOTO:', qrX + qrSize / 2, qrY + qrSize + 5, { align: 'center' });
         } catch { /* skip */ }
       }
 
-      const headerBottom = m + 24;
-      doc.setLineWidth(0.3);
-      doc.line(m, headerBottom, pw - m, headerBottom);
+      // ─── DESCRIPTION AREA (3 columns) ───
+      const descTop = m + 32;
+      doc.setFontSize(8);
 
-      // ─── STUBS at bottom ───
-      const stubH = 36;
-      const stubTop = ph - m - stubH;
-      doc.line(m, stubTop, pw - m, stubTop);
+      // Column 1 (left)
+      const col1X = m + 2;
+      let y1 = descTop;
+      const fieldGap = 4.5;
 
-      // ─── DESCRIPTION (between header and stubs) ───
-      const descTop = headerBottom + 3;
-      const descBottom = stubTop - 2;
-      const descAvailH = descBottom - descTop;
-      const descW = (pw - m * 2 - 8) / 2;
-      const col1X = m + 3;
-      const col2X = m + 5 + descW;
+      if (order.tamanho) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Tamanho:', col1X, y1);
+        doc.setFont('helvetica', 'normal');
+        const tamText = `${order.tamanho}${order.genero ? ' ' + order.genero.substring(0, 3).toLowerCase() + '.' : ''}`;
+        doc.text(tamText, col1X + 17, y1);
+        y1 += fieldGap;
+      }
+      if (order.modelo) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Modelo:', col1X, y1);
+        doc.setFont('helvetica', 'normal');
+        const modeloText = order.modelo.toLowerCase().replace('tradicional', 'trad.').replace('feminino', 'fem.');
+        doc.text(modeloText, col1X + 13, y1);
+        y1 += fieldGap;
+      }
+      if (order.couroCano) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('C. cano:', col1X, y1);
+        doc.setFont('helvetica', 'normal');
+        const couroText = `${order.couroCano.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroCano ? ' ' + order.corCouroCano.toLowerCase() : ''}`;
+        doc.text(couroText, col1X + 13, y1);
+        y1 += fieldGap;
+      }
+      if (order.couroGaspea) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('C. gaspea:', col1X, y1);
+        doc.setFont('helvetica', 'normal');
+        const couroText = `${order.couroGaspea.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroGaspea ? ' ' + order.corCouroGaspea.toLowerCase() : ''}`;
+        doc.text(couroText, col1X + 16, y1);
+        y1 += fieldGap;
+      }
+      if (order.couroTaloneira) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('C. taloneira:', col1X, y1);
+        doc.setFont('helvetica', 'normal');
+        const couroText = `${order.couroTaloneira.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroTaloneira ? ' ' + order.corCouroTaloneira.toLowerCase() : ''}`;
+        doc.text(couroText, col1X + 19, y1);
+        y1 += fieldGap;
+      }
+      if (order.bordadoCano) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('B. cano:', col1X, y1);
+        doc.setFont('helvetica', 'normal');
+        const bordadoText = `${order.bordadoCano.toLowerCase().replace('florão básico', 'florão b.')}${order.corBordadoCano ? ' ' + order.corBordadoCano.toLowerCase() : ''}`;
+        doc.text(bordadoText, col1X + 13, y1);
+        y1 += fieldGap;
+      }
+      if (order.bordadoGaspea) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('B. gáspea:', col1X, y1);
+        doc.setFont('helvetica', 'normal');
+        const bordadoText = `${order.bordadoGaspea.toLowerCase().replace('florão básico', 'florão b.')}${order.corBordadoGaspea ? ' ' + order.corBordadoGaspea.toLowerCase() : ''}`;
+        doc.text(bordadoText, col1X + 16, y1);
+        y1 += fieldGap;
+      }
+      if (order.nomeBordadoDesc || order.personalizacaoNome) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Nome bordado:', col1X, y1);
+        doc.setFont('helvetica', 'normal');
+        doc.text(order.nomeBordadoDesc || order.personalizacaoNome || '', col1X + 25, y1);
+        y1 += fieldGap;
+      }
 
-      const details: string[] = [];
-      if (order.tamanho) details.push(`**Tamanho:** ${order.tamanho}${order.genero ? ' ' + order.genero.substring(0, 3).toLowerCase() + '.' : ''}`);
-      if (order.modelo) details.push(`**Modelo:** ${order.modelo.toLowerCase().replace('tradicional', 'trad.').replace('feminino', 'fem.')}`);
-      if (order.couroCano) details.push(`**C. cano:** ${order.couroCano.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroCano ? ' ' + order.corCouroCano.toLowerCase() : ''}`);
-      if (order.couroGaspea) details.push(`**C. gáspea:** ${order.couroGaspea.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroGaspea ? ' ' + order.corCouroGaspea.toLowerCase() : ''}`);
-      if (order.couroTaloneira) details.push(`**C. taloneira:** ${order.couroTaloneira.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroTaloneira ? ' ' + order.corCouroTaloneira.toLowerCase() : ''}`);
-      if (order.bordadoCano) details.push(`**B. cano:** ${order.bordadoCano.toLowerCase().replace('florão básico', 'florão b.')}${order.corBordadoCano ? ' ' + order.corBordadoCano.toLowerCase() : ''}`);
-      if (order.bordadoGaspea) details.push(`**B. gáspea:** ${order.bordadoGaspea.toLowerCase().replace('florão básico', 'florão b.')}${order.corBordadoGaspea ? ' ' + order.corBordadoGaspea.toLowerCase() : ''}`);
-      if (order.bordadoTaloneira) details.push(`**B. taloneira:** ${order.bordadoTaloneira.toLowerCase().replace('florão básico', 'florão b.')}${order.corBordadoTaloneira ? ' ' + order.corBordadoTaloneira.toLowerCase() : ''}`);
-      if (order.nomeBordadoDesc || order.personalizacaoNome) details.push(`**Nome bordado:** ${order.nomeBordadoDesc || order.personalizacaoNome}`);
-      if (order.laserCano) details.push(`**L. cano:** ${order.laserCano.toLowerCase()}${order.corGlitterCano ? ' ' + order.corGlitterCano.toLowerCase() : ''}`);
-      if (order.laserGaspea) details.push(`**L. gáspea:** ${order.laserGaspea.toLowerCase()}${order.corGlitterGaspea ? ' ' + order.corGlitterGaspea.toLowerCase() : ''}`);
-      if (order.laserTaloneira) details.push(`**L. taloneira:** ${order.laserTaloneira.toLowerCase()}${order.corGlitterTaloneira ? ' ' + order.corGlitterTaloneira.toLowerCase() : ''}`);
-      if (order.estampa === 'Sim' && order.estampaDesc) details.push(`**L. estampa:** ${order.estampaDesc.toLowerCase()}`);
-      if (order.pintura === 'Sim' && order.pinturaDesc) details.push(`**Pintura:** ${order.pinturaDesc}`);
-      if (order.corLinha) details.push(`**Linha:** ${order.corLinha.toLowerCase()}`);
-      if (order.corBorrachinha) details.push(`**Borrachinha:** ${order.corBorrachinha.toLowerCase()}`);
-      if (order.corVivo) details.push(`**Vivo:** ${order.corVivo.toLowerCase()}`);
+      // Column 2 (middle)
+      const col2X = col1X + 68;
+      let y2 = descTop;
+
+      if (order.acessorios) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Acessórios:', col2X, y2);
+        doc.setFont('helvetica', 'normal');
+        doc.text(order.acessorios, col2X + 20, y2);
+        y2 += fieldGap;
+      }
+      if (order.corLinha) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Linha:', col2X, y2);
+        doc.setFont('helvetica', 'normal');
+        doc.text(order.corLinha.toLowerCase(), col2X + 11, y2);
+        y2 += fieldGap;
+      }
+      if (order.corBorrachinha) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Borrachinha:', col2X, y2);
+        doc.setFont('helvetica', 'normal');
+        doc.text(order.corBorrachinha.toLowerCase(), col2X + 20, y2);
+        y2 += fieldGap;
+      }
+      if (order.corVivo) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Vivo:', col2X, y2);
+        doc.setFont('helvetica', 'normal');
+        doc.text(order.corVivo.toLowerCase(), col2X + 9, y2);
+        y2 += fieldGap;
+      }
       if (order.metais) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Metal:', col2X, y2);
+        doc.setFont('helvetica', 'normal');
         let metalStr = order.metais.toLowerCase();
         if (order.tipoMetal) metalStr += ', ' + order.tipoMetal.toLowerCase();
         if (order.corMetal) metalStr += ', ' + order.corMetal.toLowerCase();
-        details.push(`**Metal:** ${metalStr}`);
+        doc.text(metalStr, col2X + 11, y2);
+        y2 += fieldGap;
       }
-      if (order.strassQtd) details.push(`**Strass:** ${order.strassQtd} un.`);
-      if (order.cruzMetalQtd) details.push(`**Cruz metal:** ${order.cruzMetalQtd} un.`);
-      if (order.bridaoMetalQtd) details.push(`**Bridão metal:** ${order.bridaoMetalQtd} un.`);
-      if (order.trisce === 'Sim' && order.triceDesc) details.push(`**Tricê:** ${order.triceDesc.toLowerCase()}`);
-      if (order.tiras === 'Sim' && order.tirasDesc) details.push(`**Tiras:** ${order.tirasDesc.toLowerCase()}`);
-      if (order.solado) {
-        let solaStr = order.solado.toLowerCase();
-        if (order.corSola) solaStr += ' ' + order.corSola.toLowerCase();
-        details.push(`**Sola:** ${solaStr}`);
+      if (order.trisce === 'Sim' && order.triceDesc) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Tricê:', col2X, y2);
+        doc.setFont('helvetica', 'normal');
+        doc.text(order.triceDesc.toLowerCase(), col2X + 10, y2);
+        y2 += fieldGap;
       }
-      if (order.formatoBico) details.push(`**Bico:** ${order.formatoBico.toLowerCase()}`);
-      if (order.corVira) details.push(`**Vira:** ${order.corVira.toLowerCase()}`);
-      if (order.costuraAtras === 'Sim') details.push(`**Costura atrás:** sim`);
-      if (order.carimbo) details.push(`**Carimbo:** ${order.carimbo.toLowerCase()}${order.carimboDesc ? ' ' + order.carimboDesc : ''}`);
-      if (order.acessorios) details.push(`**Acessórios:** ${order.acessorios.toLowerCase()}`);
-      if (order.sobMedida) details.push(`**Sob medida:** ${order.sobMedidaDesc || 'sim'}`);
-      if (order.desenvolvimento) details.push(`**Desenvolvimento:** ${order.desenvolvimento.toLowerCase()}`);
-      if (order.adicionalDesc) details.push(`**Adicional:** ${order.adicionalDesc}`);
-      if (order.observacao) details.push(`**Obs:** ${order.observacao}`);
+      if (order.tiras === 'Sim' && order.tirasDesc) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('Tiras:', col2X, y2);
+        doc.setFont('helvetica', 'normal');
+        doc.text(order.tirasDesc.toLowerCase(), col2X + 9, y2);
+        y2 += fieldGap;
+      }
 
-      // Render details in 2 columns
-      doc.setFontSize(7.5);
-      const lineH = 4.5;
-      const maxLines = Math.floor(descAvailH / lineH);
+      // Column 3 (right - SOLA highlighted)
+      const col3X = col2X + 68;
+      const col3Y = descTop;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text('Sola:', col3X, col3Y);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      let solaY = col3Y + 5;
+      const solaText = `${order.solado || 'Borracha'} ${order.formatoBico || 'quadrada'}`.toLowerCase();
+      const corSolaText = (order.corSola || 'preta').toLowerCase();
+      doc.text(solaText, col3X, solaY);
+      solaY += fieldGap;
+      doc.text(corSolaText, col3X, solaY);
 
-      let lineIdx = 0;
-      details.forEach((detail) => {
-        if (lineIdx >= maxLines * 2) return;
-        const col = lineIdx < maxLines ? 0 : 1;
-        const row = lineIdx < maxLines ? lineIdx : lineIdx - maxLines;
-        const x = col === 0 ? col1X : col2X;
-        const y = descTop + row * lineH;
+      // ─── STUBS AT BOTTOM (3 sections with dotted separator) ───
+      const stubTop = ph - 38;
+      doc.setLineWidth(0.2);
+      doc.setLineDash([1, 1]);
+      doc.line(m, stubTop - 2, pw - m, stubTop - 2);
+      doc.setLineDash([]);
 
-        const match = detail.match(/^\*\*(.+?)\*\*\s*(.*)$/);
-        if (match) {
-          doc.setFont('helvetica', 'bold');
-          doc.text(match[1], x, y);
-          doc.setFont('helvetica', 'normal');
-          const labelW = doc.getTextWidth(match[1] + ' ');
-          const availW = descW - labelW - 2;
-          const valText = doc.splitTextToSize(match[2], availW);
-          doc.text(valText[0] || '', x + labelW, y);
-          if (valText.length > 1) {
-            for (let vi = 1; vi < valText.length && lineIdx + vi < maxLines * 2; vi++) {
-              doc.text(valText[vi], x + labelW, y + vi * lineH);
-              lineIdx++;
-            }
-          }
-        } else {
-          doc.text(detail, x, y);
-        }
-        lineIdx++;
-      });
-
-      // ─── 3 STUBS ───
       const stubAreaW = pw - m * 2;
-      const stub1W = Math.floor(stubAreaW * 0.3);
-      const stub2W = Math.floor(stubAreaW * 0.3);
-      const stub3W = stubAreaW - stub1W - stub2W;
+      const stubW = stubAreaW / 3;
       const bcVal = orderBarcodeValue(order.numero);
-      const bcUrl = barcodeDataUrl(bcVal, { width: 1, height: 22 });
+      const bcUrl = barcodeDataUrl(bcVal, { width: 1.2, height: 30 });
 
       // Stub 1: BORDADO / LASER
-      const s1x = m;
+      let stubX = m;
+      doc.setLineWidth(0.3);
+      doc.line(stubX + stubW, stubTop, stubX + stubW, ph - m);
       doc.setFontSize(7);
       doc.setFont('helvetica', 'bold');
-      doc.text('BORDADO / LASER', s1x + stub1W / 2, stubTop + 5, { align: 'center' });
+      doc.text('BORDADO / LASER', stubX + stubW / 2, stubTop + 4, { align: 'center' });
       if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', s1x + 4, stubTop + 7, stub1W - 8, 12); } catch {}
+        try { doc.addImage(bcUrl, 'PNG', stubX + 8, stubTop + 6, stubW - 16, 15); } catch {}
       }
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
-      doc.text(orderNumClean, s1x + stub1W / 2, stubTop + 23, { align: 'center' });
+      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 25, { align: 'center' });
 
       // Stub 2: PESPONTO
-      const s2x = m + stub1W;
-      doc.setLineWidth(0.3);
-      doc.line(s2x, stubTop, s2x, ph - m);
-      doc.setFontSize(7);
+      stubX += stubW;
+      doc.line(stubX + stubW, stubTop, stubX + stubW, ph - m);
       doc.setFont('helvetica', 'bold');
-      doc.text('PESPONTO', s2x + stub2W / 2, stubTop + 5, { align: 'center' });
+      doc.setFontSize(7);
+      doc.text('PESPONTO', stubX + stubW / 2, stubTop + 4, { align: 'center' });
       if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', s2x + 4, stubTop + 7, stub2W - 8, 12); } catch {}
+        try { doc.addImage(bcUrl, 'PNG', stubX + 8, stubTop + 6, stubW - 16, 15); } catch {}
       }
-      doc.setFontSize(8);
-      doc.text(orderNumClean, s2x + stub2W / 2, stubTop + 23, { align: 'center' });
-
-      // Stub 3: MONTAGEM (larger, with extra info)
-      const s3x = m + stub1W + stub2W;
-      doc.line(s3x, stubTop, s3x, ph - m);
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'bold');
-      doc.text('MONTAGEM', s3x + stub3W / 2, stubTop + 5, { align: 'center' });
-      doc.setFontSize(6.5);
       doc.setFont('helvetica', 'normal');
-      const solaInfo = `${order.solado || ''} ${order.formatoBico || ''} ${order.corSola || ''}`.trim().toLowerCase();
-      doc.text(`SOLA: ${solaInfo}`, s3x + 2, stubTop + 9);
-      doc.text(`FORMA: ${orderNumClean}`, s3x + 2, stubTop + 13);
-      doc.text(`NÚMERO: ${order.tamanho}`, s3x + 2, stubTop + 17);
+      doc.setFontSize(8);
+      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 25, { align: 'center' });
+
+      // Stub 3: MONTAGEM (larger with details)
+      stubX += stubW;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.text('MONTAGEM', stubX + stubW / 2, stubTop + 4, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.5);
+      const solaStubText = `${order.solado || 'BORRACHA'} ${order.formatoBico || 'QUADRADA'}`.toUpperCase();
+      const corSolaStubText = `${order.corSola || 'PRETA'}`.toUpperCase();
+      doc.text(`SOLA:`, stubX + 2, stubTop + 8);
+      doc.text(solaStubText, stubX + 2, stubTop + 11);
+      doc.text(corSolaStubText, stubX + 2, stubTop + 14);
+      doc.text(`FORMA: ${orderNumClean}`, stubX + stubW - 26, stubTop + 8);
+      doc.text(`NÚMERO: ${order.tamanho}`, stubX + stubW - 26, stubTop + 12);
       if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', s3x + 4, stubTop + 19, stub3W - 8, 10); } catch {}
+        try { doc.addImage(bcUrl, 'PNG', stubX + 8, stubTop + 16, stubW - 16, 12); } catch {}
       }
       doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
-      doc.text(orderNumClean, s3x + stub3W / 2, stubTop + 33, { align: 'center' });
+      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 32, { align: 'center' });
     }
 
     doc.save('fichas-producao.pdf');
