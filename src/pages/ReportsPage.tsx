@@ -428,20 +428,22 @@ const ReportsPage = () => {
       // Stub 3: (no title - more space for info)
       stubX += stubW;
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      const solaStubText = `${order.solado || 'BORRACHA'} ${order.formatoBico || 'QUADRADA'}`.toUpperCase();
+      doc.setFontSize(7);
+      const solaStubText = `${order.solado || 'BORRACHA'}`.toUpperCase();
+      const bicoStubText = `${order.formatoBico || 'QUADRADO'}`.toUpperCase();
       const corSolaStubText = `${order.corSola || 'PRETA'}`.toUpperCase();
-      doc.text(`SOLA:`, stubX + 2, stubTop + 4);
-      doc.text(solaStubText, stubX + 2, stubTop + 7.5);
-      doc.text(corSolaStubText, stubX + 2, stubTop + 11);
-      doc.text(`FORMA: ${orderNumClean}`, stubX + stubW - 28, stubTop + 4);
-      doc.text(`NÚMERO: ${order.tamanho}`, stubX + stubW - 28, stubTop + 8);
+      doc.text(`SOLA: ${solaStubText}`, stubX + 2, stubTop + 4);
+      doc.text(`BICO: ${bicoStubText}`, stubX + 2, stubTop + 7);
+      doc.text(`COR: ${corSolaStubText}`, stubX + 2, stubTop + 10);
+      doc.setFontSize(8);
+      doc.text(`FORMA: ${orderNumClean}`, stubX + 2, stubTop + 14);
+      doc.text(`NUM: ${order.tamanho}`, stubX + 2, stubTop + 17.5);
       if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', stubX + 6, stubTop + 13, stubW - 12, 10); } catch {}
+        try { doc.addImage(bcUrl, 'PNG', stubX + 6, stubTop + 19, stubW - 12, 6); } catch {}
       }
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
-      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 27, { align: 'center' });
+      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 28, { align: 'center' });
     }
 
     doc.save('fichas-producao.pdf');
