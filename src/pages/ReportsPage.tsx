@@ -392,7 +392,9 @@ const ReportsPage = () => {
         catIndices.forEach(ci => {
           const cat = categories[ci];
           if (cy > descBottom) return;
-          // Title
+          // Title with background box
+          doc.setFillColor(232, 232, 232);
+          doc.rect(startX - 1, cy - 3.5, colWidth, 5, 'F');
           doc.setFontSize(9);
           doc.setFont('helvetica', 'bold');
           doc.text(cat.title, startX, cy);
@@ -469,25 +471,26 @@ const ReportsPage = () => {
       doc.setFontSize(10);
       doc.text(orderNumClean, stubX + stubW / 2, stubTop + 24, { align: 'center' });
 
-      // Stub 3: (no title - more space for info)
+      // Stub 3: Tamanho + sola info + FORMA + barcode
       stubX += stubW;
+      const solaParts = [
+        order.tamanho,
+        (order.solado || 'borracha').toLowerCase(),
+        (order.formatoBico || 'quadrado').toLowerCase(),
+        (order.corSola || 'preta').toLowerCase(),
+        order.corVira ? `vira ${order.corVira.toLowerCase()}` : '',
+      ].filter(Boolean).join('  ');
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      const solaStubText = `${order.solado || 'BORRACHA'}`.toUpperCase();
-      const bicoStubText = `${order.formatoBico || 'QUADRADO'}`.toUpperCase();
-      const corSolaStubText = `${order.corSola || 'PRETA'}`.toUpperCase();
-      doc.text(`SOLA: ${solaStubText}`, stubX + 2, stubTop + 4);
-      doc.text(`BICO: ${bicoStubText}`, stubX + 2, stubTop + 7);
-      doc.text(`COR: ${corSolaStubText}`, stubX + 2, stubTop + 10);
       doc.setFontSize(8);
-      doc.text(`FORMA: ${orderNumClean}`, stubX + 2, stubTop + 14);
-      doc.text(`NUM: ${order.tamanho}`, stubX + 2, stubTop + 17.5);
+      doc.text(solaParts, stubX + stubW / 2, stubTop + 5, { align: 'center' });
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text(`FORMA: ${orderNumClean}`, stubX + stubW / 2, stubTop + 10, { align: 'center' });
       if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', stubX + 6, stubTop + 19, stubW - 12, 6); } catch {}
+        try { doc.addImage(bcUrl, 'PNG', stubX + 6, stubTop + 13, stubW - 12, 10); } catch {}
       }
       doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 28, { align: 'center' });
+      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 27, { align: 'center' });
     }
 
     doc.save('fichas-producao.pdf');
