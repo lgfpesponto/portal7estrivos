@@ -223,18 +223,47 @@ const ReportsPage = () => {
       const dateStr = `${order.dataCriacao.slice(8, 10)}/${order.dataCriacao.slice(5, 7)} ${order.horaCriacao}`;
       printHeaderField('Data:      ', dateStr, hx, hy + hGap * 2);
 
-      // Right column
+      // Right column — dynamic Y with wrapping
+      let rhY = hy;
+      const rhMaxW = qrX - hx2 - 4; // max width before QR code
+
       let tamText = `${order.tamanho || ''}${order.genero ? ' ' + order.genero.substring(0, 3).toLowerCase() + '.' : ''}`;
       if (order.sobMedida) {
         tamText += ` | sob medida${order.sobMedidaDesc ? ': ' + order.sobMedidaDesc : ''}`;
       }
-      printHeaderField('Tamanho:  ', tamText, hx2, hy);
+
+      // Render Tamanho with wrapping
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      const tamLabel = 'Tamanho:  ';
+      doc.text(tamLabel, hx2, rhY);
+      doc.setFont('helvetica', 'normal');
+      const tamLabelW = doc.getTextWidth(tamLabel);
+      const tamLines = doc.splitTextToSize(tamText, rhMaxW - tamLabelW);
+      tamLines.forEach((line: string, li: number) => {
+        doc.text(line, hx2 + tamLabelW, rhY + li * 4);
+      });
+      rhY += Math.max(tamLines.length, 1) * 4 + 2;
+
+      // Modelo
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      const modLabel = 'Modelo:   ';
+      doc.text(modLabel, hx2, rhY);
+      doc.setFont('helvetica', 'normal');
+      const modLabelW = doc.getTextWidth(modLabel);
       const modeloText = (order.modelo || '').toLowerCase();
-      printHeaderField('Modelo:   ', modeloText, hx2, hy + hGap);
+      const modLines = doc.splitTextToSize(modeloText, rhMaxW - modLabelW);
+      modLines.forEach((line: string, li: number) => {
+        doc.text(line, hx2 + modLabelW, rhY + li * 4);
+      });
+      rhY += Math.max(modLines.length, 1) * 4 + 2;
+
+      // QR phrase
       if (hasQR) {
         doc.setFontSize(9);
         doc.setFont('helvetica', 'italic');
-        doc.text('Escaneie para ver a foto ->', hx2, hy + hGap * 2);
+        doc.text('Escaneie para ver a foto ->', hx2, rhY);
       }
 
       // Separator
@@ -242,29 +271,12 @@ const ReportsPage = () => {
       doc.setLineWidth(0.4);
       doc.line(m, headerBottom, pw - m, headerBottom);
 
-      // ─── DESCRIPTION AREA (dynamic 2-column categories) ───
+      // ─── DESCRIPTION AREA (dynamic 3-column categories) ───
       const descTop = headerBottom + 5;
       const fs = 11;
       const fieldGap = 5.5;
       const catGap = 3;
       const descBottom = (ph - 34) - 4; // stubTop - 4mm safety
-
-      const printField = (label: string, value: string, x: number, y: number) => {
-        if (y > descBottom) return;
-        doc.setFontSize(fs);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`${label}`, x, y);
-        doc.setFont('helvetica', 'normal');
-        const lw = doc.getTextWidth(label) + 3;
-        doc.text(value, x + lw, y);
-      };
-
-      const printCatTitle = (title: string, x: number, y: number) => {
-        if (y > descBottom) return;
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text(title, x, y);
-      };
 
       // Build categories with filled fields only
       type CatField = { label: string; value: string };
@@ -344,49 +356,81 @@ const ReportsPage = () => {
         categories.push({ title: 'OBS', fields: [{ label: '', value: order.observacao }] });
       }
 
-      // Calculate height for each category: title line + fields
-      const catHeights = categories.map(c => (c.fields.length + 1) * fieldGap + catGap);
+      // 3-column layout
+      const colWidth = (pw - m * 2 - 8) / 3;
+      const col1X = m + 3;
+      const col2X = col1X + colWidth + 2;
+      const col3X = col2X + colWidth + 2;
 
-      // Greedy distribution into 2 columns
-      let col1H = 0, col2H = 0;
-      const col1Cats: number[] = [], col2Cats: number[] = [];
+      // Estimate height for each category (considering text wrapping)
+      const estimateCatHeight = (cat: Category): number => {
+        let h = fieldGap; // title line
+        cat.fields.forEach(f => {
+          const labelW = f.label ? doc.getTextWidth(f.label) + 3 : 0;
+          doc.setFontSize(fs);
+          const valLines = doc.splitTextToSize(f.value, colWidth - labelW - 5);
+          h += Math.max(valLines.length, 1) * (fieldGap * 0.8);
+        });
+        h += catGap;
+        return h;
+      };
+
+      const catHeights = categories.map(c => estimateCatHeight(c));
+
+      // Greedy distribution into 3 columns
+      const colHeights = [0, 0, 0];
+      const colCats: number[][] = [[], [], []];
       catHeights.forEach((h, i) => {
-        if (col1H <= col2H) {
-          col1Cats.push(i);
-          col1H += h;
-        } else {
-          col2Cats.push(i);
-          col2H += h;
-        }
+        const minCol = colHeights.indexOf(Math.min(...colHeights));
+        colCats[minCol].push(i);
+        colHeights[minCol] += h;
       });
 
-      // Render categories
-      const colWidth = (pw - m * 2 - 6) / 2;
-      const col1X = m + 3;
-      const col2X = col1X + colWidth + 3;
-
+      // Render categories with text wrapping
       const renderCats = (catIndices: number[], startX: number) => {
         let cy = descTop;
         catIndices.forEach(ci => {
           const cat = categories[ci];
-          printCatTitle(cat.title, startX, cy);
+          if (cy > descBottom) return;
+          // Title
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text(cat.title, startX, cy);
           cy += fieldGap;
+
           cat.fields.forEach(f => {
+            if (cy > descBottom) return;
+            doc.setFontSize(fs);
             if (f.label) {
-              printField(f.label, f.value, startX, cy);
-            } else {
-              doc.setFontSize(fs);
+              doc.setFont('helvetica', 'bold');
+              doc.text(f.label, startX, cy);
+              const lw = doc.getTextWidth(f.label) + 3;
               doc.setFont('helvetica', 'normal');
-              if (cy <= descBottom) doc.text(f.value, startX, cy);
+              const valLines = doc.splitTextToSize(f.value, colWidth - lw - 3);
+              valLines.forEach((line: string, li: number) => {
+                if (cy + li * (fieldGap * 0.8) <= descBottom) {
+                  doc.text(line, startX + lw, cy + li * (fieldGap * 0.8));
+                }
+              });
+              cy += Math.max(valLines.length, 1) * (fieldGap * 0.8);
+            } else {
+              doc.setFont('helvetica', 'normal');
+              const valLines = doc.splitTextToSize(f.value, colWidth - 3);
+              valLines.forEach((line: string, li: number) => {
+                if (cy + li * (fieldGap * 0.8) <= descBottom) {
+                  doc.text(line, startX, cy + li * (fieldGap * 0.8));
+                }
+              });
+              cy += Math.max(valLines.length, 1) * (fieldGap * 0.8);
             }
-            cy += fieldGap;
           });
           cy += catGap;
         });
       };
 
-      renderCats(col1Cats, col1X);
-      renderCats(col2Cats, col2X);
+      renderCats(colCats[0], col1X);
+      renderCats(colCats[1], col2X);
+      renderCats(colCats[2], col3X);
 
       // ─── STUBS AT BOTTOM ───
       const stubTop = ph - 34;
