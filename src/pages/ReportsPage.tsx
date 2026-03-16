@@ -311,9 +311,15 @@ const ReportsPage = () => {
       // METAIS
       const metaisFields: CatField[] = [];
       if (order.metais) {
-        metaisFields.push({ label: 'Área:', value: order.metais.toLowerCase() });
-        if (order.tipoMetal) metaisFields.push({ label: 'Tipo:', value: order.tipoMetal.toLowerCase() });
-        if (order.corMetal) metaisFields.push({ label: 'Cor:', value: order.corMetal.toLowerCase() });
+        const metalParts = [order.metais.toLowerCase()];
+        if (order.tipoMetal) metalParts.push(order.tipoMetal.toLowerCase());
+        if (order.corMetal) metalParts.push(order.corMetal.toLowerCase());
+        metaisFields.push({ label: 'Metais:', value: metalParts.join(', ') });
+        const metalExtras: string[] = [];
+        if (order.strassQtd) metalExtras.push(`strass x${order.strassQtd}`);
+        if (order.cruzMetalQtd) metalExtras.push(`cruz x${order.cruzMetalQtd}`);
+        if (order.bridaoMetalQtd) metalExtras.push(`bridao x${order.bridaoMetalQtd}`);
+        if (metalExtras.length) metaisFields.push({ label: '', value: metalExtras.join(', ') });
       }
       if (metaisFields.length) categories.push({ title: 'METAIS', fields: metaisFields });
 
