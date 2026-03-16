@@ -372,9 +372,9 @@ const ReportsPage = () => {
       // ─── STUBS AT BOTTOM (3 sections with dotted separator) ───
       const stubTop = ph - 38;
       doc.setLineWidth(0.2);
-      doc.setLineDash([1, 1]);
+      (doc as any).setLineDash([1, 1]);
       doc.line(m, stubTop - 2, pw - m, stubTop - 2);
-      doc.setLineDash([]);
+      (doc as any).setLineDash([]);
 
       const stubAreaW = pw - m * 2;
       const stubW = stubAreaW / 3;
