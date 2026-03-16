@@ -177,7 +177,7 @@ const ReportsPage = () => {
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [148.5, 210] });
     const pw = 210;
     const ph = 148.5;
-    const m = 5;
+    const m = 6;
 
     for (let idx = 0; idx < list.length; idx++) {
       const order = list[idx];
@@ -186,192 +186,177 @@ const ReportsPage = () => {
       const orderNumClean = order.numero.replace('7E-', '');
 
       // ─── HEADER TOP LEFT ───
-      doc.setFontSize(10);
+      doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('7ESTRIVOS', m + 2, m + 7);
+      doc.text('7ESTRIVOS', m + 2, m + 8);
 
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
       const hx = m + 2;
-      let hy = m + 13;
-      doc.text('Código: ', hx, hy);
+      let hy = m + 16;
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Código: `, hx, hy);
       doc.setFont('helvetica', 'normal');
       doc.text(orderNumClean, hx + doc.getTextWidth('Código: '), hy);
-      hy += 5;
+      hy += 6;
       doc.setFont('helvetica', 'bold');
-      doc.text('Vendedor: ', hx, hy);
+      doc.text(`Vendedor: `, hx, hy);
       doc.setFont('helvetica', 'normal');
       doc.text(order.vendedor, hx + doc.getTextWidth('Vendedor: '), hy);
-      hy += 5;
+      hy += 6;
       doc.setFont('helvetica', 'bold');
-      doc.text('Data e hora: ', hx, hy);
+      doc.text(`Data e hora: `, hx, hy);
       doc.setFont('helvetica', 'normal');
       const dateStr = `${order.dataCriacao.slice(8, 10)}/${order.dataCriacao.slice(5, 7)} ${order.horaCriacao}`;
       doc.text(dateStr, hx + doc.getTextWidth('Data e hora: '), hy);
 
       // ─── QR CODE TOP RIGHT ───
-      const qrSize = 35;
+      const qrSize = 30;
       const qrX = pw - qrSize - m - 2;
-      const qrY = m + 3;
+      const qrY = m + 2;
       if (order.fotos && order.fotos.length > 0 && order.fotos[0].startsWith('http')) {
         try {
           const qrDataUrl = await QRCode.toDataURL(order.fotos[0], { width: 300, margin: 1 });
           doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-          doc.setFontSize(7);
+          doc.setFontSize(8);
           doc.setFont('helvetica', 'bold');
-          doc.text('ESCANEIE PARA', qrX + qrSize / 2, qrY + qrSize + 2.5, { align: 'center' });
-          doc.text('VER A FOTO:', qrX + qrSize / 2, qrY + qrSize + 5, { align: 'center' });
+          doc.text('ESCANEIE PARA', qrX + qrSize / 2, qrY + qrSize + 3, { align: 'center' });
+          doc.text('VER A FOTO', qrX + qrSize / 2, qrY + qrSize + 6, { align: 'center' });
         } catch { /* skip */ }
       }
 
+      // ─── SEPARATOR LINE ───
+      const headerBottom = m + 37;
+      doc.setLineWidth(0.4);
+      doc.line(m, headerBottom, pw - m, headerBottom);
+
       // ─── DESCRIPTION AREA (3 columns) ───
-      const descTop = m + 32;
-      doc.setFontSize(8);
+      const descTop = headerBottom + 5;
+      const fs = 10; // main description font size
+      const fieldGap = 5.5;
 
       // Column 1 (left)
-      const col1X = m + 2;
+      const col1X = m + 3;
       let y1 = descTop;
-      const fieldGap = 4.5;
+
+      const printField = (label: string, value: string, x: number, y: number) => {
+        doc.setFontSize(fs);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${label} `, x, y);
+        doc.setFont('helvetica', 'normal');
+        const lw = doc.getTextWidth(`${label} `);
+        doc.text(value, x + lw, y);
+      };
 
       if (order.tamanho) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('Tamanho:', col1X, y1);
-        doc.setFont('helvetica', 'normal');
         const tamText = `${order.tamanho}${order.genero ? ' ' + order.genero.substring(0, 3).toLowerCase() + '.' : ''}`;
-        doc.text(tamText, col1X + 17, y1);
+        printField('Tamanho:', tamText, col1X, y1);
         y1 += fieldGap;
       }
       if (order.modelo) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('Modelo:', col1X, y1);
-        doc.setFont('helvetica', 'normal');
-        const modeloText = order.modelo.toLowerCase().replace('tradicional', 'trad.').replace('feminino', 'fem.');
-        doc.text(modeloText, col1X + 13, y1);
+        printField('Modelo:', order.modelo.toLowerCase().replace('tradicional', 'trad.').replace('feminino', 'fem.'), col1X, y1);
         y1 += fieldGap;
       }
       if (order.couroCano) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('C. cano:', col1X, y1);
-        doc.setFont('helvetica', 'normal');
-        const couroText = `${order.couroCano.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroCano ? ' ' + order.corCouroCano.toLowerCase() : ''}`;
-        doc.text(couroText, col1X + 13, y1);
+        const t = `${order.couroCano.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroCano ? ' ' + order.corCouroCano.toLowerCase() : ''}`;
+        printField('C. cano:', t, col1X, y1);
         y1 += fieldGap;
       }
       if (order.couroGaspea) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('C. gaspea:', col1X, y1);
-        doc.setFont('helvetica', 'normal');
-        const couroText = `${order.couroGaspea.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroGaspea ? ' ' + order.corCouroGaspea.toLowerCase() : ''}`;
-        doc.text(couroText, col1X + 16, y1);
+        const t = `${order.couroGaspea.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroGaspea ? ' ' + order.corCouroGaspea.toLowerCase() : ''}`;
+        printField('C. gaspea:', t, col1X, y1);
         y1 += fieldGap;
       }
       if (order.couroTaloneira) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('C. taloneira:', col1X, y1);
-        doc.setFont('helvetica', 'normal');
-        const couroText = `${order.couroTaloneira.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroTaloneira ? ' ' + order.corCouroTaloneira.toLowerCase() : ''}`;
-        doc.text(couroText, col1X + 19, y1);
+        const t = `${order.couroTaloneira.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroTaloneira ? ' ' + order.corCouroTaloneira.toLowerCase() : ''}`;
+        printField('C. taloneira:', t, col1X, y1);
         y1 += fieldGap;
       }
       if (order.bordadoCano) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('B. cano:', col1X, y1);
-        doc.setFont('helvetica', 'normal');
-        const bordadoText = `${order.bordadoCano.toLowerCase().replace('florão básico', 'florão b.')}${order.corBordadoCano ? ' ' + order.corBordadoCano.toLowerCase() : ''}`;
-        doc.text(bordadoText, col1X + 13, y1);
+        const t = `${order.bordadoCano.toLowerCase().replace('florão básico', 'florão b.')}${order.corBordadoCano ? ' ' + order.corBordadoCano.toLowerCase() : ''}`;
+        printField('B. cano:', t, col1X, y1);
         y1 += fieldGap;
       }
       if (order.bordadoGaspea) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('B. gáspea:', col1X, y1);
-        doc.setFont('helvetica', 'normal');
-        const bordadoText = `${order.bordadoGaspea.toLowerCase().replace('florão básico', 'florão b.')}${order.corBordadoGaspea ? ' ' + order.corBordadoGaspea.toLowerCase() : ''}`;
-        doc.text(bordadoText, col1X + 16, y1);
+        const t = `${order.bordadoGaspea.toLowerCase().replace('florão básico', 'florão b.')}${order.corBordadoGaspea ? ' ' + order.corBordadoGaspea.toLowerCase() : ''}`;
+        printField('B. gáspea:', t, col1X, y1);
         y1 += fieldGap;
       }
       if (order.nomeBordadoDesc || order.personalizacaoNome) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('Nome bordado:', col1X, y1);
-        doc.setFont('helvetica', 'normal');
-        doc.text(order.nomeBordadoDesc || order.personalizacaoNome || '', col1X + 25, y1);
+        printField('Nome bordado:', order.nomeBordadoDesc || order.personalizacaoNome || '', col1X, y1);
         y1 += fieldGap;
       }
 
       // Column 2 (middle)
-      const col2X = col1X + 68;
+      const col2X = col1X + 72;
       let y2 = descTop;
 
       if (order.acessorios) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('Acessórios:', col2X, y2);
-        doc.setFont('helvetica', 'normal');
-        doc.text(order.acessorios, col2X + 20, y2);
+        printField('Acessórios:', order.acessorios, col2X, y2);
         y2 += fieldGap;
       }
       if (order.corLinha) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('Linha:', col2X, y2);
-        doc.setFont('helvetica', 'normal');
-        doc.text(order.corLinha.toLowerCase(), col2X + 11, y2);
+        printField('Linha:', order.corLinha.toLowerCase(), col2X, y2);
         y2 += fieldGap;
       }
       if (order.corBorrachinha) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('Borrachinha:', col2X, y2);
-        doc.setFont('helvetica', 'normal');
-        doc.text(order.corBorrachinha.toLowerCase(), col2X + 20, y2);
+        printField('Borrachinha:', order.corBorrachinha.toLowerCase(), col2X, y2);
         y2 += fieldGap;
       }
       if (order.corVivo) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('Vivo:', col2X, y2);
-        doc.setFont('helvetica', 'normal');
-        doc.text(order.corVivo.toLowerCase(), col2X + 9, y2);
+        printField('Vivo:', order.corVivo.toLowerCase(), col2X, y2);
         y2 += fieldGap;
       }
       if (order.metais) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('Metal:', col2X, y2);
-        doc.setFont('helvetica', 'normal');
         let metalStr = order.metais.toLowerCase();
         if (order.tipoMetal) metalStr += ', ' + order.tipoMetal.toLowerCase();
         if (order.corMetal) metalStr += ', ' + order.corMetal.toLowerCase();
-        doc.text(metalStr, col2X + 11, y2);
+        printField('Metal:', metalStr, col2X, y2);
         y2 += fieldGap;
       }
       if (order.trisce === 'Sim' && order.triceDesc) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('Tricê:', col2X, y2);
-        doc.setFont('helvetica', 'normal');
-        doc.text(order.triceDesc.toLowerCase(), col2X + 10, y2);
+        printField('Tricê:', order.triceDesc.toLowerCase(), col2X, y2);
         y2 += fieldGap;
       }
       if (order.tiras === 'Sim' && order.tirasDesc) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('Tiras:', col2X, y2);
-        doc.setFont('helvetica', 'normal');
-        doc.text(order.tirasDesc.toLowerCase(), col2X + 9, y2);
+        printField('Tiras:', order.tirasDesc.toLowerCase(), col2X, y2);
         y2 += fieldGap;
       }
 
-      // Column 3 (right - SOLA highlighted)
-      const col3X = col2X + 68;
+      // Column 3 (right - SOLA)
+      const col3X = col2X + 65;
       const col3Y = descTop;
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
+      doc.setFontSize(12);
       doc.text('Sola:', col3X, col3Y);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      let solaY = col3Y + 5;
-      const solaText = `${order.solado || 'Borracha'} ${order.formatoBico || 'quadrada'}`.toLowerCase();
-      const corSolaText = (order.corSola || 'preta').toLowerCase();
-      doc.text(solaText, col3X, solaY);
-      solaY += fieldGap;
-      doc.text(corSolaText, col3X, solaY);
+      doc.setFontSize(fs);
+      const solaLine1 = `${order.solado || 'Borracha'} ${order.formatoBico || 'quadrada'}`.toLowerCase();
+      const solaLine2 = (order.corSola || 'preta').toLowerCase();
+      doc.text(solaLine1, col3X, col3Y + 6);
+      doc.text(solaLine2, col3X, col3Y + 12);
 
-      // ─── STUBS AT BOTTOM (3 sections with dotted separator) ───
-      const stubTop = ph - 38;
-      doc.setLineWidth(0.2);
+      // Extra fields (laser, estampa, etc.) below columns if space
+      let extraY = Math.max(y1, y2) + 2;
+      if (order.laserCano) {
+        printField('L. cano:', `${order.laserCano.toLowerCase()}${order.corGlitterCano ? ' ' + order.corGlitterCano.toLowerCase() : ''}`, col1X, extraY);
+        extraY += fieldGap;
+      }
+      if (order.laserGaspea) {
+        printField('L. gáspea:', `${order.laserGaspea.toLowerCase()}${order.corGlitterGaspea ? ' ' + order.corGlitterGaspea.toLowerCase() : ''}`, col1X, extraY);
+        extraY += fieldGap;
+      }
+      if (order.laserTaloneira) {
+        printField('L. taloneira:', `${order.laserTaloneira.toLowerCase()}${order.corGlitterTaloneira ? ' ' + order.corGlitterTaloneira.toLowerCase() : ''}`, col1X, extraY);
+        extraY += fieldGap;
+      }
+      if (order.observacao) {
+        printField('Obs:', order.observacao, col1X, extraY);
+        extraY += fieldGap;
+      }
+
+      // ─── STUBS AT BOTTOM ───
+      const stubTop = ph - 34;
+      doc.setLineWidth(0.3);
       (doc as any).setLineDash([1, 1]);
       doc.line(m, stubTop - 2, pw - m, stubTop - 2);
       (doc as any).setLineDash([]);
@@ -379,55 +364,53 @@ const ReportsPage = () => {
       const stubAreaW = pw - m * 2;
       const stubW = stubAreaW / 3;
       const bcVal = orderBarcodeValue(order.numero);
-      const bcUrl = barcodeDataUrl(bcVal, { width: 1.2, height: 30 });
+      const bcUrl = barcodeDataUrl(bcVal, { width: 1.2, height: 28 });
 
       // Stub 1: BORDADO / LASER
       let stubX = m;
       doc.setLineWidth(0.3);
       doc.line(stubX + stubW, stubTop, stubX + stubW, ph - m);
-      doc.setFontSize(7);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       doc.text('BORDADO / LASER', stubX + stubW / 2, stubTop + 4, { align: 'center' });
       if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', stubX + 8, stubTop + 6, stubW - 16, 15); } catch {}
+        try { doc.addImage(bcUrl, 'PNG', stubX + 6, stubTop + 6, stubW - 12, 14); } catch {}
       }
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 25, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 24, { align: 'center' });
 
       // Stub 2: PESPONTO
       stubX += stubW;
       doc.line(stubX + stubW, stubTop, stubX + stubW, ph - m);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
+      doc.setFontSize(9);
       doc.text('PESPONTO', stubX + stubW / 2, stubTop + 4, { align: 'center' });
       if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', stubX + 8, stubTop + 6, stubW - 16, 15); } catch {}
+        try { doc.addImage(bcUrl, 'PNG', stubX + 6, stubTop + 6, stubW - 12, 14); } catch {}
       }
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 25, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 24, { align: 'center' });
 
-      // Stub 3: MONTAGEM (larger with details)
+      // Stub 3: MONTAGEM
       stubX += stubW;
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
+      doc.setFontSize(9);
       doc.text('MONTAGEM', stubX + stubW / 2, stubTop + 4, { align: 'center' });
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.5);
+      doc.setFontSize(8);
       const solaStubText = `${order.solado || 'BORRACHA'} ${order.formatoBico || 'QUADRADA'}`.toUpperCase();
       const corSolaStubText = `${order.corSola || 'PRETA'}`.toUpperCase();
       doc.text(`SOLA:`, stubX + 2, stubTop + 8);
-      doc.text(solaStubText, stubX + 2, stubTop + 11);
-      doc.text(corSolaStubText, stubX + 2, stubTop + 14);
-      doc.text(`FORMA: ${orderNumClean}`, stubX + stubW - 26, stubTop + 8);
-      doc.text(`NÚMERO: ${order.tamanho}`, stubX + stubW - 26, stubTop + 12);
+      doc.text(solaStubText, stubX + 2, stubTop + 11.5);
+      doc.text(corSolaStubText, stubX + 2, stubTop + 15);
+      doc.text(`FORMA: ${orderNumClean}`, stubX + stubW - 28, stubTop + 8);
+      doc.text(`NÚMERO: ${order.tamanho}`, stubX + stubW - 28, stubTop + 12);
       if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', stubX + 8, stubTop + 16, stubW - 16, 12); } catch {}
+        try { doc.addImage(bcUrl, 'PNG', stubX + 6, stubTop + 17, stubW - 12, 10); } catch {}
       }
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 32, { align: 'center' });
+      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 30, { align: 'center' });
     }
 
     doc.save('fichas-producao.pdf');
