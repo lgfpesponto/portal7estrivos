@@ -217,10 +217,11 @@ const ReportsPage = () => {
         try {
           const qrDataUrl = await QRCode.toDataURL(order.fotos[0], { width: 300, margin: 1 });
           doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-          doc.setFontSize(8);
+          // Text to the LEFT of QR code
+          doc.setFontSize(9);
           doc.setFont('helvetica', 'bold');
-          doc.text('ESCANEIE PARA', qrX + qrSize / 2, qrY + qrSize + 3, { align: 'center' });
-          doc.text('VER A FOTO', qrX + qrSize / 2, qrY + qrSize + 6, { align: 'center' });
+          doc.text('ESCANEIE PARA', qrX - 2, qrY + qrSize / 2 - 2, { align: 'right' });
+          doc.text('VER A FOTO', qrX - 2, qrY + qrSize / 2 + 2, { align: 'right' });
         } catch { /* skip */ }
       }
 
@@ -231,8 +232,8 @@ const ReportsPage = () => {
 
       // ─── DESCRIPTION AREA (3 columns) ───
       const descTop = headerBottom + 5;
-      const fs = 10; // main description font size
-      const fieldGap = 5.5;
+      const fs = 11; // main description font size
+      const fieldGap = 6;
 
       // Column 1 (left)
       const col1X = m + 3;
