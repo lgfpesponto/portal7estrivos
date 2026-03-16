@@ -217,10 +217,11 @@ const ReportsPage = () => {
         try {
           const qrDataUrl = await QRCode.toDataURL(order.fotos[0], { width: 300, margin: 1 });
           doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-          doc.setFontSize(8);
+          // Text to the LEFT of QR code
+          doc.setFontSize(9);
           doc.setFont('helvetica', 'bold');
-          doc.text('ESCANEIE PARA', qrX + qrSize / 2, qrY + qrSize + 3, { align: 'center' });
-          doc.text('VER A FOTO', qrX + qrSize / 2, qrY + qrSize + 6, { align: 'center' });
+          doc.text('ESCANEIE PARA', qrX - 2, qrY + qrSize / 2 - 2, { align: 'right' });
+          doc.text('VER A FOTO', qrX - 2, qrY + qrSize / 2 + 2, { align: 'right' });
         } catch { /* skip */ }
       }
 
@@ -231,8 +232,8 @@ const ReportsPage = () => {
 
       // ─── DESCRIPTION AREA (3 columns) ───
       const descTop = headerBottom + 5;
-      const fs = 10; // main description font size
-      const fieldGap = 5.5;
+      const fs = 11; // main description font size
+      const fieldGap = 6;
 
       // Column 1 (left)
       const col1X = m + 3;
@@ -391,26 +392,23 @@ const ReportsPage = () => {
       doc.setFontSize(10);
       doc.text(orderNumClean, stubX + stubW / 2, stubTop + 24, { align: 'center' });
 
-      // Stub 3: MONTAGEM
+      // Stub 3: (no title - more space for info)
       stubX += stubW;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.text('MONTAGEM', stubX + stubW / 2, stubTop + 4, { align: 'center' });
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       const solaStubText = `${order.solado || 'BORRACHA'} ${order.formatoBico || 'QUADRADA'}`.toUpperCase();
       const corSolaStubText = `${order.corSola || 'PRETA'}`.toUpperCase();
-      doc.text(`SOLA:`, stubX + 2, stubTop + 8);
-      doc.text(solaStubText, stubX + 2, stubTop + 11.5);
-      doc.text(corSolaStubText, stubX + 2, stubTop + 15);
-      doc.text(`FORMA: ${orderNumClean}`, stubX + stubW - 28, stubTop + 8);
-      doc.text(`NÚMERO: ${order.tamanho}`, stubX + stubW - 28, stubTop + 12);
+      doc.text(`SOLA:`, stubX + 2, stubTop + 4);
+      doc.text(solaStubText, stubX + 2, stubTop + 7.5);
+      doc.text(corSolaStubText, stubX + 2, stubTop + 11);
+      doc.text(`FORMA: ${orderNumClean}`, stubX + stubW - 28, stubTop + 4);
+      doc.text(`NÚMERO: ${order.tamanho}`, stubX + stubW - 28, stubTop + 8);
       if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', stubX + 6, stubTop + 17, stubW - 12, 10); } catch {}
+        try { doc.addImage(bcUrl, 'PNG', stubX + 6, stubTop + 13, stubW - 12, 10); } catch {}
       }
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 30, { align: 'center' });
+      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 27, { align: 'center' });
     }
 
     doc.save('fichas-producao.pdf');
