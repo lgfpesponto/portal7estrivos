@@ -392,7 +392,9 @@ const ReportsPage = () => {
         catIndices.forEach(ci => {
           const cat = categories[ci];
           if (cy > descBottom) return;
-          // Title
+          // Title with background box
+          doc.setFillColor(232, 232, 232);
+          doc.rect(startX - 1, cy - 3.5, colWidth, 5, 'F');
           doc.setFontSize(9);
           doc.setFont('helvetica', 'bold');
           doc.text(cat.title, startX, cy);
