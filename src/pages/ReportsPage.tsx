@@ -403,14 +403,12 @@ const ReportsPage = () => {
       doc.text(corSolaStubText, stubX + 2, stubTop + 11);
       doc.text(`FORMA: ${orderNumClean}`, stubX + stubW - 28, stubTop + 4);
       doc.text(`NÚMERO: ${order.tamanho}`, stubX + stubW - 28, stubTop + 8);
-      doc.text(`FORMA: ${orderNumClean}`, stubX + stubW - 28, stubTop + 8);
-      doc.text(`NÚMERO: ${order.tamanho}`, stubX + stubW - 28, stubTop + 12);
       if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', stubX + 6, stubTop + 17, stubW - 12, 10); } catch {}
+        try { doc.addImage(bcUrl, 'PNG', stubX + 6, stubTop + 13, stubW - 12, 10); } catch {}
       }
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 30, { align: 'center' });
+      doc.text(orderNumClean, stubX + stubW / 2, stubTop + 27, { align: 'center' });
     }
 
     doc.save('fichas-producao.pdf');
