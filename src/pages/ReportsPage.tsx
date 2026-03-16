@@ -333,10 +333,9 @@ const ReportsPage = () => {
       if (order.trisce === 'Sim' && order.triceDesc) extrasFields.push({ label: 'Tricê:', value: order.triceDesc.toLowerCase() });
       if (order.tiras === 'Sim' && order.tirasDesc) extrasFields.push({ label: 'Tiras:', value: order.tirasDesc.toLowerCase() });
       if (order.costuraAtras === 'Sim') extrasFields.push({ label: 'Costura atrás:', value: 'sim' });
-      if (order.estampa === 'Sim') extrasFields.push({ label: 'Estampa:', value: 'sim' });
-      if (order.pintura === 'Sim') extrasFields.push({ label: 'Pintura:', value: 'sim' });
-      if (order.sobMedida) extrasFields.push({ label: 'Sob medida:', value: order.sobMedidaDesc || 'sim' });
-      if (order.carimbo === 'Sim') extrasFields.push({ label: 'Carimbo:', value: 'sim' });
+      if (order.estampa === 'Sim') extrasFields.push({ label: 'Estampa:', value: order.estampaDesc || 'sim' });
+      if (order.pintura === 'Sim') extrasFields.push({ label: 'Pintura:', value: order.pinturaDesc || 'sim' });
+      if (order.carimbo) extrasFields.push({ label: 'Carimbo:', value: `${order.carimbo}${order.carimboDesc ? ' - ' + order.carimboDesc : ''}` });
       if (order.adicionalDesc) extrasFields.push({ label: 'Adicional:', value: `${order.adicionalDesc} R$${order.adicionalValor || 0}` });
       if (extrasFields.length) categories.push({ title: 'EXTRAS', fields: extrasFields });
 
