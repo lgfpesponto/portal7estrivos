@@ -326,7 +326,7 @@ const ReportsPage = () => {
       if (order.costuraAtras === 'Sim') extrasFields.push({ label: 'Costura atrás:', value: 'sim' });
       if (order.estampa === 'Sim') extrasFields.push({ label: 'Estampa:', value: 'sim' });
       if (order.pintura === 'Sim') extrasFields.push({ label: 'Pintura:', value: 'sim' });
-      if (order.sobMedida) extrasFields.push({ label: 'Sob medida:', value: order.sobMedida });
+      if (order.sobMedida) extrasFields.push({ label: 'Sob medida:', value: order.sobMedidaDesc || 'sim' });
       if (order.carimbo === 'Sim') extrasFields.push({ label: 'Carimbo:', value: 'sim' });
       if (order.adicionalDesc) extrasFields.push({ label: 'Adicional:', value: `${order.adicionalDesc} R$${order.adicionalValor || 0}` });
       if (extrasFields.length) categories.push({ title: 'EXTRAS', fields: extrasFields });
