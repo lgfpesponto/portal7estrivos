@@ -302,7 +302,7 @@ const ReportsPage = () => {
       const solaType = `${order.solado || 'Borracha'} ${order.formatoBico || 'quadrada'}`.toLowerCase();
       soladoFields.push({ label: 'Tipo:', value: solaType });
       if (order.corSola) soladoFields.push({ label: 'Cor:', value: order.corSola.toLowerCase() });
-      if (order.vpiVira) soladoFields.push({ label: 'Vira:', value: order.vpiVira.toLowerCase() });
+      if (order.corVira) soladoFields.push({ label: 'Vira:', value: order.corVira.toLowerCase() });
       categories.push({ title: 'SOLADOS', fields: soladoFields });
 
       // METAIS
