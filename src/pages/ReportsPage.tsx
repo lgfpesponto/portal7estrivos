@@ -185,175 +185,200 @@ const ReportsPage = () => {
 
       const orderNumClean = order.numero.replace('7E-', '');
 
-      // ─── HEADER TOP LEFT ───
+      // ─── HEADER ───
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
       doc.text('7ESTRIVOS', m + 2, m + 8);
 
-      const hx = m + 2;
-      let hy = m + 16;
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Código: `, hx, hy);
-      doc.setFont('helvetica', 'normal');
-      doc.text(orderNumClean, hx + doc.getTextWidth('Código: '), hy);
-      hy += 6;
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Vendedor: `, hx, hy);
-      doc.setFont('helvetica', 'normal');
-      doc.text(order.vendedor, hx + doc.getTextWidth('Vendedor: '), hy);
-      hy += 6;
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Data e hora: `, hx, hy);
-      doc.setFont('helvetica', 'normal');
-      const dateStr = `${order.dataCriacao.slice(8, 10)}/${order.dataCriacao.slice(5, 7)} ${order.horaCriacao}`;
-      doc.text(dateStr, hx + doc.getTextWidth('Data e hora: '), hy);
-
-      // ─── QR CODE TOP RIGHT ───
+      // QR Code top right
       const qrSize = 30;
       const qrX = pw - qrSize - m - 2;
       const qrY = m + 2;
+      let hasQR = false;
       if (order.fotos && order.fotos.length > 0 && order.fotos[0].startsWith('http')) {
         try {
           const qrDataUrl = await QRCode.toDataURL(order.fotos[0], { width: 300, margin: 1 });
           doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-          // Text to the LEFT of QR code
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'bold');
-          doc.text('ESCANEIE PARA', qrX - 2, qrY + qrSize / 2 - 2, { align: 'right' });
-          doc.text('VER A FOTO', qrX - 2, qrY + qrSize / 2 + 2, { align: 'right' });
+          hasQR = true;
         } catch { /* skip */ }
       }
 
-      // ─── SEPARATOR LINE ───
+      // Header columns
+      const hx = m + 2;
+      const hx2 = 105;
+      let hy = m + 16;
+      const hGap = 6;
+
+      const printHeaderField = (label: string, value: string, x: number, y: number) => {
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(label, x, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(value, x + doc.getTextWidth(label), y);
+      };
+
+      // Left column
+      printHeaderField('Código:    ', orderNumClean, hx, hy);
+      printHeaderField('Vendedor:  ', order.vendedor, hx, hy + hGap);
+      const dateStr = `${order.dataCriacao.slice(8, 10)}/${order.dataCriacao.slice(5, 7)} ${order.horaCriacao}`;
+      printHeaderField('Data:      ', dateStr, hx, hy + hGap * 2);
+
+      // Right column
+      const tamText = `${order.tamanho || ''}${order.genero ? ' ' + order.genero.substring(0, 3).toLowerCase() + '.' : ''}`;
+      printHeaderField('Tamanho:  ', tamText, hx2, hy);
+      const modeloText = (order.modelo || '').toLowerCase();
+      printHeaderField('Modelo:   ', modeloText, hx2, hy + hGap);
+      if (hasQR) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'italic');
+        doc.text('Escaneie para ver a foto \u2192', hx2, hy + hGap * 2);
+      }
+
+      // Separator
       const headerBottom = m + 37;
       doc.setLineWidth(0.4);
       doc.line(m, headerBottom, pw - m, headerBottom);
 
-      // ─── DESCRIPTION AREA (3 columns) ───
+      // ─── DESCRIPTION AREA (dynamic 2-column categories) ───
       const descTop = headerBottom + 5;
-      const fs = 11; // main description font size
-      const fieldGap = 6;
-
-      // Column 1 (left)
-      const col1X = m + 3;
-      let y1 = descTop;
+      const fs = 11;
+      const fieldGap = 5.5;
+      const catGap = 3;
+      const descBottom = (ph - 34) - 4; // stubTop - 4mm safety
 
       const printField = (label: string, value: string, x: number, y: number) => {
+        if (y > descBottom) return;
         doc.setFontSize(fs);
         doc.setFont('helvetica', 'bold');
-        doc.text(`${label} `, x, y);
+        doc.text(`${label}`, x, y);
         doc.setFont('helvetica', 'normal');
-        const lw = doc.getTextWidth(`${label} `);
+        const lw = doc.getTextWidth(label) + 3;
         doc.text(value, x + lw, y);
       };
 
-      if (order.tamanho) {
-        const tamText = `${order.tamanho}${order.genero ? ' ' + order.genero.substring(0, 3).toLowerCase() + '.' : ''}`;
-        printField('Tamanho:', tamText, col1X, y1);
-        y1 += fieldGap;
-      }
-      if (order.modelo) {
-        printField('Modelo:', order.modelo.toLowerCase().replace('tradicional', 'trad.').replace('feminino', 'fem.'), col1X, y1);
-        y1 += fieldGap;
-      }
-      if (order.couroCano) {
-        const t = `${order.couroCano.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroCano ? ' ' + order.corCouroCano.toLowerCase() : ''}`;
-        printField('C. cano:', t, col1X, y1);
-        y1 += fieldGap;
-      }
-      if (order.couroGaspea) {
-        const t = `${order.couroGaspea.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroGaspea ? ' ' + order.corCouroGaspea.toLowerCase() : ''}`;
-        printField('C. gaspea:', t, col1X, y1);
-        y1 += fieldGap;
-      }
-      if (order.couroTaloneira) {
-        const t = `${order.couroTaloneira.toLowerCase().replace('crazy horse', 'horse')}${order.corCouroTaloneira ? ' ' + order.corCouroTaloneira.toLowerCase() : ''}`;
-        printField('C. taloneira:', t, col1X, y1);
-        y1 += fieldGap;
-      }
-      if (order.bordadoCano) {
-        const t = `${order.bordadoCano.toLowerCase().replace('florão básico', 'florão b.')}${order.corBordadoCano ? ' ' + order.corBordadoCano.toLowerCase() : ''}`;
-        printField('B. cano:', t, col1X, y1);
-        y1 += fieldGap;
-      }
-      if (order.bordadoGaspea) {
-        const t = `${order.bordadoGaspea.toLowerCase().replace('florão básico', 'florão b.')}${order.corBordadoGaspea ? ' ' + order.corBordadoGaspea.toLowerCase() : ''}`;
-        printField('B. gáspea:', t, col1X, y1);
-        y1 += fieldGap;
-      }
-      if (order.nomeBordadoDesc || order.personalizacaoNome) {
-        printField('Nome bordado:', order.nomeBordadoDesc || order.personalizacaoNome || '', col1X, y1);
-        y1 += fieldGap;
-      }
+      const printCatTitle = (title: string, x: number, y: number) => {
+        if (y > descBottom) return;
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, x, y);
+      };
 
-      // Column 2 (middle)
-      const col2X = col1X + 72;
-      let y2 = descTop;
+      // Build categories with filled fields only
+      type CatField = { label: string; value: string };
+      type Category = { title: string; fields: CatField[] };
+      const categories: Category[] = [];
 
-      if (order.acessorios) {
-        printField('Acessórios:', order.acessorios, col2X, y2);
-        y2 += fieldGap;
-      }
-      if (order.corLinha) {
-        printField('Linha:', order.corLinha.toLowerCase(), col2X, y2);
-        y2 += fieldGap;
-      }
-      if (order.corBorrachinha) {
-        printField('Borrachinha:', order.corBorrachinha.toLowerCase(), col2X, y2);
-        y2 += fieldGap;
-      }
-      if (order.corVivo) {
-        printField('Vivo:', order.corVivo.toLowerCase(), col2X, y2);
-        y2 += fieldGap;
-      }
+      // COUROS
+      const courosFields: CatField[] = [];
+      if (order.couroCano) courosFields.push({ label: 'Cano:', value: `${order.couroCano.toLowerCase()}${order.corCouroCano ? ' ' + order.corCouroCano.toLowerCase() : ''}` });
+      if (order.couroGaspea) courosFields.push({ label: 'Gáspea:', value: `${order.couroGaspea.toLowerCase()}${order.corCouroGaspea ? ' ' + order.corCouroGaspea.toLowerCase() : ''}` });
+      if (order.couroTaloneira) courosFields.push({ label: 'Taloneira:', value: `${order.couroTaloneira.toLowerCase()}${order.corCouroTaloneira ? ' ' + order.corCouroTaloneira.toLowerCase() : ''}` });
+      if (courosFields.length) categories.push({ title: 'COUROS', fields: courosFields });
+
+      // BORDADOS
+      const bordadoFields: CatField[] = [];
+      if (order.bordadoCano) bordadoFields.push({ label: 'Cano:', value: `${order.bordadoCano.toLowerCase()}${order.corBordadoCano ? ' ' + order.corBordadoCano.toLowerCase() : ''}` });
+      if (order.bordadoGaspea) bordadoFields.push({ label: 'Gáspea:', value: `${order.bordadoGaspea.toLowerCase()}${order.corBordadoGaspea ? ' ' + order.corBordadoGaspea.toLowerCase() : ''}` });
+      if (order.bordadoTaloneira) bordadoFields.push({ label: 'Taloneira:', value: `${(order.bordadoTaloneira || '').toLowerCase()}${order.corBordadoTaloneira ? ' ' + order.corBordadoTaloneira.toLowerCase() : ''}` });
+      if (order.nomeBordadoDesc || order.personalizacaoNome) bordadoFields.push({ label: 'Nome:', value: (order.nomeBordadoDesc || order.personalizacaoNome || '').toLowerCase() });
+      if (bordadoFields.length) categories.push({ title: 'BORDADOS', fields: bordadoFields });
+
+      // LASER
+      const laserFields: CatField[] = [];
+      if (order.laserCano) laserFields.push({ label: 'Cano:', value: `${order.laserCano.toLowerCase()}${order.corGlitterCano ? ' ' + order.corGlitterCano.toLowerCase() : ''}` });
+      if (order.laserGaspea) laserFields.push({ label: 'Gáspea:', value: `${order.laserGaspea.toLowerCase()}${order.corGlitterGaspea ? ' ' + order.corGlitterGaspea.toLowerCase() : ''}` });
+      if (order.laserTaloneira) laserFields.push({ label: 'Taloneira:', value: `${(order.laserTaloneira || '').toLowerCase()}${order.corGlitterTaloneira ? ' ' + order.corGlitterTaloneira.toLowerCase() : ''}` });
+      if (laserFields.length) categories.push({ title: 'LASER', fields: laserFields });
+
+      // PESPONTO
+      const pespontoFields: CatField[] = [];
+      if (order.corLinha) pespontoFields.push({ label: 'Linha:', value: order.corLinha.toLowerCase() });
+      if (order.corBorrachinha) pespontoFields.push({ label: 'Borrachinha:', value: order.corBorrachinha.toLowerCase() });
+      if (order.corVivo) pespontoFields.push({ label: 'Vivo:', value: order.corVivo.toLowerCase() });
+      if (pespontoFields.length) categories.push({ title: 'PESPONTO', fields: pespontoFields });
+
+      // SOLADOS
+      const soladoFields: CatField[] = [];
+      const solaType = `${order.solado || 'Borracha'} ${order.formatoBico || 'quadrada'}`.toLowerCase();
+      soladoFields.push({ label: 'Tipo:', value: solaType });
+      if (order.corSola) soladoFields.push({ label: 'Cor:', value: order.corSola.toLowerCase() });
+      if (order.vpiVira) soladoFields.push({ label: 'Vira:', value: order.vpiVira.toLowerCase() });
+      categories.push({ title: 'SOLADOS', fields: soladoFields });
+
+      // METAIS
+      const metaisFields: CatField[] = [];
       if (order.metais) {
-        let metalStr = order.metais.toLowerCase();
-        if (order.tipoMetal) metalStr += ', ' + order.tipoMetal.toLowerCase();
-        if (order.corMetal) metalStr += ', ' + order.corMetal.toLowerCase();
-        printField('Metal:', metalStr, col2X, y2);
-        y2 += fieldGap;
+        metaisFields.push({ label: 'Área:', value: order.metais.toLowerCase() });
+        if (order.tipoMetal) metaisFields.push({ label: 'Tipo:', value: order.tipoMetal.toLowerCase() });
+        if (order.corMetal) metaisFields.push({ label: 'Cor:', value: order.corMetal.toLowerCase() });
       }
-      if (order.trisce === 'Sim' && order.triceDesc) {
-        printField('Tricê:', order.triceDesc.toLowerCase(), col2X, y2);
-        y2 += fieldGap;
-      }
-      if (order.tiras === 'Sim' && order.tirasDesc) {
-        printField('Tiras:', order.tirasDesc.toLowerCase(), col2X, y2);
-        y2 += fieldGap;
-      }
+      if (metaisFields.length) categories.push({ title: 'METAIS', fields: metaisFields });
 
-      // Column 3 (right - SOLA)
-      const col3X = col2X + 65;
-      const col3Y = descTop;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('Sola:', col3X, col3Y);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(fs);
-      const solaLine1 = `${order.solado || 'Borracha'} ${order.formatoBico || 'quadrada'}`.toLowerCase();
-      const solaLine2 = (order.corSola || 'preta').toLowerCase();
-      doc.text(solaLine1, col3X, col3Y + 6);
-      doc.text(solaLine2, col3X, col3Y + 12);
+      // ACESSÓRIOS
+      const acessorioFields: CatField[] = [];
+      if (order.acessorios) acessorioFields.push({ label: '', value: order.acessorios });
+      if (acessorioFields.length) categories.push({ title: 'ACESSÓRIOS', fields: acessorioFields });
 
-      // Extra fields (laser, estampa, etc.) below columns if space
-      let extraY = Math.max(y1, y2) + 2;
-      if (order.laserCano) {
-        printField('L. cano:', `${order.laserCano.toLowerCase()}${order.corGlitterCano ? ' ' + order.corGlitterCano.toLowerCase() : ''}`, col1X, extraY);
-        extraY += fieldGap;
-      }
-      if (order.laserGaspea) {
-        printField('L. gáspea:', `${order.laserGaspea.toLowerCase()}${order.corGlitterGaspea ? ' ' + order.corGlitterGaspea.toLowerCase() : ''}`, col1X, extraY);
-        extraY += fieldGap;
-      }
-      if (order.laserTaloneira) {
-        printField('L. taloneira:', `${order.laserTaloneira.toLowerCase()}${order.corGlitterTaloneira ? ' ' + order.corGlitterTaloneira.toLowerCase() : ''}`, col1X, extraY);
-        extraY += fieldGap;
-      }
+      // EXTRAS
+      const extrasFields: CatField[] = [];
+      if (order.trisce === 'Sim' && order.triceDesc) extrasFields.push({ label: 'Tricê:', value: order.triceDesc.toLowerCase() });
+      if (order.tiras === 'Sim' && order.tirasDesc) extrasFields.push({ label: 'Tiras:', value: order.tirasDesc.toLowerCase() });
+      if (order.costuraAtras === 'Sim') extrasFields.push({ label: 'Costura atrás:', value: 'sim' });
+      if (order.estampa === 'Sim') extrasFields.push({ label: 'Estampa:', value: 'sim' });
+      if (order.pintura === 'Sim') extrasFields.push({ label: 'Pintura:', value: 'sim' });
+      if (order.sobMedida) extrasFields.push({ label: 'Sob medida:', value: order.sobMedida });
+      if (order.carimbo === 'Sim') extrasFields.push({ label: 'Carimbo:', value: 'sim' });
+      if (order.adicionalDesc) extrasFields.push({ label: 'Adicional:', value: `${order.adicionalDesc} R$${order.adicionalValor || 0}` });
+      if (extrasFields.length) categories.push({ title: 'EXTRAS', fields: extrasFields });
+
+      // OBS
       if (order.observacao) {
-        printField('Obs:', order.observacao, col1X, extraY);
-        extraY += fieldGap;
+        categories.push({ title: 'OBS', fields: [{ label: '', value: order.observacao }] });
       }
+
+      // Calculate height for each category: title line + fields
+      const catHeights = categories.map(c => (c.fields.length + 1) * fieldGap + catGap);
+
+      // Greedy distribution into 2 columns
+      let col1H = 0, col2H = 0;
+      const col1Cats: number[] = [], col2Cats: number[] = [];
+      catHeights.forEach((h, i) => {
+        if (col1H <= col2H) {
+          col1Cats.push(i);
+          col1H += h;
+        } else {
+          col2Cats.push(i);
+          col2H += h;
+        }
+      });
+
+      // Render categories
+      const colWidth = (pw - m * 2 - 6) / 2;
+      const col1X = m + 3;
+      const col2X = col1X + colWidth + 3;
+
+      const renderCats = (catIndices: number[], startX: number) => {
+        let cy = descTop;
+        catIndices.forEach(ci => {
+          const cat = categories[ci];
+          printCatTitle(cat.title, startX, cy);
+          cy += fieldGap;
+          cat.fields.forEach(f => {
+            if (f.label) {
+              printField(f.label, f.value, startX, cy);
+            } else {
+              doc.setFontSize(fs);
+              doc.setFont('helvetica', 'normal');
+              if (cy <= descBottom) doc.text(f.value, startX, cy);
+            }
+            cy += fieldGap;
+          });
+          cy += catGap;
+        });
+      };
+
+      renderCats(col1Cats, col1X);
+      renderCats(col2Cats, col2X);
 
       // ─── STUBS AT BOTTOM ───
       const stubTop = ph - 34;
