@@ -392,18 +392,17 @@ const ReportsPage = () => {
       doc.setFontSize(10);
       doc.text(orderNumClean, stubX + stubW / 2, stubTop + 24, { align: 'center' });
 
-      // Stub 3: MONTAGEM
+      // Stub 3: (no title - more space for info)
       stubX += stubW;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.text('MONTAGEM', stubX + stubW / 2, stubTop + 4, { align: 'center' });
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       const solaStubText = `${order.solado || 'BORRACHA'} ${order.formatoBico || 'QUADRADA'}`.toUpperCase();
       const corSolaStubText = `${order.corSola || 'PRETA'}`.toUpperCase();
-      doc.text(`SOLA:`, stubX + 2, stubTop + 8);
-      doc.text(solaStubText, stubX + 2, stubTop + 11.5);
-      doc.text(corSolaStubText, stubX + 2, stubTop + 15);
+      doc.text(`SOLA:`, stubX + 2, stubTop + 4);
+      doc.text(solaStubText, stubX + 2, stubTop + 7.5);
+      doc.text(corSolaStubText, stubX + 2, stubTop + 11);
+      doc.text(`FORMA: ${orderNumClean}`, stubX + stubW - 28, stubTop + 4);
+      doc.text(`NÚMERO: ${order.tamanho}`, stubX + stubW - 28, stubTop + 8);
       doc.text(`FORMA: ${orderNumClean}`, stubX + stubW - 28, stubTop + 8);
       doc.text(`NÚMERO: ${order.tamanho}`, stubX + stubW - 28, stubTop + 12);
       if (bcUrl) {
