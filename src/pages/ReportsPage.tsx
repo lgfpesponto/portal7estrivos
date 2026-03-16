@@ -224,14 +224,17 @@ const ReportsPage = () => {
       printHeaderField('Data:      ', dateStr, hx, hy + hGap * 2);
 
       // Right column
-      const tamText = `${order.tamanho || ''}${order.genero ? ' ' + order.genero.substring(0, 3).toLowerCase() + '.' : ''}`;
+      let tamText = `${order.tamanho || ''}${order.genero ? ' ' + order.genero.substring(0, 3).toLowerCase() + '.' : ''}`;
+      if (order.sobMedida) {
+        tamText += ` | sob medida${order.sobMedidaDesc ? ': ' + order.sobMedidaDesc : ''}`;
+      }
       printHeaderField('Tamanho:  ', tamText, hx2, hy);
       const modeloText = (order.modelo || '').toLowerCase();
       printHeaderField('Modelo:   ', modeloText, hx2, hy + hGap);
       if (hasQR) {
         doc.setFontSize(9);
         doc.setFont('helvetica', 'italic');
-        doc.text('Escaneie para ver a foto \u2192', hx2, hy + hGap * 2);
+        doc.text('Escaneie para ver a foto ->', hx2, hy + hGap * 2);
       }
 
       // Separator
