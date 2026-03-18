@@ -1,7 +1,12 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth, businessDaysRemaining } from '@/contexts/AuthContext';
+import { useAuth, businessDaysRemaining, formatBrasiliaDate, formatBrasiliaTime } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { ArrowLeft, CheckCircle2, Clock, History } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import {
   MODELOS, ACESSORIOS, BORDADOS, COURO_PRECOS, SOLADO, COR_SOLA, COR_VIRA,
   CARIMBO, AREA_METAL, DESENVOLVIMENTO,
@@ -12,9 +17,12 @@ import {
 
 const OrderDetailPage = () => {
   const { id } = useParams();
-  const { orders, isAdmin } = useAuth();
+  const { orders, isAdmin, user, updateOrder, isFernanda } = useAuth();
   const navigate = useNavigate();
   const order = orders.find(o => o.id === id);
+
+  const [descontoInput, setDescontoInput] = useState('');
+  const [justificativaInput, setJustificativaInput] = useState('');
 
   if (!order) {
     return (
