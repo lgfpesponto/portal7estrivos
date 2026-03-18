@@ -14,7 +14,7 @@ const fadeIn = {
 };
 
 const Index = () => {
-  const { isLoggedIn, isAdmin, isFernanda, orders, allOrders } = useAuth();
+  const { isLoggedIn, isAdmin, isFernanda, orders, allOrders, user } = useAuth();
   const [chartPeriod, setChartPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano'>('mes');
   const [receberVendedor, setReceberVendedor] = useState<string>('todos');
 
