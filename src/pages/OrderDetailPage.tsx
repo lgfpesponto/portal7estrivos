@@ -156,7 +156,7 @@ const OrderDetailPage = () => {
               <h1 className="text-2xl font-display font-bold">{order.numero}</h1>
               {isAdmin && <span className="text-sm text-muted-foreground">— {order.vendedor}</span>}
             </div>
-            <span className="text-2xl font-bold text-primary">{formatCurrency(order.preco * order.quantidade)}</span>
+            <span className="text-2xl font-bold text-primary">{formatCurrency(totalCalc)}</span>
           </div>
           <p className="text-sm text-muted-foreground mb-1">
             {formatDateBR(order.dataCriacao)} — {order.horaCriacao || ''}

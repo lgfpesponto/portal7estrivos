@@ -204,7 +204,7 @@ const Index = () => {
     </section>
   );
 
-  // ── Revendedor: pendente + produção ──
+  // ── Revendedor: pendente + produção + gráfico ──
   const renderVendedorDashboard = () => (
     <section className="container mx-auto px-4 py-8">
       <div className="grid lg:grid-cols-2 gap-8">
@@ -234,7 +234,35 @@ const Index = () => {
           </motion.div>
         </div>
 
-        {/* Reports removed for resellers */}
+        {/* Right column: Sales chart */}
+        <div className="space-y-6">
+          <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={2} className="bg-card rounded-xl p-6 western-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-display font-bold flex items-center gap-2">
+                <BarChart3 className="text-primary" size={22} /> Botas Vendidas
+              </h2>
+            </div>
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {(['dia', 'semana', 'mes', 'ano'] as const).map((p) =>
+                <button key={p} onClick={() => setChartPeriod(p)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-colors ${chartPeriod === p ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-primary/10'}`}>
+                  {p === 'mes' ? 'Mês' : p}
+                </button>
+              )}
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(30 20% 80%)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
+                  <YAxis tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
+                  <Tooltip formatter={(v: number) => [v, 'Botas']} />
+                  <Line type="monotone" dataKey="botas" stroke="hsl(25 85% 48%)" strokeWidth={3} dot={{ fill: 'hsl(25 85% 48%)', r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </section>
   );
