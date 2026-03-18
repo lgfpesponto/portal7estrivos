@@ -264,7 +264,79 @@ const OrderDetailPage = () => {
               <span>Total</span>
               <span className="text-primary">{formatCurrency(totalCalc || order.preco * order.quantidade)}</span>
             </div>
+            {/* Desconto display */}
+            {order.desconto && order.desconto > 0 && (
+              <>
+                <div className="flex justify-between pt-1 text-destructive">
+                  <span className="text-sm font-semibold">Desconto</span>
+                  <span className="text-sm font-semibold">- {formatCurrency(order.desconto)}</span>
+                </div>
+                <div className="flex justify-between pt-1 font-bold text-lg border-t border-border mt-1">
+                  <span>Total com desconto</span>
+                  <span className="text-primary">{formatCurrency((totalCalc || order.preco * order.quantidade) - order.desconto)}</span>
+                </div>
+                {order.descontoJustificativa && (
+                  <p className="text-xs text-muted-foreground mt-1 italic">Justificativa: {order.descontoJustificativa}</p>
+                )}
+              </>
+            )}
           </div>
+
+          {/* Discount input — Juliana ADM only */}
+          {isAdmin && user?.id === 'admin-1' && !isFernanda && (
+            <div className="border border-border rounded-lg p-4 mt-4">
+              <h3 className="text-sm font-bold mb-3">Aplicar Desconto</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground">Desconto (R$)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={descontoInput}
+                    onChange={e => setDescontoInput(e.target.value)}
+                  />
+                </div>
+                {Number(descontoInput) > 0 && (
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground">Justificativa do desconto *</label>
+                    <Textarea
+                      placeholder="Motivo do desconto..."
+                      value={justificativaInput}
+                      onChange={e => setJustificativaInput(e.target.value)}
+                    />
+                  </div>
+                )}
+                <Button
+                  onClick={() => {
+                    const val = Number(descontoInput);
+                    if (!val || val <= 0) { toast.error('Informe um valor de desconto válido.'); return; }
+                    if (!justificativaInput.trim()) { toast.error('A justificativa é obrigatória.'); return; }
+                    const dataHoje = formatBrasiliaDate();
+                    const horaAgora = formatBrasiliaTime();
+                    const newAlteracao = {
+                      data: dataHoje,
+                      hora: horaAgora,
+                      descricao: `Desconto aplicado: ${formatCurrency(val)} | Justificativa: ${justificativaInput.trim()} | Por: Juliana ADM`,
+                    };
+                    updateOrder(order.id, {
+                      desconto: (order.desconto || 0) + val,
+                      descontoJustificativa: justificativaInput.trim(),
+                      alteracoes: [...(order.alteracoes || []), newAlteracao],
+                    });
+                    setDescontoInput('');
+                    setJustificativaInput('');
+                    toast.success('Desconto aplicado com sucesso!');
+                  }}
+                  disabled={!descontoInput || Number(descontoInput) <= 0}
+                  className="w-full"
+                >
+                  Aplicar Desconto
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </motion.div>
     </div>
