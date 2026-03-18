@@ -234,11 +234,7 @@ const Index = () => {
           </motion.div>
         </div>
 
-        <div className="space-y-6">
-          <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={2}>
-            <SpecializedReports reports={['expedicao', 'cobranca']} />
-          </motion.div>
-        </div>
+        {/* Reports removed for resellers */}
       </div>
     </section>
   );
