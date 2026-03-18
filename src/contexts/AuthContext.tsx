@@ -100,6 +100,8 @@ export interface Order {
   corVivo?: string;
   adicionalDesc?: string;
   adicionalValor?: number;
+  desconto?: number;
+  descontoJustificativa?: string;
 }
 
 export const PRODUCTION_STATUSES = [
