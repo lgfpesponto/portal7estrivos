@@ -161,9 +161,43 @@ const Index = () => {
         </div>
       </div>
 
+      {/* Pedidos de Alerta — only Juliana (admin-1) */}
+      {user?.id === 'admin-1' && (() => {
+        const FINAL_STAGES = ['Expedição', 'Entregue', 'Cobrado', 'Pago'];
+        const alertOrders = sourceOrders.filter(o => {
+          const overdue = o.diasRestantes === 0 && !FINAL_STAGES.includes(o.status);
+          const regressed = o.historico.some(h => FINAL_STAGES.includes(h.local)) && !FINAL_STAGES.includes(o.status);
+          return overdue || regressed;
+        });
+        return alertOrders.length > 0 ? (
+          <div className="mt-8">
+            <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={2} className="bg-card rounded-xl p-6 western-shadow">
+              <h2 className="text-xl font-display font-bold flex items-center gap-2 mb-4">
+                <AlertTriangle className="text-destructive" size={22} /> Pedidos de Alerta
+              </h2>
+              <p className="text-sm text-muted-foreground mb-3">Pedidos atrasados ou que regrediram na produção</p>
+              <div className="space-y-2 max-h-80 overflow-y-auto">
+                {alertOrders.map(o => (
+                  <Link key={o.id} to={`/pedido/${o.id}`} className="flex items-center justify-between p-3 bg-destructive/10 rounded-lg hover:bg-destructive/20 transition-colors">
+                    <div>
+                      <span className="font-bold text-sm">{o.numero}</span>
+                      <span className="text-xs text-muted-foreground ml-2">— {o.vendedor}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-semibold bg-destructive/20 text-destructive px-2 py-0.5 rounded">{o.status}</span>
+                      {o.diasRestantes === 0 && <span className="text-xs text-destructive ml-2">Prazo atingido</span>}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        ) : null;
+      })()}
+
       {/* Specialized reports section */}
       <div className="mt-8">
-        <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={2}>
+        <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={3}>
           <SpecializedReports reports={['escalacao', 'forro', 'pesponto', 'bordados', 'expedicao', 'cobranca']} />
         </motion.div>
       </div>
