@@ -218,151 +218,189 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.save('relatorio-bordados.pdf');
   };
 
-  // ── Expedição: pedidos em expedição com assinatura ──
+  // ── Expedição: tabular A4 layout ──
   const generateExpedicaoPDF = () => {
     const filtered = sourceOrders.filter(o =>
       o.status.toLowerCase() === 'expedição' &&
       (filterVendedor === 'todos' || o.vendedor === filterVendedor)
     );
 
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('Relatório de Expedição — 7ESTRIVOS', 14, 20);
-    doc.setFontSize(9);
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pw = 210;
+    const mx = 14;
+    const cw = pw - mx * 2; // content width
     const geradoEm = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    doc.text(`Gerado em: ${geradoEm}`, 14, 27);
-    doc.text(`Vendedor: ${filterVendedor === 'todos' ? 'Todos' : filterVendedor}`, 14, 32);
+    const vendedorLabel = filterVendedor === 'todos' ? 'Todos vendedores' : filterVendedor;
 
-    let y = 42;
+    // Header
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Expedição  [${geradoEm} — ${vendedorLabel}]`, mx, 20);
+
+    // Table columns: N. PEDIDO(30), CÓD. BARRAS(50), QTD(20), PREÇO(35), ASSINATURA(rest)
+    const cols = [30, 50, 20, 35, cw - 30 - 50 - 20 - 35];
+    const colX = cols.reduce<number[]>((acc, w) => { acc.push((acc.length ? acc[acc.length - 1] : mx) + (acc.length ? cols[acc.length - 1] : 0)); return acc; }, []);
+    // Fix colX
+    const cx = [mx, mx + cols[0], mx + cols[0] + cols[1], mx + cols[0] + cols[1] + cols[2], mx + cols[0] + cols[1] + cols[2] + cols[3]];
+
+    let y = 30;
+    const rowH = 16;
+
+    // Header row
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setFillColor(232, 232, 232);
+    doc.rect(mx, y, cw, 8, 'F');
+    doc.text('Nº PEDIDO', cx[0] + 2, y + 5.5);
+    doc.text('CÓD. BARRAS', cx[1] + 2, y + 5.5);
+    doc.text('QTD', cx[2] + 2, y + 5.5);
+    doc.text('PREÇO', cx[3] + 2, y + 5.5);
+    doc.text('ASSINATURA', cx[4] + 2, y + 5.5);
+    y += 8;
+
     let totalValor = 0;
     let totalQtd = 0;
 
-    filtered.forEach((o, i) => {
-      if (y > 240) { doc.addPage(); y = 20; }
-      const bcVal = orderBarcodeValue(o.numero);
-      const bcUrl = barcodeDataUrl(bcVal, { width: 1, height: 20 });
+    doc.setFont('helvetica', 'normal');
+    filtered.forEach(o => {
+      if (y + rowH > 280) { doc.addPage(); y = 20; }
+      // Row border
+      doc.setLineWidth(0.2);
+      doc.rect(mx, y, cw, rowH);
+      // Vertical lines
+      cols.reduce((x, w) => { doc.line(x + w, y, x + w, y + rowH); return x + w; }, mx);
 
       doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`${i + 1}. ${o.numero}`, 14, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Data criação: ${formatDateBR(o.dataCriacao)}`, 60, y);
-      doc.text(`Data relatório: ${geradoEm}`, 120, y);
-      y += 5;
-      doc.text(`Valor: ${formatCurrency(o.preco * o.quantidade)}`, 14, y);
-      doc.text(`Quantidade: ${o.quantidade}`, 80, y);
-      doc.text(`Vendedor: ${o.vendedor}`, 120, y);
-      y += 5;
+      doc.text(o.numero, cx[0] + 2, y + 6);
 
+      // Barcode
+      const bcVal = orderBarcodeValue(o.numero);
+      const bcUrl = barcodeDataUrl(bcVal, { width: 1, height: 20 });
       if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', 14, y, 50, 10); } catch {}
-        y += 12;
+        try { doc.addImage(bcUrl, 'PNG', cx[1] + 2, y + 2, cols[1] - 4, 10); } catch {}
       }
 
-      // Signature line
+      doc.text(String(o.quantidade), cx[2] + 2, y + 6);
+      doc.text(formatCurrency(o.preco * o.quantidade), cx[3] + 2, y + 6);
+      // Signature line inside cell
       doc.setLineWidth(0.3);
-      doc.line(14, y + 3, 100, y + 3);
-      doc.setFontSize(7);
-      doc.text('Assinatura', 14, y + 7);
-      y += 14;
+      doc.line(cx[4] + 4, y + rowH - 4, cx[4] + cols[4] - 4, y + rowH - 4);
 
+      y += rowH;
       totalValor += o.preco * o.quantidade;
       totalQtd += o.quantidade;
     });
 
-    // Summary
-    if (y > 260) { doc.addPage(); y = 20; }
-    doc.setLineWidth(0.5);
-    doc.line(14, y, 196, y);
-    y += 6;
-    doc.setFontSize(11);
+    // Footer total
+    if (y + 10 > 285) { doc.addPage(); y = 20; }
+    doc.setFillColor(232, 232, 232);
+    doc.rect(mx, y, cw, 10, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.text(`Total: ${filtered.length} pedidos | ${totalQtd} pares | ${formatCurrency(totalValor)}`, 14, y);
+    doc.setFontSize(10);
+    doc.text('TOTAL', cx[0] + 2, y + 7);
+    doc.text(String(totalQtd), cx[2] + 2, y + 7);
+    doc.text(formatCurrency(totalValor), cx[3] + 2, y + 7);
 
     doc.save('relatorio-expedicao.pdf');
   };
 
-  // ── Cobrança: pedidos entregues com composição de valores ──
+  // ── Cobrança: tabular A4 layout ──
   const generateCobrancaPDF = () => {
     const filtered = sourceOrders.filter(o =>
       o.status.toLowerCase() === 'entregue' &&
       (filterVendedor === 'todos' || o.vendedor === filterVendedor)
     );
 
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('Relatório de Cobrança — 7ESTRIVOS', 14, 20);
-    doc.setFontSize(9);
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pw = 210;
+    const mx = 14;
+    const cw = pw - mx * 2;
     const geradoEm = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    doc.text(`Gerado em: ${geradoEm}`, 14, 27);
-    doc.text(`Vendedor: ${filterVendedor === 'todos' ? 'Todos' : filterVendedor}`, 14, 32);
+    const vendedorLabel = filterVendedor === 'todos' ? 'Todos vendedores' : filterVendedor;
 
-    let y = 42;
+    // Header
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Cobrança  [${geradoEm} — ${vendedorLabel}]`, mx, 20);
+
+    // Columns: N. PEDIDO(25), COMPOSIÇÃO(80), QTD(15), PREÇO(30), PAGO(rest ~32)
+    const cols = [25, 80, 15, 30, cw - 25 - 80 - 15 - 30];
+    const cx = [mx, mx + cols[0], mx + cols[0] + cols[1], mx + cols[0] + cols[1] + cols[2], mx + cols[0] + cols[1] + cols[2] + cols[3]];
+
+    let y = 30;
+
+    // Header row
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setFillColor(232, 232, 232);
+    doc.rect(mx, y, cw, 8, 'F');
+    doc.text('Nº PEDIDO', cx[0] + 1, y + 5.5);
+    doc.text('COMPOSIÇÃO DA BOTA', cx[1] + 1, y + 5.5);
+    doc.text('QTD', cx[2] + 1, y + 5.5);
+    doc.text('PREÇO', cx[3] + 1, y + 5.5);
+    doc.text('PAGO', cx[4] + 1, y + 5.5);
+    y += 8;
+
     let totalValor = 0;
     let totalQtd = 0;
 
-    filtered.forEach((o, i) => {
-      if (y > 230) { doc.addPage(); y = 20; }
-      const bcVal = orderBarcodeValue(o.numero);
-      const bcUrl = barcodeDataUrl(bcVal, { width: 1, height: 18 });
+    doc.setFont('helvetica', 'normal');
+    filtered.forEach(o => {
+      // Build composition
+      const comp: string[] = [];
+      if (o.modelo) comp.push(o.modelo);
+      if (o.solado && o.solado !== 'Borracha') comp.push(`Solado: ${o.solado}`);
+      if (o.bordadoCano) comp.push(`B.cano: ${o.bordadoCano}`);
+      if (o.bordadoGaspea) comp.push(`B.gáspea: ${o.bordadoGaspea}`);
+      if (o.bordadoTaloneira) comp.push(`B.talon: ${o.bordadoTaloneira}`);
+      if (o.laserCano) comp.push(`L.cano: ${o.laserCano}`);
+      if (o.laserGaspea) comp.push(`L.gáspea: ${o.laserGaspea}`);
+      if (o.metais) comp.push(`Metal: ${o.metais}`);
+      if (o.acessorios) comp.push(`Acess: ${o.acessorios}`);
+      if (o.sobMedida) comp.push('Sob medida');
+      if (o.desenvolvimento) comp.push(`Desenv: ${o.desenvolvimento}`);
+      if (o.adicionalDesc) comp.push(`Adicional: ${o.adicionalDesc}`);
+      const compText = comp.join(' | ');
 
-      // Find "Entregue" date from historico
-      const entregueHist = o.historico.find(h => h.local.toLowerCase() === 'entregue');
-      const dataSaida = entregueHist ? formatDateBR(entregueHist.data) : '—';
+      doc.setFontSize(6);
+      const lines = doc.splitTextToSize(compText, cols[1] - 4);
+      const rowH = Math.max(12, lines.length * 3.5 + 6);
 
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`${i + 1}. ${o.numero}`, 14, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Criação: ${formatDateBR(o.dataCriacao)}`, 55, y);
-      doc.text(`Saída: ${dataSaida}`, 110, y);
-      doc.text(`Qtd: ${o.quantidade}`, 160, y);
-      y += 5;
-      doc.text(`Vendedor: ${o.vendedor}`, 14, y);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Valor: ${formatCurrency(o.preco * o.quantidade)}`, 110, y);
-      doc.setFont('helvetica', 'normal');
-      y += 5;
+      if (y + rowH > 280) { doc.addPage(); y = 20; }
 
-      // Composição do pedido
-      const composicao: string[] = [];
-      if (o.modelo) composicao.push(`Modelo: ${o.modelo}`);
-      if (o.solado && o.solado !== 'Borracha') composicao.push(`Solado: ${o.solado}`);
-      if (o.bordadoCano) composicao.push(`B. cano: ${o.bordadoCano}`);
-      if (o.bordadoGaspea) composicao.push(`B. gáspea: ${o.bordadoGaspea}`);
-      if (o.bordadoTaloneira) composicao.push(`B. taloneira: ${o.bordadoTaloneira}`);
-      if (o.laserCano) composicao.push(`L. cano: ${o.laserCano}`);
-      if (o.laserGaspea) composicao.push(`L. gáspea: ${o.laserGaspea}`);
-      if (o.metais) composicao.push(`Metal: ${o.metais}`);
-      if (o.acessorios) composicao.push(`Acessórios: ${o.acessorios}`);
-      if (o.sobMedida) composicao.push('Sob medida');
-      if (o.desenvolvimento) composicao.push(`Desenv: ${o.desenvolvimento}`);
-      if (o.adicionalDesc) composicao.push(`Adicional: ${o.adicionalDesc} R$${o.adicionalValor || 0}`);
+      // Row border
+      doc.setLineWidth(0.2);
+      doc.rect(mx, y, cw, rowH);
+      cols.reduce((x, w) => { doc.line(x + w, y, x + w, y + rowH); return x + w; }, mx);
 
-      if (composicao.length > 0) {
-        doc.setFontSize(7);
-        doc.text(`Composição: ${composicao.join(' | ')}`, 14, y);
-        y += 4;
-      }
+      doc.setFontSize(8);
+      doc.text(o.numero, cx[0] + 1, y + 5);
 
-      if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', 14, y, 45, 8); } catch {}
-        y += 11;
-      }
+      doc.setFontSize(6);
+      doc.text(lines, cx[1] + 1, y + 4);
 
-      y += 3;
+      doc.setFontSize(8);
+      doc.text(String(o.quantidade), cx[2] + 1, y + 5);
+      doc.text(formatCurrency(o.preco * o.quantidade), cx[3] + 1, y + 5);
+
+      // Checkbox for PAGO
+      const cbSize = 4;
+      doc.rect(cx[4] + (cols[4] - cbSize) / 2, y + (rowH - cbSize) / 2, cbSize, cbSize);
+
+      y += rowH;
       totalValor += o.preco * o.quantidade;
       totalQtd += o.quantidade;
     });
 
-    // Summary
-    if (y > 260) { doc.addPage(); y = 20; }
-    doc.setLineWidth(0.5);
-    doc.line(14, y, 196, y);
-    y += 6;
-    doc.setFontSize(11);
+    // Footer total
+    if (y + 10 > 285) { doc.addPage(); y = 20; }
+    doc.setFillColor(232, 232, 232);
+    doc.rect(mx, y, cw, 10, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.text(`Total: ${filtered.length} pedidos | ${totalQtd} pares | ${formatCurrency(totalValor)}`, 14, y);
+    doc.setFontSize(10);
+    doc.text('TOTAL', cx[0] + 1, y + 7);
+    doc.text(String(totalQtd), cx[2] + 1, y + 7);
+    doc.text(formatCurrency(totalValor), cx[3] + 1, y + 7);
 
     doc.save('relatorio-cobranca.pdf');
   };
