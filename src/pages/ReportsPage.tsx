@@ -53,7 +53,7 @@ const ReportsPage = () => {
   const [scanValue, setScanValue] = useState('');
 
   const [appliedFilters, setAppliedFilters] = useState({
-    searchQuery: '', filterDate: '', filterDateEnd: '', filterStatus: '', filterVendedor: '', filterProduto: new Set(['bota', ...EXTRA_PRODUCTS.map(p => p.id)]),
+    searchQuery: '', filterDate: '', filterDateEnd: '', filterStatus: '', filterVendedor: '', filterProduto: new Set(['bota', 'cinto', ...EXTRA_PRODUCTS.map(p => p.id)]),
   });
 
   const applyFilters = () => {
