@@ -122,7 +122,6 @@ const OrderPage = () => {
   const [bordadoVariadoDescCano, setBordadoVariadoDescCano] = useState(df.bordadoVariadoDescCano || '');
   const [bordadoVariadoDescGaspea, setBordadoVariadoDescGaspea] = useState(df.bordadoVariadoDescGaspea || '');
   const [bordadoVariadoDescTaloneira, setBordadoVariadoDescTaloneira] = useState(df.bordadoVariadoDescTaloneira || '');
-  const [corBordadoTaloneira, setCorBordadoTaloneira] = useState(df.corBordadoTaloneira || '');
 
   // nome bordado
   const [nomeBordado, setNomeBordado] = useState(df.nomeBordado === 'true');
