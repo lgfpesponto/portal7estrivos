@@ -103,6 +103,9 @@ export interface Order {
   desconto?: number;
   descontoJustificativa?: string;
   forma?: string;
+  tipoExtra?: string;
+  extraDetalhes?: Record<string, any>;
+  numeroPedidoBota?: string;
 }
 
 export const PRODUCTION_STATUSES = [
@@ -112,6 +115,10 @@ export const PRODUCTION_STATUSES = [
   "Pespontando", "Montagem", "Revisão", "Expedição",
   "Baixa Estoque", "Baixa Site (Despachado)",
   "Entregue", "Cobrado", "Pago"
+];
+
+export const EXTRAS_STATUSES = [
+  "Em aberto", "Produzindo", "Expedição", "Entregue", "Cobrado", "Pago"
 ];
 
 export const PRODUCTION_STATUSES_USER = [
