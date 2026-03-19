@@ -182,6 +182,41 @@ const OrderPage = () => {
   const [laserOutroGaspeaText, setLaserOutroGaspeaText] = useState(df.laserOutroGaspeaText || '');
   const [laserOutroTaloneiraText, setLaserOutroTaloneiraText] = useState(df.laserOutroTaloneiraText || '');
 
+  /* ───── cascading field handlers ───── */
+  const handleModeloChange = (newModelo: string) => {
+    setModelo(newModelo);
+    const sols = getSoladosForModelo(newModelo);
+    const newSolado = sols.length === 1 ? sols[0].label : (sols.find(s => s.label === solado) ? solado : '');
+    setSolado(newSolado);
+    const bicos = getBicosForModeloSolado(newModelo, newSolado);
+    const newBico = bicos.length === 1 ? bicos[0] : (bicos.includes(formatoBico) ? formatoBico : '');
+    setFormatoBico(newBico);
+    const cso = getCorSolaOptions(newModelo, newSolado, newBico);
+    setCorSola(cso === null ? '' : cso.length === 1 ? cso[0].label : (cso.find(c => c.label === corSola) ? corSola : ''));
+    const cv = getCorViraOptions(newModelo, newSolado);
+    setCorVira(cv.length === 1 ? cv[0].label : (cv.find(c => c.label === corVira) ? corVira : ''));
+  };
+
+  const handleSoladoChange = (newSolado: string) => {
+    setSolado(newSolado);
+    const bicos = getBicosForModeloSolado(modelo, newSolado);
+    const newBico = bicos.length === 1 ? bicos[0] : (bicos.includes(formatoBico) ? formatoBico : '');
+    setFormatoBico(newBico);
+    const cso = getCorSolaOptions(modelo, newSolado, newBico);
+    setCorSola(cso === null ? '' : cso.length === 1 ? cso[0].label : (cso.find(c => c.label === corSola) ? corSola : ''));
+    const cv = getCorViraOptions(modelo, newSolado);
+    setCorVira(cv.length === 1 ? cv[0].label : (cv.find(c => c.label === corVira) ? corVira : ''));
+  };
+
+  const handleBicoChange = (newBico: string) => {
+    setFormatoBico(newBico);
+    const sols = getSoladosForModelo(modelo, newBico);
+    const newSolado = sols.find(s => s.label === solado) ? solado : (sols.length === 1 ? sols[0].label : '');
+    if (newSolado !== solado) setSolado(newSolado);
+    const cso = getCorSolaOptions(modelo, newSolado, newBico);
+    setCorSola(cso === null ? '' : cso.length === 1 ? cso[0].label : (cso.find(c => c.label === corSola) ? corSola : ''));
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
