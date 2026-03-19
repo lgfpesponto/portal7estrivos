@@ -1,75 +1,72 @@
 
 
-## Plano: Corrigir pedidos que não são criados (sem mensagem de erro)
+## Plano: Corrigir lentidão e travamento no login
 
 ### Diagnóstico
 
-O problema é uma combinação de dois fatores:
+O `AuthContext.tsx` tem um problema de race condition e bloqueio na inicialização:
 
-1. **Sessão expirada silenciosa**: Os logs de autenticação mostram "Invalid Refresh Token: Refresh Token Not Found". Quando o token expira, o Supabase rejeita o INSERT por RLS, mas o erro não chega ao usuário.
+1. **Carregamento duplicado**: Tanto `onAuthStateChange` quanto `getSession` disparam ao mesmo tempo no mount, ambos chamando `loadProfile` + `loadOrders` — dobrando as queries ao banco.
 
-2. **Sem try-catch**: A função `confirmOrder` nas páginas (OrderPage, BeltOrderPage, ExtrasPage) chama `await addOrder(...)` sem try-catch. Se `addOrder` lançar uma exceção (em vez de retornar `false`), a promise é rejeitada silenciosamente — nenhum toast aparece.
+2. **`await` dentro de `onAuthStateChange`**: Isso bloqueia o processamento de eventos de autenticação subsequentes, causando deadlock. A documentação do Supabase avisa explicitamente para NÃO usar await dentro desse listener.
 
-3. **`addOrder` sem tratamento robusto**: A função `addOrder` no AuthContext não tem try-catch. Se qualquer operação Supabase falhar de forma inesperada, a exceção sobe sem tratamento.
+3. **`setLoading(false)` em dois lugares**: Pode ser chamado antes dos dados estarem prontos, ou nunca ser chamado se uma das promises travar.
 
 ### Solução
 
-**1. `src/contexts/AuthContext.tsx`** — Envolver `addOrder` em try-catch:
-- Adicionar try-catch completo ao redor de toda a lógica
-- No catch: `console.error` + retornar `false`
-- Verificar sessão ativa antes de inserir: `const { data: { session } } = await supabase.auth.getSession()` — se não houver sessão, forçar logout e retornar `false`
+Reestruturar o `useEffect` de autenticação seguindo o padrão recomendado:
 
-**2. `src/pages/OrderPage.tsx`** — Envolver `confirmOrder` em try-catch:
-- Adicionar try-catch com toast de erro no catch
-- Adicionar `console.error` para debug
-
-**3. `src/pages/BeltOrderPage.tsx`** — Mesmo tratamento
-
-**4. `src/pages/ExtrasPage.tsx`** — Mesmo tratamento
-
-### Mudanças específicas
+**`src/contexts/AuthContext.tsx`** — Reescrever o listener de auth:
 
 ```typescript
-// AuthContext.tsx - addOrder
-const addOrder = useCallback(async (orderData: ...): Promise<boolean> => {
-  try {
-    if (!user) {
-      console.error('addOrder: user is null');
-      return false;
+useEffect(() => {
+  let isMounted = true;
+
+  // 1. Restaurar sessão do storage PRIMEIRO
+  supabase.auth.getSession().then(async ({ data: { session } }) => {
+    if (!isMounted) return;
+    if (session?.user) {
+      const result = await loadProfile(session.user.id);
+      if (result && isMounted) await loadOrders(result);
     }
-    // Verificar sessão válida
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      console.error('addOrder: session expired');
-      await logout();
-      return false;
+    if (isMounted) setLoading(false);
+  });
+
+  // 2. Listener para mudanças SUBSEQUENTES (login/logout)
+  //    NÃO usar await — fire-and-forget
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    (event, session) => {
+      if (!isMounted) return;
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Fire-and-forget — sem await
+        loadProfile(session.user.id).then(result => {
+          if (result && isMounted) loadOrders(result);
+        });
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setIsAdmin(false);
+        setOrders([]);
+        setAllOrders([]);
+      }
     }
-    // ... resto da lógica existente ...
-  } catch (err) {
-    console.error('addOrder exception:', err);
-    return false;
-  }
-}, [user, logout]);
+  );
+
+  return () => {
+    isMounted = false;
+    subscription.unsubscribe();
+  };
+}, [loadProfile, loadOrders]);
 ```
 
-```typescript
-// OrderPage.tsx, BeltOrderPage.tsx - confirmOrder
-const confirmOrder = async () => {
-  try {
-    const success = await addOrder({ ... });
-    if (success) { ... }
-    else { toast.error('Erro ao salvar. Faça login novamente e tente.'); }
-  } catch (err) {
-    console.error('confirmOrder error:', err);
-    toast.error('Erro inesperado ao salvar o pedido.');
-  }
-};
-```
+Mudanças-chave:
+- `getSession` roda primeiro para restaurar sessão existente
+- `onAuthStateChange` só reage a eventos novos (`SIGNED_IN`, `SIGNED_OUT`), sem `await`
+- Flag `isMounted` previne updates em componente desmontado
+- `setLoading(false)` chamado em um único lugar
+
+### Arquivos alterados
 
 | Arquivo | Alteração |
 |---|---|
-| `src/contexts/AuthContext.tsx` | Try-catch + verificação de sessão em `addOrder` |
-| `src/pages/OrderPage.tsx` | Try-catch em `confirmOrder` |
-| `src/pages/BeltOrderPage.tsx` | Try-catch em `confirmOrder` |
-| `src/pages/ExtrasPage.tsx` | Try-catch no submit |
+| `src/contexts/AuthContext.tsx` | Reescrever useEffect de auth (linhas 434-458) |
 
