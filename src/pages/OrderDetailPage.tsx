@@ -43,7 +43,7 @@ const OrderDetailPage = () => {
 
   // Calculate days remaining
   const createdDate = new Date(order.dataCriacao + 'T00:00:00');
-  const totalBizDays = order.temLaser ? 30 : 10;
+  const totalBizDays = order.tipoExtra === 'cinto' ? 5 : order.tipoExtra ? 1 : order.temLaser ? 30 : 10;
   const daysLeft = businessDaysRemaining(createdDate, totalBizDays);
 
   // Build details list (only filled fields)
