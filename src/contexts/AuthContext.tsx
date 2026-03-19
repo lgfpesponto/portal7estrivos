@@ -704,7 +704,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{
-      user, isLoggedIn: !!user, isAdmin, needsVerification, isFernanda,
+      user, isLoggedIn: !!user, isAdmin, isFernanda,
       login, register, logout, updateProfile,
       orders: userOrders, addOrder, deleteOrder, updateOrder, updateOrderStatus,
       recoverPassword, allOrders, loading,
