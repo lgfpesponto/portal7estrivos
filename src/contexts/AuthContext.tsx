@@ -449,7 +449,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const result = await loadProfile(session.user.id);
-        if (result && result.verificado) await loadOrders(result.user);
+        if (result) await loadOrders(result);
       }
       setLoading(false);
     });
