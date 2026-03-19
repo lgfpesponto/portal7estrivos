@@ -262,7 +262,10 @@ const EditOrderPage = () => {
   const modeloPreco = MODELOS.find(m => m.label === modelo)?.preco || 0;
   const acessoriosPreco = acessorios.reduce((sum, a) => sum + (ACESSORIOS.find(x => x.label === a)?.preco || 0), 0);
   const couroPreco = [tipoCouroCano, tipoCouroGaspea, tipoCouroTaloneira].reduce((sum, t) => sum + (COURO_PRECOS[t] || 0), 0);
-  const bordadoPreco = [...bordadoCano, ...bordadoGaspea, ...bordadoTaloneira].reduce((sum, b) => sum + (BORDADOS.find(x => x.label === b)?.preco || 0), 0);
+  const bordadoPreco =
+    bordadoCano.reduce((sum, b) => sum + (BORDADOS_CANO.find(x => x.label === b)?.preco || 0), 0) +
+    bordadoGaspea.reduce((sum, b) => sum + (BORDADOS_GASPEA.find(x => x.label === b)?.preco || 0), 0) +
+    bordadoTaloneira.reduce((sum, b) => sum + (BORDADOS_TALONEIRA.find(x => x.label === b)?.preco || 0), 0);
   const laserCanoPreco = laserCano.length > 0 ? LASER_CANO_PRECO : 0;
   const glitterCanoPreco = corGlitterCano ? GLITTER_CANO_PRECO : 0;
   const laserGaspeaPreco = laserGaspea.length > 0 ? LASER_GASPEA_PRECO : 0;
