@@ -341,6 +341,17 @@ const OrderPage = () => {
       toast.error(`Preencha os campos obrigatórios: ${missing.map(([, l]) => l).join(', ')}`);
       return;
     }
+    // Validate bordado variado descriptions
+    const variadoChecks: [string[], string, string][] = [
+      [bordadoCano, bordadoVariadoDescCano, 'Descrição do Bordado Variado (Cano)'],
+      [bordadoGaspea, bordadoVariadoDescGaspea, 'Descrição do Bordado Variado (Gáspea)'],
+      [bordadoTaloneira, bordadoVariadoDescTaloneira, 'Descrição do Bordado Variado (Taloneira)'],
+    ];
+    const missingVariado = variadoChecks.filter(([sel, desc]) => sel.some(s => s.includes('Bordado Variado')) && !desc.trim());
+    if (missingVariado.length > 0) {
+      toast.error(`Preencha: ${missingVariado.map(([,, l]) => l).join(', ')}`);
+      return;
+    }
     // Validate toggle descriptions (TEM requires description)
     const toggleChecks: [boolean, string, string][] = [
       [sobMedida, sobMedidaDesc, 'Sob Medida'],
