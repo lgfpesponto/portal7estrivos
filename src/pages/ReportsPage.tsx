@@ -76,6 +76,10 @@ const ReportsPage = () => {
       if (appliedFilters.filterDate && o.dataCriacao < appliedFilters.filterDate) return false;
       if (appliedFilters.filterDateEnd && o.dataCriacao > appliedFilters.filterDateEnd) return false;
       if (appliedFilters.filterStatus && o.status !== appliedFilters.filterStatus) return false;
+      // Produto filter
+      const isExtra = !!o.tipoExtra;
+      if (isExtra && !appliedFilters.filterProduto.has('extras')) return false;
+      if (!isExtra && !appliedFilters.filterProduto.has('bota')) return false;
       return true;
     });
   }, [displayOrders, appliedFilters]);
