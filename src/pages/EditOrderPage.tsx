@@ -14,6 +14,7 @@ import {
   CARIMBO, SOB_MEDIDA_PRECO, NOME_BORDADO_PRECO, ESTAMPA_PRECO,
   PINTURA_PRECO, TRICE_PRECO, TIRAS_PRECO, COSTURA_ATRAS_PRECO, FORMATO_BICO,
   getModelosForTamanho,
+  getSoladosForModelo, getBicosForModeloSolado, getCorSolaOptions, getCorViraOptions, getForma,
 } from '@/lib/orderFieldsConfig';
 
 const cls = {
