@@ -191,3 +191,43 @@ export const PINTURA_PRECO = 15;
 export const TRICE_PRECO = 20;
 export const TIRAS_PRECO = 15;
 export const COSTURA_ATRAS_PRECO = 20;
+
+// ==================== VIRA HIDDEN (não mostrar na descrição/impressão) ====================
+export const VIRA_HIDDEN = ['Bege', 'Neutra'];
+
+// ==================== VINCULAÇÃO TAMANHO → MODELO ====================
+export function getModelosForTamanho(tamanho: string): { label: string; preco: number }[] {
+  if (!tamanho) return MODELOS;
+  const t = Number(tamanho);
+  if (isNaN(t)) return MODELOS;
+
+  const allowed: string[] = [];
+
+  // 24-33: infantis
+  if (t >= 24 && t <= 33) {
+    allowed.push('Bota Infantil', 'Botina Infantil', 'Cano Médio Infantil');
+  }
+  // 34-45: adultos
+  if (t >= 34 && t <= 45) {
+    allowed.push(
+      'Bota Tradicional', 'Bota Feminino', 'Bota Peão',
+      'Coturno', 'Destroyer', 'Capota',
+      'Bota Ouver Perfilado', 'Capota Bico Fino Perfilado',
+      'Cano Médio', 'Botina', 'Urbano',
+      'Bota Bico Fino Perfilado', 'Tradicional Bico Fino',
+    );
+    // Montaria só até 40
+    if (t <= 40) allowed.push('Bota Montaria (40)');
+  }
+  // 33-40: bico fino feminino + capota bico fino
+  if (t >= 33 && t <= 40) {
+    allowed.push('Bota Bico Fino Feminino', 'Capota Bico Fino');
+  }
+  // 34-40: City
+  if (t >= 34 && t <= 40) {
+    allowed.push('City');
+  }
+
+  if (allowed.length === 0) return MODELOS;
+  return MODELOS.filter(m => allowed.includes(m.label));
+}
