@@ -675,8 +675,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const { error } = await supabase.from('orders').update({
       status: newStatus,
-      historico: updatedHistorico,
-      alteracoes: updatedAlteracoes,
+      historico: updatedHistorico as any,
+      alteracoes: updatedAlteracoes as any,
     }).eq('id', id);
 
     if (error) {
