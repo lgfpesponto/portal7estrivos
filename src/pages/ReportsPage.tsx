@@ -36,6 +36,7 @@ const ReportsPage = () => {
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVendedor, setFilterVendedor] = useState('');
+  const [filterProduto, setFilterProduto] = useState<Set<string>>(new Set(['bota', 'extras']));
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Bulk progress modal
