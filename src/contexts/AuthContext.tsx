@@ -346,7 +346,7 @@ interface AuthContextType {
   logout: () => void;
   updateProfile: (data: Partial<Omit<User, 'id' | 'isAdmin'>>) => void;
   orders: Order[];
-  addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status' | 'alteracoes'> & { numeroPedido?: string }) => void;
+  addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status' | 'alteracoes'> & { numeroPedido?: string }) => Promise<boolean>;
   deleteOrder: (id: string) => void;
   updateOrder: (id: string, data: Partial<Order>) => void;
   updateOrderStatus: (id: string, newStatus: string, observacao?: string) => void;
