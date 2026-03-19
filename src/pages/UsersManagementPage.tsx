@@ -24,7 +24,7 @@ interface Profile {
 const PROTECTED_USERNAMES = ['7estrivos', 'fernanda', 'demo'];
 
 const UsersManagementPage = () => {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,12 +37,13 @@ const UsersManagementPage = () => {
   const isJuliana = user?.nomeUsuario?.toLowerCase() === '7estrivos';
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isLoggedIn || !isJuliana) {
       navigate('/');
       return;
     }
     fetchProfiles();
-  }, [isLoggedIn, isJuliana]);
+  }, [isLoggedIn, isJuliana, authLoading]);
 
   const fetchProfiles = async () => {
     setLoading(true);
@@ -104,6 +105,13 @@ const UsersManagementPage = () => {
 
   const isProtected = (username: string) => PROTECTED_USERNAMES.includes(username.toLowerCase());
 
+  if (authLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="animate-spin text-primary" size={32} />
+      </div>
+    );
+  }
   if (!isLoggedIn || !isJuliana) return null;
 
   return (
