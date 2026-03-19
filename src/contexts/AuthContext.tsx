@@ -341,8 +341,7 @@ interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
   isAdmin: boolean;
-  needsVerification: boolean;
-  login: (username: string, password: string) => Promise<'ok' | 'verify' | 'error'>;
+  login: (username: string, password: string) => Promise<'ok' | 'error'>;
   register: (data: Omit<User, 'id' | 'isAdmin'> & { senha: string }) => Promise<boolean>;
   logout: () => void;
   updateProfile: (data: Partial<Omit<User, 'id' | 'isAdmin'>>) => void;
@@ -362,7 +361,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [needsVerification, setNeedsVerification] = useState(false);
+  
   const [orders, setOrders] = useState<Order[]>([]);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -385,7 +384,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .eq('user_id', authUserId);
 
     const hasAdmin = roles?.some((r: any) => r.role === 'admin') ?? false;
-    const verificado = (profile as any).verificado ?? true;
 
     const u: User = {
       id: authUserId,
@@ -399,8 +397,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setUser(u);
     setIsAdmin(hasAdmin);
-    setNeedsVerification(!verificado);
-    return { user: u, verificado };
+    return u;
   }, []);
 
   /* ───── Load orders ───── */
@@ -438,11 +435,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         const result = await loadProfile(session.user.id);
-        if (result && result.verificado) await loadOrders(result.user);
+        if (result) await loadOrders(result);
       } else {
         setUser(null);
         setIsAdmin(false);
-        setNeedsVerification(false);
         setOrders([]);
         setAllOrders([]);
       }
@@ -453,7 +449,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const result = await loadProfile(session.user.id);
-        if (result && result.verificado) await loadOrders(result.user);
+        if (result) await loadOrders(result);
       }
       setLoading(false);
     });
@@ -462,24 +458,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [loadProfile, loadOrders]);
 
   /* ───── Login ───── */
-  const login = useCallback(async (username: string, password: string): Promise<'ok' | 'verify' | 'error'> => {
+  const login = useCallback(async (username: string, password: string): Promise<'ok' | 'error'> => {
     const sanitized = username.toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]/g, '');
     const email = `${sanitized}@7estrivos.app`;
-    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return 'error';
-
-    // Check if verified
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('verificado')
-      .eq('id', authData.user.id)
-      .single();
-
-    const verificado = (profile as any)?.verificado ?? true;
-    setNeedsVerification(!verificado);
-    return verificado ? 'ok' : 'verify';
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return error ? 'error' : 'ok';
   }, []);
 
   /* ───── Register ───── */
@@ -719,7 +704,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{
-      user, isLoggedIn: !!user, isAdmin, needsVerification, isFernanda,
+      user, isLoggedIn: !!user, isAdmin, isFernanda,
       login, register, logout, updateProfile,
       orders: userOrders, addOrder, deleteOrder, updateOrder, updateOrderStatus,
       recoverPassword, allOrders, loading,
