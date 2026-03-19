@@ -529,41 +529,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   /* ───── Add Order ───── */
   const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status' | 'alteracoes'> & { numeroPedido?: string }): Promise<boolean> => {
-    if (!user) return false;
+    try {
+      if (!user) {
+        console.error('addOrder: user is null');
+        return false;
+      }
 
-    const { numeroPedido, ...rest } = orderData;
-    const dataHoje = formatBrasiliaDate();
-    const horaAgora = formatBrasiliaTime();
-    const totalBizDays = rest.tipoExtra === 'cinto' ? 5 : rest.tipoExtra ? 1 : rest.temLaser ? 30 : 10;
+      // Verify active session before inserting
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('addOrder: session expired');
+        await logout();
+        return false;
+      }
 
-    // Generate order number
-    const { count } = await supabase.from('orders').select('*', { count: 'exact', head: true });
-    const numero = numeroPedido || `7E-${dataHoje.slice(0, 4)}${String((count || 0) + 1).padStart(4, '0')}`;
+      const { numeroPedido, ...rest } = orderData;
+      const dataHoje = formatBrasiliaDate();
+      const horaAgora = formatBrasiliaTime();
+      const totalBizDays = rest.tipoExtra === 'cinto' ? 5 : rest.tipoExtra ? 1 : rest.temLaser ? 30 : 10;
 
-    const newOrder = {
-      ...rest,
-      dataCriacao: dataHoje,
-      horaCriacao: horaAgora,
-      diasRestantes: totalBizDays,
-      status: 'Em aberto',
-      historico: [{ data: dataHoje, hora: horaAgora, local: 'Em aberto', descricao: 'Pedido criado' }],
-      alteracoes: [],
-      numero,
-    };
+      // Generate order number
+      const { count } = await supabase.from('orders').select('*', { count: 'exact', head: true });
+      const numero = numeroPedido || `7E-${dataHoje.slice(0, 4)}${String((count || 0) + 1).padStart(4, '0')}`;
 
-    const dbRow = orderToDbRow(newOrder, user.id);
+      const newOrder = {
+        ...rest,
+        dataCriacao: dataHoje,
+        horaCriacao: horaAgora,
+        diasRestantes: totalBizDays,
+        status: 'Em aberto',
+        historico: [{ data: dataHoje, hora: horaAgora, local: 'Em aberto', descricao: 'Pedido criado' }],
+        alteracoes: [],
+        numero,
+      };
 
-    const { data, error } = await supabase.from('orders').insert(dbRow).select().single();
-    if (error) {
-      console.error('Error adding order:', error);
+      const dbRow = orderToDbRow(newOrder, user.id);
+
+      const { data, error } = await supabase.from('orders').insert(dbRow).select().single();
+      if (error) {
+        console.error('Error adding order:', error);
+        return false;
+      }
+
+      const mapped = dbRowToOrder(data);
+      setOrders(prev => [mapped, ...prev]);
+      setAllOrders(prev => [mapped, ...prev]);
+      return true;
+    } catch (err) {
+      console.error('addOrder exception:', err);
       return false;
     }
-
-    const mapped = dbRowToOrder(data);
-    setOrders(prev => [mapped, ...prev]);
-    setAllOrders(prev => [mapped, ...prev]);
-    return true;
-  }, [user]);
+  }, [user, logout]);
 
   /* ───── Delete Order ───── */
   const deleteOrder = useCallback(async (id: string) => {
