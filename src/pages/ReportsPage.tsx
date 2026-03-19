@@ -664,6 +664,13 @@ const ReportsPage = () => {
                       />
                       <span className="text-sm">Bota</span>
                     </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={filterProduto.has('cinto')}
+                        onCheckedChange={() => toggleProdutoFilter('cinto')}
+                      />
+                      <span className="text-sm">Cinto</span>
+                    </label>
                     {EXTRA_PRODUCTS.map(ep => (
                       <label key={ep.id} className="flex items-center gap-2 cursor-pointer">
                         <Checkbox
