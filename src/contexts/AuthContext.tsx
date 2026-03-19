@@ -437,11 +437,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        const u = await loadProfile(session.user.id);
-        if (u) await loadOrders(u);
+        const result = await loadProfile(session.user.id);
+        if (result && result.verificado) await loadOrders(result.user);
       } else {
         setUser(null);
         setIsAdmin(false);
+        setNeedsVerification(false);
         setOrders([]);
         setAllOrders([]);
       }
@@ -451,8 +452,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Initial check
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        const u = await loadProfile(session.user.id);
-        if (u) await loadOrders(u);
+        const result = await loadProfile(session.user.id);
+        if (result && result.verificado) await loadOrders(result.user);
       }
       setLoading(false);
     });
