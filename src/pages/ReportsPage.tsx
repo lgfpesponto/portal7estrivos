@@ -876,6 +876,19 @@ const ReportsPage = () => {
           )}
         </div>
 
+        {/* Specialized Reports inline */}
+        {showSpecializedReports && (
+          <div className="mb-6">
+            <SpecializedReports
+              reports={isAdmin
+                ? ['escalacao', 'forro', 'pesponto', 'bordados', 'expedicao', 'cobranca', 'extras_cintos']
+                : ['expedicao', 'cobranca']
+              }
+              showTitle={true}
+            />
+          </div>
+        )}
+
         {/* Select All - admin only */}
         {isAdmin && (
           <div className="flex items-center gap-3 mb-3">
