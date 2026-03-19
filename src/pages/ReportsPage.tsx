@@ -1,4 +1,4 @@
-import { useAuth, PRODUCTION_STATUSES, PRODUCTION_STATUSES_USER, orderBarcodeValue } from '@/contexts/AuthContext';
+import { useAuth, PRODUCTION_STATUSES, PRODUCTION_STATUSES_USER, EXTRAS_STATUSES, orderBarcodeValue } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
