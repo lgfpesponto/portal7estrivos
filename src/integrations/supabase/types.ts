@@ -269,6 +269,7 @@ export type Database = {
           nome_completo: string
           nome_usuario: string
           telefone: string
+          verificado: boolean
         }
         Insert: {
           cpf_cnpj?: string
@@ -278,6 +279,7 @@ export type Database = {
           nome_completo?: string
           nome_usuario: string
           telefone?: string
+          verificado?: boolean
         }
         Update: {
           cpf_cnpj?: string
@@ -287,6 +289,7 @@ export type Database = {
           nome_completo?: string
           nome_usuario?: string
           telefone?: string
+          verificado?: boolean
         }
         Relationships: []
       }
@@ -304,6 +307,36 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      verification_codes: {
+        Row: {
+          code: string
+          created_at: string
+          destination: string
+          expires_at: string
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          destination: string
+          expires_at: string
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          destination?: string
+          expires_at?: string
+          id?: string
+          type?: string
           user_id?: string
         }
         Relationships: []
