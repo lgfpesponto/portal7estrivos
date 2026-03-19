@@ -341,7 +341,8 @@ interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
   isAdmin: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
+  needsVerification: boolean;
+  login: (username: string, password: string) => Promise<'ok' | 'verify' | 'error'>;
   register: (data: Omit<User, 'id' | 'isAdmin'> & { senha: string }) => Promise<boolean>;
   logout: () => void;
   updateProfile: (data: Partial<Omit<User, 'id' | 'isAdmin'>>) => void;
