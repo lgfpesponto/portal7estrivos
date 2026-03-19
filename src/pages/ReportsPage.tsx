@@ -478,7 +478,7 @@ const ReportsPage = () => {
         (order.solado || 'borracha').toLowerCase(),
         (order.formatoBico || 'quadrado').toLowerCase().replace(/\bfino\b/gi, 'BF'),
         (order.corSola || 'preta').toLowerCase(),
-        order.corVira ? `vira ${order.corVira.toLowerCase()}` : '',
+        (order.corVira && !['Bege', 'Neutra'].includes(order.corVira)) ? `vira ${order.corVira.toLowerCase()}` : '',
       ].filter(Boolean).join('  ');
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);

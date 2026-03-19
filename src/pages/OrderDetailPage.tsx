@@ -87,7 +87,7 @@ const OrderDetailPage = () => {
     ['Solado', order.solado],
     ['Formato do Bico', order.formatoBico || ''],
     ['Cor da Sola', order.corSola || ''],
-    ['Cor da Vira', order.corVira || ''],
+    ['Cor da Vira', (order.corVira && !VIRA_HIDDEN.includes(order.corVira)) ? order.corVira : ''],
     ['Costura Atrás', order.costuraAtras === 'Sim' ? 'Sim' : ''],
     ['Carimbo a Fogo', order.carimbo ? `${order.carimbo}${order.carimboDesc ? ' — ' + order.carimboDesc : ''}` : ''],
     ['Adicional', order.adicionalDesc ? `${order.adicionalDesc}${order.adicionalValor ? ` — ${formatCurrency(order.adicionalValor)}` : ''}` : ''],
