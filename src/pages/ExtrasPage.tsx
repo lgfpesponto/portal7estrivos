@@ -11,34 +11,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { TIPOS_COURO, CORES_COURO } from '@/lib/orderFieldsConfig';
+import { EXTRA_PRODUCTS } from '@/lib/extrasConfig';
 import { ShoppingCart, Package } from 'lucide-react';
-
-// ==================== PRODUCT DEFINITIONS ====================
-
-interface ExtraProduct {
-  id: string;
-  nome: string;
-  descricao: string;
-  precoBase: number | null; // null = variable
-  precoLabel: string;
-}
-
-const PRODUCTS: ExtraProduct[] = [
-  { id: 'tiras_laterais', nome: 'Tiras Laterais', descricao: 'Tiras laterais para botas', precoBase: 15, precoLabel: 'R$ 15,00' },
-  { id: 'desmanchar', nome: 'Desmanchar', descricao: 'Serviço de desmanchar bota', precoBase: null, precoLabel: 'A partir de R$ 65,00' },
-  { id: 'kit_canivete', nome: 'Kit Canivete', descricao: 'Kit canivete em couro', precoBase: 30, precoLabel: 'A partir de R$ 30,00' },
-  { id: 'kit_faca', nome: 'Kit Faca', descricao: 'Kit faca em couro', precoBase: 35, precoLabel: 'A partir de R$ 35,00' },
-  { id: 'carimbo_fogo', nome: 'Carimbo a Fogo', descricao: 'Carimbo a fogo personalizado', precoBase: 20, precoLabel: 'A partir de R$ 20,00' },
-  { id: 'revitalizador', nome: 'Revitalizador (Unidade)', descricao: 'Revitalizador para couro', precoBase: 10, precoLabel: 'R$ 10,00/un' },
-  { id: 'kit_revitalizador', nome: 'Kit 2 Revitalizador', descricao: 'Kit com 2 revitalizadores', precoBase: 26, precoLabel: 'R$ 26,00/kit' },
-  { id: 'gravata_country', nome: 'Gravata Country', descricao: 'Gravata country com metal', precoBase: 30, precoLabel: 'R$ 30,00' },
-  { id: 'adicionar_metais', nome: 'Adicionar Metais', descricao: 'Metais adicionais para botas', precoBase: null, precoLabel: 'Variável' },
-  { id: 'chaveiro_carimbo', nome: 'Chaveiro c/ Carimbo a Fogo', descricao: 'Chaveiro em couro com carimbo', precoBase: 50, precoLabel: 'R$ 50,00' },
-  { id: 'bainha_cartao', nome: 'Bainha de Cartão', descricao: 'Bainha de cartão em couro', precoBase: 15, precoLabel: 'R$ 15,00' },
-  { id: 'regata', nome: 'Regata', descricao: 'Regata bordada personalizada', precoBase: null, precoLabel: 'Sob consulta' },
-];
-
-// ==================== FORM STATE ====================
 
 const emptyForm = (): Record<string, any> => ({
   numeroPedidoBota: '',
@@ -60,9 +34,9 @@ const emptyForm = (): Record<string, any> => ({
   qtdStrass: '1',
   corRegata: '',
   descBordadoRegata: '',
+  descricaoProduto: '',
+  valorManual: '',
 });
-
-// ==================== COMPONENT ====================
 
 const ExtrasPage = () => {
   const { isLoggedIn, user, addOrder } = useAuth();
@@ -112,13 +86,29 @@ const ExtrasPage = () => {
       }
       case 'chaveiro_carimbo': return 50;
       case 'bainha_cartao': return 15;
-      case 'regata': return 0;
+      case 'regata': return 50;
+      case 'bota_pronta_entrega': return parseFloat(form.valorManual) || 0;
       default: return 0;
     }
   };
 
   const handleSubmit = (productId: string) => {
-    const product = PRODUCTS.find(p => p.id === productId)!;
+    const product = EXTRA_PRODUCTS.find(p => p.id === productId)!;
+
+    // Validate numeroPedidoBota (required for all extras)
+    if (!form.numeroPedidoBota.trim()) {
+      toast({ title: 'Preencha o Nº do pedido', variant: 'destructive' });
+      return;
+    }
+
+    // Extra validation for bota_pronta_entrega
+    if (productId === 'bota_pronta_entrega') {
+      if (!form.valorManual || parseFloat(form.valorManual) <= 0) {
+        toast({ title: 'Preencha o valor do produto', variant: 'destructive' });
+        return;
+      }
+    }
+
     const price = calcPrice(productId);
     const detalhes: Record<string, any> = { ...form };
 
@@ -152,7 +142,8 @@ const ExtrasPage = () => {
       fotos: [],
       tipoExtra: productId,
       extraDetalhes: detalhes,
-      numeroPedidoBota: form.numeroPedidoBota || undefined,
+      numeroPedidoBota: form.numeroPedidoBota.trim(),
+      numeroPedido: form.numeroPedidoBota.trim(),
     });
 
     setOpenProduct(null);
@@ -160,20 +151,16 @@ const ExtrasPage = () => {
     navigate('/relatorios');
   };
 
-  // ==================== FORM RENDERERS ====================
-
   const renderForm = (productId: string) => {
     const price = calcPrice(productId);
 
     return (
       <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-        {/* Common: Número do pedido da bota */}
-        {productId !== 'revitalizador' && productId !== 'kit_revitalizador' && productId !== 'regata' && (
-          <div>
-            <Label>Nº do pedido da bota (opcional)</Label>
-            <Input value={form.numeroPedidoBota} onChange={e => set('numeroPedidoBota', e.target.value)} placeholder="Ex: 7E-20240001" />
-          </div>
-        )}
+        {/* Número do pedido — obrigatório em TODOS */}
+        <div>
+          <Label>Nº do pedido *</Label>
+          <Input value={form.numeroPedidoBota} onChange={e => set('numeroPedidoBota', e.target.value)} placeholder="Ex: 7E-20240001" />
+        </div>
 
         {/* Product-specific fields */}
         {productId === 'tiras_laterais' && (
@@ -240,10 +227,6 @@ const ExtrasPage = () => {
 
         {productId === 'carimbo_fogo' && (
           <>
-            <div>
-              <Label>Nº do pedido da bota *</Label>
-              <Input value={form.numeroPedidoBota} onChange={e => set('numeroPedidoBota', e.target.value)} placeholder="Ex: 7E-20240001" />
-            </div>
             <div>
               <Label>Quantidade de carimbos *</Label>
               <Select value={form.qtdCarimbos} onValueChange={v => set('qtdCarimbos', v)}>
@@ -408,6 +391,23 @@ const ExtrasPage = () => {
           </>
         )}
 
+        {productId === 'bota_pronta_entrega' && (
+          <>
+            <div>
+              <Label>Descrição do produto</Label>
+              <Textarea value={form.descricaoProduto} onChange={e => set('descricaoProduto', e.target.value)} placeholder="Descreva o produto" />
+            </div>
+            <div>
+              <Label>Valor (R$) *</Label>
+              <Input type="number" min="0" step="0.01" value={form.valorManual} onChange={e => set('valorManual', e.target.value)} placeholder="Ex: 350,00" />
+            </div>
+            <div>
+              <Label>Quantidade</Label>
+              <Input type="number" value="1" disabled className="opacity-60" />
+            </div>
+          </>
+        )}
+
         {/* Price summary */}
         <div className="pt-4 border-t border-border">
           <div className="flex justify-between items-center text-lg font-bold">
@@ -433,7 +433,7 @@ const ExtrasPage = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {PRODUCTS.map(product => (
+          {EXTRA_PRODUCTS.map(product => (
             <Card key={product.id} className="flex flex-col justify-between hover:shadow-lg transition-shadow">
               <CardContent className="pt-6 flex flex-col h-full">
                 <div className="flex items-center gap-3 mb-3">
@@ -455,7 +455,7 @@ const ExtrasPage = () => {
       </div>
 
       {/* Product modals */}
-      {PRODUCTS.map(product => (
+      {EXTRA_PRODUCTS.map(product => (
         <Dialog key={product.id} open={openProduct === product.id} onOpenChange={open => !open && setOpenProduct(null)}>
           <DialogContent className="max-w-md">
             <DialogHeader>
