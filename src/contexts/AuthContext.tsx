@@ -385,6 +385,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .eq('user_id', authUserId);
 
     const hasAdmin = roles?.some((r: any) => r.role === 'admin') ?? false;
+    const verificado = (profile as any).verificado ?? true;
 
     const u: User = {
       id: authUserId,
@@ -398,7 +399,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setUser(u);
     setIsAdmin(hasAdmin);
-    return u;
+    setNeedsVerification(!verificado);
+    return { user: u, verificado };
   }, []);
 
   /* ───── Load orders ───── */
