@@ -432,29 +432,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   /* ───── Auth state listener ───── */
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        const result = await loadProfile(session.user.id);
-        if (result) await loadOrders(result);
-      } else {
-        setUser(null);
-        setIsAdmin(false);
-        setOrders([]);
-        setAllOrders([]);
-      }
-      setLoading(false);
-    });
+    let isMounted = true;
 
-    // Initial check
+    // 1. Restaurar sessão do storage PRIMEIRO
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isMounted) return;
       if (session?.user) {
         const result = await loadProfile(session.user.id);
-        if (result) await loadOrders(result);
+        if (result && isMounted) await loadOrders(result);
       }
-      setLoading(false);
+      if (isMounted) setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // 2. Listener para mudanças SUBSEQUENTES (login/logout)
+    //    NÃO usar await — fire-and-forget
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!isMounted) return;
+        if (event === 'SIGNED_IN' && session?.user) {
+          loadProfile(session.user.id).then(result => {
+            if (result && isMounted) loadOrders(result);
+          });
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setIsAdmin(false);
+          setOrders([]);
+          setAllOrders([]);
+        }
+      }
+    );
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [loadProfile, loadOrders]);
 
   /* ───── Login ───── */
