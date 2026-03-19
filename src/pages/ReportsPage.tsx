@@ -438,11 +438,21 @@ const ReportsPage = () => {
       if (order.couroTaloneira) courosFields.push({ label: 'Taloneira:', value: `${order.couroTaloneira.toLowerCase()}${order.corCouroTaloneira ? ' ' + order.corCouroTaloneira.toLowerCase() : ''}` });
       if (courosFields.length) categories.push({ title: 'COUROS', fields: courosFields });
 
-      // BORDADOS
+      // BORDADOS — replace "Bordado Variado R$X" with description
       const bordadoFields: CatField[] = [];
-      if (order.bordadoCano) bordadoFields.push({ label: 'Cano:', value: `${order.bordadoCano.toLowerCase()}${order.corBordadoCano ? ' ' + order.corBordadoCano.toLowerCase() : ''}` });
-      if (order.bordadoGaspea) bordadoFields.push({ label: 'Gáspea:', value: `${order.bordadoGaspea.toLowerCase()}${order.corBordadoGaspea ? ' ' + order.corBordadoGaspea.toLowerCase() : ''}` });
-      if (order.bordadoTaloneira) bordadoFields.push({ label: 'Taloneira:', value: `${(order.bordadoTaloneira || '').toLowerCase()}${order.corBordadoTaloneira ? ' ' + order.corBordadoTaloneira.toLowerCase() : ''}` });
+      const replaceBordadoVariado = (text: string, desc?: string) => {
+        if (!text) return text;
+        return text.split(', ').map(b => {
+          if (b.includes('Bordado Variado') && desc) return desc;
+          return b;
+        }).join(', ');
+      };
+      const bordCanoText = replaceBordadoVariado(order.bordadoCano, order.bordadoVariadoDescCano);
+      const bordGaspeaText = replaceBordadoVariado(order.bordadoGaspea, order.bordadoVariadoDescGaspea);
+      const bordTaloneiraText = replaceBordadoVariado(order.bordadoTaloneira, order.bordadoVariadoDescTaloneira);
+      if (bordCanoText) bordadoFields.push({ label: 'Cano:', value: `${bordCanoText.toLowerCase()}${order.corBordadoCano ? ' ' + order.corBordadoCano.toLowerCase() : ''}` });
+      if (bordGaspeaText) bordadoFields.push({ label: 'Gáspea:', value: `${bordGaspeaText.toLowerCase()}${order.corBordadoGaspea ? ' ' + order.corBordadoGaspea.toLowerCase() : ''}` });
+      if (bordTaloneiraText) bordadoFields.push({ label: 'Taloneira:', value: `${bordTaloneiraText.toLowerCase()}${order.corBordadoTaloneira ? ' ' + order.corBordadoTaloneira.toLowerCase() : ''}` });
       if (order.nomeBordadoDesc || order.personalizacaoNome) bordadoFields.push({ label: 'Nome:', value: (order.nomeBordadoDesc || order.personalizacaoNome || '').toLowerCase() });
       if (bordadoFields.length) categories.push({ title: 'BORDADOS', fields: bordadoFields });
 
