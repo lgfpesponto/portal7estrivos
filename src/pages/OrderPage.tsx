@@ -15,6 +15,7 @@ import {
   CARIMBO, SOB_MEDIDA_PRECO, NOME_BORDADO_PRECO, ESTAMPA_PRECO,
   PINTURA_PRECO, TRICE_PRECO, TIRAS_PRECO, COSTURA_ATRAS_PRECO, FORMATO_BICO,
   getModelosForTamanho,
+  getSoladosForModelo, getBicosForModeloSolado, getCorSolaOptions, getCorViraOptions, getForma,
 } from '@/lib/orderFieldsConfig';
 
 /* ───── helpers ───── */
@@ -181,6 +182,41 @@ const OrderPage = () => {
   const [laserOutroGaspeaText, setLaserOutroGaspeaText] = useState(df.laserOutroGaspeaText || '');
   const [laserOutroTaloneiraText, setLaserOutroTaloneiraText] = useState(df.laserOutroTaloneiraText || '');
 
+  /* ───── cascading field handlers ───── */
+  const handleModeloChange = (newModelo: string) => {
+    setModelo(newModelo);
+    const sols = getSoladosForModelo(newModelo);
+    const newSolado = sols.length === 1 ? sols[0].label : (sols.find(s => s.label === solado) ? solado : '');
+    setSolado(newSolado);
+    const bicos = getBicosForModeloSolado(newModelo, newSolado);
+    const newBico = bicos.length === 1 ? bicos[0] : (bicos.includes(formatoBico) ? formatoBico : '');
+    setFormatoBico(newBico);
+    const cso = getCorSolaOptions(newModelo, newSolado, newBico);
+    setCorSola(cso === null ? '' : cso.length === 1 ? cso[0].label : (cso.find(c => c.label === corSola) ? corSola : ''));
+    const cv = getCorViraOptions(newModelo, newSolado);
+    setCorVira(cv.length === 1 ? cv[0].label : (cv.find(c => c.label === corVira) ? corVira : ''));
+  };
+
+  const handleSoladoChange = (newSolado: string) => {
+    setSolado(newSolado);
+    const bicos = getBicosForModeloSolado(modelo, newSolado);
+    const newBico = bicos.length === 1 ? bicos[0] : (bicos.includes(formatoBico) ? formatoBico : '');
+    setFormatoBico(newBico);
+    const cso = getCorSolaOptions(modelo, newSolado, newBico);
+    setCorSola(cso === null ? '' : cso.length === 1 ? cso[0].label : (cso.find(c => c.label === corSola) ? corSola : ''));
+    const cv = getCorViraOptions(modelo, newSolado);
+    setCorVira(cv.length === 1 ? cv[0].label : (cv.find(c => c.label === corVira) ? corVira : ''));
+  };
+
+  const handleBicoChange = (newBico: string) => {
+    setFormatoBico(newBico);
+    const sols = getSoladosForModelo(modelo, newBico);
+    const newSolado = sols.find(s => s.label === solado) ? solado : (sols.length === 1 ? sols[0].label : '');
+    if (newSolado !== solado) setSolado(newSolado);
+    const cso = getCorSolaOptions(modelo, newSolado, newBico);
+    setCorSola(cso === null ? '' : cso.length === 1 ? cso[0].label : (cso.find(c => c.label === corSola) ? corSola : ''));
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -214,7 +250,8 @@ const OrderPage = () => {
   const cruzMetalPrecoTotal = cruzMetal ? cruzMetalQtd * CRUZ_METAL_PRECO : 0;
   const bridaoMetalPrecoTotal = bridaoMetal ? bridaoMetalQtd * BRIDAO_METAL_PRECO : 0;
   const soladoPreco = SOLADO.find(s => s.label === solado)?.preco || 0;
-  const corSolaPreco = COR_SOLA.find(c => c.label === corSola)?.preco || 0;
+  const corSolaOptsForPrice = getCorSolaOptions(modelo, solado, formatoBico);
+  const corSolaPreco = corSolaOptsForPrice?.find(c => c.label === corSola)?.preco || 0;
   const corViraPreco = COR_VIRA.find(c => c.label === corVira)?.preco || 0;
   const carimboPreco = CARIMBO.find(c => c.label === carimbo)?.preco || 0;
 
@@ -258,7 +295,7 @@ const OrderPage = () => {
       [corVivo, 'Cor do Vivo'],
       [solado, 'Tipo do Solado'],
       [formatoBico, 'Formato do Bico'],
-      [corSola, 'Cor da Sola'],
+      ...(getCorSolaOptions(modelo, solado, formatoBico) !== null ? [[corSola, 'Cor da Sola'] as [string, string]] : []),
       [corVira, 'Cor da Vira'],
     ];
     const missing = required.filter(([val]) => !val);
@@ -314,6 +351,7 @@ const OrderPage = () => {
       acessorios: acessorios.join(', '),
       desenvolvimento, observacao,
       corVira, corVivo, corSola,
+      forma: getForma(modelo, formatoBico),
       costuraAtras: costuraAtras ? 'Sim' : '',
       carimbo, carimboDesc,
       adicionalDesc, adicionalValor: adicionalValor > 0 ? adicionalValor : 0,
@@ -452,9 +490,9 @@ const OrderPage = () => {
 
           {/* 3-4 Tamanho + Gênero + Modelo */}
           <div className="grid sm:grid-cols-3 gap-4">
-            <SelectField label="Tamanho" value={tamanho} onChange={v => { setTamanho(v); const allowed = getModelosForTamanho(v); if (modelo && !allowed.find(m => m.label === modelo)) setModelo(''); }} options={TAMANHOS} required />
+            <SelectField label="Tamanho" value={tamanho} onChange={v => { setTamanho(v); const allowed = getModelosForTamanho(v); if (modelo && !allowed.find(m => m.label === modelo)) { setModelo(''); setSolado(''); setFormatoBico(''); setCorSola(''); setCorVira(''); } }} options={TAMANHOS} required />
             <SelectField label="Gênero" value={genero} onChange={setGenero} options={GENEROS} required />
-            <SelectField label="Modelo" value={modelo} onChange={setModelo} options={getModelosForTamanho(tamanho)} required />
+            <SelectField label="Modelo" value={modelo} onChange={handleModeloChange} options={getModelosForTamanho(tamanho)} required />
           </div>
 
           {/* 5 Sob Medida */}
@@ -577,10 +615,14 @@ const OrderPage = () => {
           {/* Solados */}
           <Section title="Solados">
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <SelectField label="Tipo de Solado" value={solado} onChange={setSolado} options={SOLADO} required />
-              <SelectField label="Formato do Bico" value={formatoBico} onChange={setFormatoBico} options={FORMATO_BICO} required />
-              <SelectField label="Cor da Sola" value={corSola} onChange={setCorSola} options={COR_SOLA} required />
-              <SelectField label="Cor da Vira" value={corVira} onChange={setCorVira} options={COR_VIRA} required />
+              <SelectField label="Tipo de Solado" value={solado} onChange={handleSoladoChange} options={getSoladosForModelo(modelo, formatoBico)} required />
+              <SelectField label="Formato do Bico" value={formatoBico} onChange={handleBicoChange} options={getBicosForModeloSolado(modelo, solado)} required />
+              {getCorSolaOptions(modelo, solado, formatoBico) !== null && (
+                <SelectField label="Cor da Sola" value={corSola} onChange={setCorSola} options={getCorSolaOptions(modelo, solado, formatoBico)!} required />
+              )}
+              {getCorViraOptions(modelo, solado).length > 1 && (
+                <SelectField label="Cor da Vira" value={corVira} onChange={setCorVira} options={getCorViraOptions(modelo, solado)} />
+              )}
             </div>
             <ToggleField label={`Costura Atrás (+R$${COSTURA_ATRAS_PRECO})`} value={costuraAtras} onChange={setCosturaAtras} />
           </Section>
