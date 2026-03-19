@@ -435,11 +435,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         const result = await loadProfile(session.user.id);
-        if (result && result.verificado) await loadOrders(result.user);
+        if (result) await loadOrders(result);
       } else {
         setUser(null);
         setIsAdmin(false);
-        setNeedsVerification(false);
         setOrders([]);
         setAllOrders([]);
       }
