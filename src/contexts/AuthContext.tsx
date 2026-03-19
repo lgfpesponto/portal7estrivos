@@ -341,7 +341,8 @@ interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
   isAdmin: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
+  needsVerification: boolean;
+  login: (username: string, password: string) => Promise<'ok' | 'verify' | 'error'>;
   register: (data: Omit<User, 'id' | 'isAdmin'> & { senha: string }) => Promise<boolean>;
   logout: () => void;
   updateProfile: (data: Partial<Omit<User, 'id' | 'isAdmin'>>) => void;
@@ -361,6 +362,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -383,6 +385,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .eq('user_id', authUserId);
 
     const hasAdmin = roles?.some((r: any) => r.role === 'admin') ?? false;
+    const verificado = (profile as any).verificado ?? true;
 
     const u: User = {
       id: authUserId,
@@ -396,7 +399,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setUser(u);
     setIsAdmin(hasAdmin);
-    return u;
+    setNeedsVerification(!verificado);
+    return { user: u, verificado };
   }, []);
 
   /* ───── Load orders ───── */
@@ -433,11 +437,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        const u = await loadProfile(session.user.id);
-        if (u) await loadOrders(u);
+        const result = await loadProfile(session.user.id);
+        if (result && result.verificado) await loadOrders(result.user);
       } else {
         setUser(null);
         setIsAdmin(false);
+        setNeedsVerification(false);
         setOrders([]);
         setAllOrders([]);
       }
@@ -447,8 +452,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Initial check
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        const u = await loadProfile(session.user.id);
-        if (u) await loadOrders(u);
+        const result = await loadProfile(session.user.id);
+        if (result && result.verificado) await loadOrders(result.user);
       }
       setLoading(false);
     });
@@ -457,10 +462,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [loadProfile, loadOrders]);
 
   /* ───── Login ───── */
-  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
-    const email = `${username.toLowerCase()}@7estrivos.app`;
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return !error;
+  const login = useCallback(async (username: string, password: string): Promise<'ok' | 'verify' | 'error'> => {
+    const sanitized = username.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+    const email = `${sanitized}@7estrivos.app`;
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return 'error';
+
+    // Check if verified
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('verificado')
+      .eq('id', authData.user.id)
+      .single();
+
+    const verificado = (profile as any)?.verificado ?? true;
+    setNeedsVerification(!verificado);
+    return verificado ? 'ok' : 'verify';
   }, []);
 
   /* ───── Register ───── */
@@ -700,7 +719,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{
-      user, isLoggedIn: !!user, isAdmin, isFernanda,
+      user, isLoggedIn: !!user, isAdmin, needsVerification, isFernanda,
       login, register, logout, updateProfile,
       orders: userOrders, addOrder, deleteOrder, updateOrder, updateOrderStatus,
       recoverPassword, allOrders, loading,

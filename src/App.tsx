@@ -20,6 +20,7 @@ import DraftsPage from "./pages/DraftsPage";
 import BeltOrderPage from "./pages/BeltOrderPage";
 import ExtrasPage from "./pages/ExtrasPage";
 import UsersManagementPage from "./pages/UsersManagementPage";
+import VerifyCodePage from "./pages/VerifyCodePage";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/perfil" element={<ProfilePage />} />
             <Route path="/rascunhos" element={<DraftsPage />} />
             <Route path="/usuarios" element={<UsersManagementPage />} />
+            <Route path="/verificar" element={<VerifyCodePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

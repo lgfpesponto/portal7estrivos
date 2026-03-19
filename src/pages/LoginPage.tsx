@@ -17,10 +17,12 @@ const LoginPage = () => {
     setError('');
     if (!username || !password) { setError('Preencha todos os campos.'); return; }
     setLoading(true);
-    const success = await login(username, password);
+    const result = await login(username, password);
     setLoading(false);
-    if (success) {
+    if (result === 'ok') {
       navigate('/');
+    } else if (result === 'verify') {
+      navigate('/verificar');
     } else {
       setError('Usuário ou senha incorretos.');
     }
