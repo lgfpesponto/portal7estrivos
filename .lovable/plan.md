@@ -1,48 +1,81 @@
 
 
-## Plano: Composição de cintos no relatório de Cobrança
+## Plano: Composição detalhada de extras no relatório de Cobrança
 
 ### Problema
-No relatório de Cobrança, pedidos de cinto entram no bloco genérico de extras (linha 359-369), que apenas mostra o nome do produto e o preço total numa única linha, sem detalhamento da composição.
+Pedidos de extras no relatório de Cobrança mostram apenas uma linha com nome e valor total (linha 370-373 de `SpecializedReports.tsx`), sem detalhar os componentes que formam o preço.
 
 ### Solução
 
-**Arquivo:** `src/components/SpecializedReports.tsx` (dentro de `generateCobrancaPDF`, linhas 359-369)
+**Arquivo:** `src/components/SpecializedReports.tsx` (bloco `else if (o.tipoExtra && o.extraDetalhes)`, linhas 370-373)
 
-Adicionar um bloco específico para `o.tipoExtra === 'cinto'` antes do bloco genérico de extras:
+Substituir o bloco genérico por composição detalhada por tipo de extra, usando `o.tipoExtra` e `o.extraDetalhes`:
 
 ```typescript
-if (o.tipoExtra === 'cinto' && o.extraDetalhes) {
-  const det = o.extraDetalhes as any;
-  // Linha 1: produto
-  priceItems.push(['Cinto', 0]); // header sem valor próprio
-
-  // Tamanho com preço
-  const sizeEntry = BELT_SIZES.find(s => s.label === det.tamanhoCinto);
-  if (sizeEntry) priceItems.push([`Tamanho: ${sizeEntry.label}`, sizeEntry.preco]);
-
-  // Bordado P
-  if (det.bordadoP === 'Sim') priceItems.push(['Bordado P', BORDADO_P_PRECO]);
-
-  // Nome Bordado
-  if (det.nomeBordado === 'Sim') priceItems.push(['Nome Bordado', NOME_BORDADO_CINTO_PRECO]);
-
-  // Carimbo
-  const carimboEntry = BELT_CARIMBO.find(c => c.label === det.carimbo);
-  if (carimboEntry) priceItems.push([det.carimbo, carimboEntry.preco]);
-
 } else if (o.tipoExtra && o.extraDetalhes) {
-  // extras genéricos (código existente)
+  const det = o.extraDetalhes as any;
+  const extraLabel = o.modelo.replace('Extra — ', '');
+  
+  switch (o.tipoExtra) {
+    case 'desmanchar': {
+      priceItems.push(['Desmanchar (base)', 65]);
+      if (det.qualSola === 'Preta borracha') priceItems.push(['Sola preta borracha', 25]);
+      else if (det.qualSola === 'De cor borracha') priceItems.push(['Sola de cor borracha', 40]);
+      else if (det.qualSola === 'De couro') priceItems.push(['Sola de couro', 60]);
+      if (det.trocaGaspea === 'Sim') priceItems.push(['Troca Gáspea/Taloneira', 35]);
+      break;
+    }
+    case 'kit_canivete': {
+      priceItems.push(['Kit Canivete', 30]);
+      if (det.vaiCanivete === 'Sim') priceItems.push(['Com canivete', 30]);
+      break;
+    }
+    case 'kit_faca': {
+      priceItems.push(['Kit Faca', 35]);
+      if (det.vaiCanivete === 'Sim') priceItems.push(['Com faca', 35]);
+      break;
+    }
+    case 'carimbo_fogo': {
+      const qty = parseInt(det.qtdCarimbos) || 1;
+      priceItems.push([`Carimbo a Fogo (${qty} un.)`, qty >= 4 ? 40 : 20]);
+      break;
+    }
+    case 'revitalizador': {
+      const qty = parseInt(det.quantidade) || 1;
+      priceItems.push([`Revitalizador (${qty} un.)`, 10 * qty]);
+      break;
+    }
+    case 'kit_revitalizador': {
+      const qty = parseInt(det.quantidade) || 1;
+      priceItems.push([`Kit 2 Revitalizador (${qty} un.)`, 26 * qty]);
+      break;
+    }
+    case 'adicionar_metais': {
+      const sel = det.metaisSelecionados || [];
+      if (sel.includes('Bola grande')) priceItems.push(['Bola grande', 15]);
+      if (sel.includes('Strass')) {
+        const qtd = parseInt(det.qtdStrass) || 1;
+        priceItems.push([`Strass (${qtd} un.)`, 0.60 * qtd]);
+      }
+      break;
+    }
+    case 'bota_pronta_entrega': {
+      priceItems.push([det.descricaoProduto || 'Bota Pronta Entrega', parseFloat(det.valorManual) || o.preco]);
+      break;
+    }
+    default:
+      // tiras_laterais, gravata_country, chaveiro_carimbo, bainha_cartao, regata
+      priceItems.push([extraLabel, o.preco]);
+      break;
+  }
 }
 ```
 
-Também importar `BELT_SIZES`, `BORDADO_P_PRECO`, `NOME_BORDADO_CINTO_PRECO`, `BELT_CARIMBO` de `extrasConfig.ts`.
-
-E ajustar o cálculo de `orderTotal` para cintos: usar a soma dos `priceItems` em vez de `o.preco` (ou manter `o.preco` se já estiver correto — ambos devem bater).
+Extras simples com preço fixo (tiras, gravata, chaveiro, bainha, regata) continuam em uma linha, pois não têm composição. Extras compostos (desmanchar, kits, carimbo, metais) mostram cada componente com seu valor.
 
 ### Arquivos alterados
 
 | Arquivo | Alteração |
 |---|---|
-| `src/components/SpecializedReports.tsx` | Bloco de composição específico para cintos no PDF de cobrança + imports |
+| `src/components/SpecializedReports.tsx` | Substituir bloco genérico de extras por composição detalhada por tipo |
 
