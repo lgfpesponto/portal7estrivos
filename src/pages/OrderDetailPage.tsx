@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth, businessDaysRemaining, formatBrasiliaDate, formatBrasiliaTime } from '@/contexts/AuthContext';
+import { useAuth, businessDaysRemaining, formatBrasiliaDate, formatBrasiliaTime, orderBarcodeValue } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { ArrowLeft, CheckCircle2, Clock, History } from 'lucide-react';
 import { Input } from '@/components/ui/input';
