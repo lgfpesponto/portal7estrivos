@@ -230,7 +230,7 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     const filtered = sourceOrders.filter(o =>
       o.status.toLowerCase() === 'expedição' &&
       (filterVendedor === 'todos' || o.vendedor === filterVendedor)
-    );
+    ); // includes extras orders with status 'Expedição'
 
     const doc = new jsPDF('p', 'mm', 'a4');
     const pw = 210;
