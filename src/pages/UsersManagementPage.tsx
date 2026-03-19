@@ -105,6 +105,13 @@ const UsersManagementPage = () => {
 
   const isProtected = (username: string) => PROTECTED_USERNAMES.includes(username.toLowerCase());
 
+  if (authLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="animate-spin text-primary" size={32} />
+      </div>
+    );
+  }
   if (!isLoggedIn || !isJuliana) return null;
 
   return (
