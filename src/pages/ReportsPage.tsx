@@ -623,6 +623,23 @@ const ReportsPage = () => {
                 </select>
               </div>
             )}
+            <div>
+              <label className="block text-xs font-semibold mb-1">Produto</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => toggleProdutoFilter('bota')}
+                  className={`px-3 py-2 rounded-lg text-sm font-bold border-2 transition-colors ${filterProduto.has('bota') ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-border hover:border-primary'}`}
+                >
+                  Bota
+                </button>
+                <button
+                  onClick={() => toggleProdutoFilter('extras')}
+                  className={`px-3 py-2 rounded-lg text-sm font-bold border-2 transition-colors ${filterProduto.has('extras') ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-border hover:border-primary'}`}
+                >
+                  Extras
+                </button>
+              </div>
+            </div>
             <div className="flex items-end">
               <button onClick={applyFilters} className="orange-gradient text-primary-foreground px-6 py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity flex items-center gap-2">
                 <Filter size={14} /> FILTRAR
