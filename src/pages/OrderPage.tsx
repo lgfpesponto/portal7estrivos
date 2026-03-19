@@ -351,6 +351,7 @@ const OrderPage = () => {
       acessorios: acessorios.join(', '),
       desenvolvimento, observacao,
       corVira, corVivo, corSola,
+      forma: getForma(modelo, formatoBico),
       costuraAtras: costuraAtras ? 'Sim' : '',
       carimbo, carimboDesc,
       adicionalDesc, adicionalValor: adicionalValor > 0 ? adicionalValor : 0,
