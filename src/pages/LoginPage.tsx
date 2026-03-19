@@ -21,8 +21,6 @@ const LoginPage = () => {
     setLoading(false);
     if (result === 'ok') {
       navigate('/');
-    } else if (result === 'verify') {
-      navigate('/verificar');
     } else {
       setError('Usuário ou senha incorretos.');
     }
