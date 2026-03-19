@@ -490,9 +490,9 @@ const OrderPage = () => {
 
           {/* 3-4 Tamanho + Gênero + Modelo */}
           <div className="grid sm:grid-cols-3 gap-4">
-            <SelectField label="Tamanho" value={tamanho} onChange={v => { setTamanho(v); const allowed = getModelosForTamanho(v); if (modelo && !allowed.find(m => m.label === modelo)) setModelo(''); }} options={TAMANHOS} required />
+            <SelectField label="Tamanho" value={tamanho} onChange={v => { setTamanho(v); const allowed = getModelosForTamanho(v); if (modelo && !allowed.find(m => m.label === modelo)) { setModelo(''); setSolado(''); setFormatoBico(''); setCorSola(''); setCorVira(''); } }} options={TAMANHOS} required />
             <SelectField label="Gênero" value={genero} onChange={setGenero} options={GENEROS} required />
-            <SelectField label="Modelo" value={modelo} onChange={setModelo} options={getModelosForTamanho(tamanho)} required />
+            <SelectField label="Modelo" value={modelo} onChange={handleModeloChange} options={getModelosForTamanho(tamanho)} required />
           </div>
 
           {/* 5 Sob Medida */}
