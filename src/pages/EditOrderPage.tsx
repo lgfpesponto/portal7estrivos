@@ -307,6 +307,7 @@ const EditOrderPage = () => {
       bridaoMetalQtd: bridaoMetal ? bridaoMetalQtd : 0,
       acessorios: acessorios.join(', '), desenvolvimento, observacao,
       corVira, corVivo, corSola,
+      forma: getForma(modelo, formatoBico),
       costuraAtras: costuraAtras ? 'Sim' : '', carimbo, carimboDesc,
       adicionalDesc, adicionalValor: adicionalValor > 0 ? adicionalValor : 0,
       personalizacaoNome: nomeBordado ? nomeBordadoDesc : '', personalizacaoBordado: '',
