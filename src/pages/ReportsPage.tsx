@@ -849,7 +849,7 @@ const ReportsPage = () => {
                 <FileText size={16} /> GERAR RELATÓRIO
               </button>
               {showReportOptions && (
-                <div className="absolute top-full left-0 mt-2 bg-card border border-border rounded-lg western-shadow p-2 z-20 min-w-[200px]">
+                <div className="absolute top-full left-0 mt-2 bg-card border border-border rounded-lg western-shadow p-2 z-20 min-w-[220px]">
                   <button onClick={() => { generateReportPDF(); setShowReportOptions(false); }} className="w-full text-left px-3 py-2 text-sm font-semibold hover:bg-muted rounded-md flex items-center gap-2">
                     <Download size={14} /> Relatório por Filtros
                   </button>
@@ -858,6 +858,9 @@ const ReportsPage = () => {
                       <FileText size={14} /> Relatório por Peças
                     </button>
                   )}
+                  <button onClick={() => { setShowSpecializedReports(prev => !prev); setShowReportOptions(false); }} className="w-full text-left px-3 py-2 text-sm font-semibold hover:bg-muted rounded-md flex items-center gap-2">
+                    <FileText size={14} /> Relatórios Especializados
+                  </button>
                 </div>
               )}
             </div>
