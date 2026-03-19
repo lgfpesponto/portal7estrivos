@@ -19,7 +19,7 @@ import { EXTRA_PRODUCT_NAME_MAP, EXTRA_DETAIL_LABELS, EXTRA_INTERNAL_KEYS, isExt
 
 const OrderDetailPage = () => {
   const { id } = useParams();
-  const { orders, isAdmin, user, updateOrder, isFernanda } = useAuth();
+  const { orders, isAdmin, user, updateOrder, isFernanda, allOrders } = useAuth();
   const navigate = useNavigate();
   const order = orders.find(o => o.id === id);
 
