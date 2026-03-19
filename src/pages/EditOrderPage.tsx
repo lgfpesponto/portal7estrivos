@@ -177,6 +177,9 @@ const EditOrderPage = () => {
     setCorBordadoGaspea(order.corBordadoGaspea || '');
     setBordadoTaloneira(order.bordadoTaloneira ? order.bordadoTaloneira.split(', ').filter(Boolean) : []);
     setCorBordadoTaloneira(order.corBordadoTaloneira || '');
+    setBordadoVariadoDescCano(order.bordadoVariadoDescCano || '');
+    setBordadoVariadoDescGaspea(order.bordadoVariadoDescGaspea || '');
+    setBordadoVariadoDescTaloneira(order.bordadoVariadoDescTaloneira || '');
     setNomeBordado(!!(order.nomeBordadoDesc || order.personalizacaoNome));
     setNomeBordadoDesc(order.nomeBordadoDesc || order.personalizacaoNome || '');
     setLaserCano(order.laserCano ? order.laserCano.split(', ').filter(Boolean) : []);
