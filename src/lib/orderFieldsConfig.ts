@@ -17,6 +17,9 @@ export const MODELOS: { label: string; preco: number }[] = [
   { label: 'Urbano', preco: 260 },
   { label: 'Bota Bico Fino Feminino', preco: 260 },
   { label: 'Bota Bico Fino Perfilado', preco: 260 },
+  { label: 'Tradicional Bico Fino', preco: 260 },
+  { label: 'Cano Médio Infantil', preco: 160 },
+  { label: 'City', preco: 270 },
 ];
 
 // ==================== TAMANHOS ====================
@@ -148,10 +151,12 @@ export const SOLADO: { label: string; preco: number }[] = [
   { label: 'Jump', preco: 30 },
   { label: 'Rústica', preco: 0 },
   { label: 'Infantil', preco: 0 },
+  { label: 'PVC', preco: 0 },
+  { label: 'Borracha City', preco: 0 },
 ];
 
 // ==================== FORMATO DO BICO ====================
-export const FORMATO_BICO = ['Quadrado', 'Redondo', 'Fino Ponta Redonda', 'Fino Ponta Quadrada'];
+export const FORMATO_BICO = ['Quadrado', 'Redondo', 'Fino Ponta Redonda', 'Fino Ponta Quadrada', 'Fino Agulha Ponta Quadrada', 'Fino Agulha Ponta Redonda'];
 
 // ==================== COR DA SOLA ====================
 export const COR_SOLA: { label: string; preco: number }[] = [
@@ -161,6 +166,7 @@ export const COR_SOLA: { label: string; preco: number }[] = [
   { label: 'Madeira', preco: 0 },
   { label: 'Avermelhada', preco: 0 },
   { label: 'Pintada de Preto', preco: 0 },
+  { label: 'Off White', preco: 0 },
 ];
 
 // ==================== COR DA VIRA ====================
@@ -168,6 +174,7 @@ export const COR_VIRA: { label: string; preco: number }[] = [
   { label: 'Bege', preco: 0 },
   { label: 'Preto', preco: 10 },
   { label: 'Rosa', preco: 10 },
+  { label: 'Neutra', preco: 0 },
 ];
 
 // ==================== CARIMBO A FOGO ====================
@@ -184,3 +191,43 @@ export const PINTURA_PRECO = 15;
 export const TRICE_PRECO = 20;
 export const TIRAS_PRECO = 15;
 export const COSTURA_ATRAS_PRECO = 20;
+
+// ==================== VIRA HIDDEN (não mostrar na descrição/impressão) ====================
+export const VIRA_HIDDEN = ['Bege', 'Neutra'];
+
+// ==================== VINCULAÇÃO TAMANHO → MODELO ====================
+export function getModelosForTamanho(tamanho: string): { label: string; preco: number }[] {
+  if (!tamanho) return MODELOS;
+  const t = Number(tamanho);
+  if (isNaN(t)) return MODELOS;
+
+  const allowed: string[] = [];
+
+  // 24-33: infantis
+  if (t >= 24 && t <= 33) {
+    allowed.push('Bota Infantil', 'Botina Infantil', 'Cano Médio Infantil');
+  }
+  // 34-45: adultos
+  if (t >= 34 && t <= 45) {
+    allowed.push(
+      'Bota Tradicional', 'Bota Feminino', 'Bota Peão',
+      'Coturno', 'Destroyer', 'Capota',
+      'Bota Ouver Perfilado', 'Capota Bico Fino Perfilado',
+      'Cano Médio', 'Botina', 'Urbano',
+      'Bota Bico Fino Perfilado', 'Tradicional Bico Fino',
+    );
+    // Montaria só até 40
+    if (t <= 40) allowed.push('Bota Montaria (40)');
+  }
+  // 33-40: bico fino feminino + capota bico fino
+  if (t >= 33 && t <= 40) {
+    allowed.push('Bota Bico Fino Feminino', 'Capota Bico Fino');
+  }
+  // 34-40: City
+  if (t >= 34 && t <= 40) {
+    allowed.push('City');
+  }
+
+  if (allowed.length === 0) return MODELOS;
+  return MODELOS.filter(m => allowed.includes(m.label));
+}

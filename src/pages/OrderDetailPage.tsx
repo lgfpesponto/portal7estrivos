@@ -13,6 +13,7 @@ import {
   SOB_MEDIDA_PRECO, NOME_BORDADO_PRECO, ESTAMPA_PRECO, PINTURA_PRECO,
   TRICE_PRECO, TIRAS_PRECO, COSTURA_ATRAS_PRECO, STRASS_PRECO, CRUZ_METAL_PRECO,
   BRIDAO_METAL_PRECO, LASER_CANO_PRECO, LASER_GASPEA_PRECO, GLITTER_CANO_PRECO, GLITTER_GASPEA_PRECO,
+  VIRA_HIDDEN,
 } from '@/lib/orderFieldsConfig';
 
 const OrderDetailPage = () => {
@@ -86,7 +87,7 @@ const OrderDetailPage = () => {
     ['Solado', order.solado],
     ['Formato do Bico', order.formatoBico || ''],
     ['Cor da Sola', order.corSola || ''],
-    ['Cor da Vira', order.corVira || ''],
+    ['Cor da Vira', (order.corVira && !VIRA_HIDDEN.includes(order.corVira)) ? order.corVira : ''],
     ['Costura Atrás', order.costuraAtras === 'Sim' ? 'Sim' : ''],
     ['Carimbo a Fogo', order.carimbo ? `${order.carimbo}${order.carimboDesc ? ' — ' + order.carimboDesc : ''}` : ''],
     ['Adicional', order.adicionalDesc ? `${order.adicionalDesc}${order.adicionalValor ? ` — ${formatCurrency(order.adicionalValor)}` : ''}` : ''],

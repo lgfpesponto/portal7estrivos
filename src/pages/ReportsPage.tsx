@@ -317,7 +317,7 @@ const ReportsPage = () => {
       const solaType = `${order.solado || 'Borracha'} ${order.formatoBico || 'quadrada'}`.toLowerCase();
       soladoFields.push({ label: 'Tipo:', value: solaType });
       if (order.corSola) soladoFields.push({ label: 'Cor:', value: order.corSola.toLowerCase() });
-      if (order.corVira) soladoFields.push({ label: 'Vira:', value: order.corVira.toLowerCase() });
+      if (order.corVira && !['Bege', 'Neutra'].includes(order.corVira)) soladoFields.push({ label: 'Vira:', value: order.corVira.toLowerCase() });
       categories.push({ title: 'SOLADOS', fields: soladoFields });
 
       // METAIS
@@ -478,7 +478,7 @@ const ReportsPage = () => {
         (order.solado || 'borracha').toLowerCase(),
         (order.formatoBico || 'quadrado').toLowerCase().replace(/\bfino\b/gi, 'BF'),
         (order.corSola || 'preta').toLowerCase(),
-        order.corVira ? `vira ${order.corVira.toLowerCase()}` : '',
+        (order.corVira && !['Bege', 'Neutra'].includes(order.corVira)) ? `vira ${order.corVira.toLowerCase()}` : '',
       ].filter(Boolean).join('  ');
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);

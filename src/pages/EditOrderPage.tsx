@@ -13,6 +13,7 @@ import {
   STRASS_PRECO, CRUZ_METAL_PRECO, BRIDAO_METAL_PRECO, SOLADO, COR_SOLA, COR_VIRA,
   CARIMBO, SOB_MEDIDA_PRECO, NOME_BORDADO_PRECO, ESTAMPA_PRECO,
   PINTURA_PRECO, TRICE_PRECO, TIRAS_PRECO, COSTURA_ATRAS_PRECO, FORMATO_BICO,
+  getModelosForTamanho,
 } from '@/lib/orderFieldsConfig';
 
 const cls = {
@@ -298,9 +299,9 @@ const EditOrderPage = () => {
           </div>
 
           <div className="grid sm:grid-cols-3 gap-4">
-            <SelectField label="Tamanho" value={tamanho} onChange={setTamanho} options={TAMANHOS} />
+            <SelectField label="Tamanho" value={tamanho} onChange={v => { setTamanho(v); const allowed = getModelosForTamanho(v); if (modelo && !allowed.find(m => m.label === modelo)) setModelo(''); }} options={TAMANHOS} />
             <SelectField label="Gênero" value={genero} onChange={setGenero} options={GENEROS} />
-            <SelectField label="Modelo" value={modelo} onChange={setModelo} options={MODELOS} />
+            <SelectField label="Modelo" value={modelo} onChange={setModelo} options={getModelosForTamanho(tamanho)} />
           </div>
 
           <ToggleField label="Sob Medida (+R$50)" value={sobMedida} onChange={setSobMedida} textValue={sobMedidaDesc} onTextChange={setSobMedidaDesc} textPlaceholder="Descreva a medida..." />

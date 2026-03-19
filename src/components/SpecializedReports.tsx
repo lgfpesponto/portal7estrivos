@@ -393,7 +393,7 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
       if (soladoP) priceItems.push(['Solado: ' + o.solado, soladoP]);
       const corSolaP = COR_SOLA.find(c => c.label === o.corSola)?.preco;
       if (corSolaP) priceItems.push(['Cor Sola: ' + o.corSola, corSolaP]);
-      const corViraP = COR_VIRA.find(c => c.label === o.corVira)?.preco;
+      const corViraP = (o.corVira && !['Bege', 'Neutra'].includes(o.corVira)) ? (COR_VIRA.find(c => c.label === o.corVira)?.preco || 0) : 0;
       if (corViraP) priceItems.push(['Cor Vira: ' + o.corVira, corViraP]);
       if (o.costuraAtras === 'Sim') priceItems.push(['Costura Atrás', COSTURA_ATRAS_PRECO]);
       const carimboP = CARIMBO.find(c => c.label === o.carimbo)?.preco;

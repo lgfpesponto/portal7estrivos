@@ -14,6 +14,7 @@ import {
   STRASS_PRECO, CRUZ_METAL_PRECO, BRIDAO_METAL_PRECO, SOLADO, COR_SOLA, COR_VIRA,
   CARIMBO, SOB_MEDIDA_PRECO, NOME_BORDADO_PRECO, ESTAMPA_PRECO,
   PINTURA_PRECO, TRICE_PRECO, TIRAS_PRECO, COSTURA_ATRAS_PRECO, FORMATO_BICO,
+  getModelosForTamanho,
 } from '@/lib/orderFieldsConfig';
 
 /* ───── helpers ───── */
@@ -451,9 +452,9 @@ const OrderPage = () => {
 
           {/* 3-4 Tamanho + Gênero + Modelo */}
           <div className="grid sm:grid-cols-3 gap-4">
-            <SelectField label="Tamanho" value={tamanho} onChange={setTamanho} options={TAMANHOS} required />
+            <SelectField label="Tamanho" value={tamanho} onChange={v => { setTamanho(v); const allowed = getModelosForTamanho(v); if (modelo && !allowed.find(m => m.label === modelo)) setModelo(''); }} options={TAMANHOS} required />
             <SelectField label="Gênero" value={genero} onChange={setGenero} options={GENEROS} required />
-            <SelectField label="Modelo" value={modelo} onChange={setModelo} options={MODELOS} required />
+            <SelectField label="Modelo" value={modelo} onChange={setModelo} options={getModelosForTamanho(tamanho)} required />
           </div>
 
           {/* 5 Sob Medida */}
