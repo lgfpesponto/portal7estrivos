@@ -37,12 +37,13 @@ const UsersManagementPage = () => {
   const isJuliana = user?.nomeUsuario?.toLowerCase() === '7estrivos';
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isLoggedIn || !isJuliana) {
       navigate('/');
       return;
     }
     fetchProfiles();
-  }, [isLoggedIn, isJuliana]);
+  }, [isLoggedIn, isJuliana, authLoading]);
 
   const fetchProfiles = async () => {
     setLoading(true);
