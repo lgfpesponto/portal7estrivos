@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { Filter, FileText, Download, Printer, CheckCircle, StickyNote, Pencil, Trash2, RefreshCw, ScanBarcode } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
+import SpecializedReports from '@/components/SpecializedReports';
 import JsBarcode from 'jsbarcode';
 import QRCode from 'qrcode';
 import {
@@ -646,6 +647,7 @@ const ReportsPage = () => {
   };
 
   const [showReportOptions, setShowReportOptions] = useState(false);
+  const [showSpecializedReports, setShowSpecializedReports] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handleDelete = (id: string) => {
@@ -849,7 +851,7 @@ const ReportsPage = () => {
                 <FileText size={16} /> GERAR RELATÓRIO
               </button>
               {showReportOptions && (
-                <div className="absolute top-full left-0 mt-2 bg-card border border-border rounded-lg western-shadow p-2 z-20 min-w-[200px]">
+                <div className="absolute top-full left-0 mt-2 bg-card border border-border rounded-lg western-shadow p-2 z-20 min-w-[220px]">
                   <button onClick={() => { generateReportPDF(); setShowReportOptions(false); }} className="w-full text-left px-3 py-2 text-sm font-semibold hover:bg-muted rounded-md flex items-center gap-2">
                     <Download size={14} /> Relatório por Filtros
                   </button>
@@ -858,6 +860,9 @@ const ReportsPage = () => {
                       <FileText size={14} /> Relatório por Peças
                     </button>
                   )}
+                  <button onClick={() => { setShowSpecializedReports(prev => !prev); setShowReportOptions(false); }} className="w-full text-left px-3 py-2 text-sm font-semibold hover:bg-muted rounded-md flex items-center gap-2">
+                    <FileText size={14} /> Relatórios Especializados
+                  </button>
                 </div>
               )}
             </div>
@@ -870,6 +875,19 @@ const ReportsPage = () => {
             </div>
           )}
         </div>
+
+        {/* Specialized Reports inline */}
+        {showSpecializedReports && (
+          <div className="mb-6">
+            <SpecializedReports
+              reports={isAdmin
+                ? ['escalacao', 'forro', 'pesponto', 'bordados', 'expedicao', 'cobranca', 'extras_cintos']
+                : ['expedicao', 'cobranca']
+              }
+              showTitle={true}
+            />
+          </div>
+        )}
 
         {/* Select All - admin only */}
         {isAdmin && (

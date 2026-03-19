@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useAuth, Order, orderBarcodeValue } from '@/contexts/AuthContext';
 import { FileText, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import jsPDF from 'jspdf';
 import JsBarcode from 'jsbarcode';
 import {
@@ -11,7 +12,7 @@ import {
   TRICE_PRECO, TIRAS_PRECO, COSTURA_ATRAS_PRECO, STRASS_PRECO, CRUZ_METAL_PRECO,
   BRIDAO_METAL_PRECO, LASER_CANO_PRECO, LASER_GASPEA_PRECO, GLITTER_CANO_PRECO, GLITTER_GASPEA_PRECO,
 } from '@/lib/orderFieldsConfig';
-import { BELT_SIZES, BORDADO_P_PRECO, NOME_BORDADO_CINTO_PRECO, BELT_CARIMBO } from '@/lib/extrasConfig';
+import { BELT_SIZES, BORDADO_P_PRECO, NOME_BORDADO_CINTO_PRECO, BELT_CARIMBO, EXTRA_DETAIL_LABELS } from '@/lib/extrasConfig';
 
 const formatDateBR = (date: string) => {
   const [y, m, d] = date.split('-');
@@ -28,7 +29,7 @@ function barcodeDataUrl(value: string, opts?: { width?: number; height?: number 
   } catch { return ''; }
 }
 
-type ReportType = 'escalacao' | 'forro' | 'pesponto' | 'bordados' | 'expedicao' | 'cobranca';
+type ReportType = 'escalacao' | 'forro' | 'pesponto' | 'bordados' | 'expedicao' | 'cobranca' | 'extras_cintos';
 
 interface SpecializedReportsProps {
   reports: ReportType[];
@@ -42,10 +43,106 @@ const REPORT_LABELS: Record<ReportType, string> = {
   bordados: 'Bordados',
   expedicao: 'Expedição',
   cobranca: 'Cobrança',
+  extras_cintos: 'Extras / Cintos',
 };
 
 const PESPONTO_STATUSES = ['Pesponto 01', 'Pesponto 02', 'Pesponto 03', 'Pesponto 04', 'Pesponto 05', 'Pespontando'];
 const BORDADO_STATUSES = ['Bordado Dinei', 'Bordado Sandro', 'Bordado 7Estrivos'];
+
+/** Products available for the extras_cintos grouping report */
+const EXTRAS_CINTOS_PRODUCTS: { value: string; label: string }[] = [
+  { value: 'cinto', label: 'Cinto' },
+  { value: 'kit_faca', label: 'Kit Faca' },
+  { value: 'kit_canivete', label: 'Kit Canivete' },
+  { value: 'desmanchar', label: 'Desmanchar' },
+  { value: 'tiras_laterais', label: 'Tiras Laterais' },
+  { value: 'gravata_country', label: 'Gravata Country' },
+  { value: 'carimbo_fogo', label: 'Carimbo a Fogo' },
+  { value: 'revitalizador', label: 'Revitalizador' },
+  { value: 'kit_revitalizador', label: 'Kit 2 Revitalizador' },
+  { value: 'adicionar_metais', label: 'Adicionar Metais' },
+  { value: 'chaveiro_carimbo', label: 'Chaveiro c/ Carimbo' },
+  { value: 'bainha_cartao', label: 'Bainha de Cartão' },
+  { value: 'regata', label: 'Regata' },
+  { value: 'bota_pronta_entrega', label: 'Bota Pronta Entrega' },
+];
+
+/** Groupable fields per product type */
+const PRODUCT_GROUPABLE_FIELDS: Record<string, { key: string; label: string }[]> = {
+  cinto: [
+    { key: 'tamanhoCinto', label: 'Tamanho' },
+    { key: 'tipoCouro', label: 'Tipo de Couro' },
+    { key: 'corCouro', label: 'Cor do Couro' },
+    { key: 'bordadoP', label: 'Bordado P' },
+    { key: 'nomeBordado', label: 'Nome Bordado' },
+    { key: 'carimbo', label: 'Carimbo' },
+  ],
+  kit_faca: [
+    { key: 'tipoCouro', label: 'Tipo de Couro' },
+    { key: 'corCouro', label: 'Cor do Couro' },
+    { key: 'vaiCanivete', label: 'Vai a Faca' },
+  ],
+  kit_canivete: [
+    { key: 'tipoCouro', label: 'Tipo de Couro' },
+    { key: 'corCouro', label: 'Cor do Couro' },
+    { key: 'vaiCanivete', label: 'Vai o Canivete' },
+  ],
+  desmanchar: [
+    { key: 'qualSola', label: 'Sola' },
+    { key: 'trocaGaspea', label: 'Troca Gáspea' },
+  ],
+  tiras_laterais: [
+    { key: 'corTiras', label: 'Cor das Tiras' },
+  ],
+  gravata_country: [
+    { key: 'corTira', label: 'Cor da Tira' },
+    { key: 'tipoMetal', label: 'Tipo de Metal' },
+    { key: 'corBridao', label: 'Cor do Bridão' },
+  ],
+  carimbo_fogo: [
+    { key: 'qtdCarimbos', label: 'Qtd. de Carimbos' },
+    { key: 'ondeAplicado', label: 'Onde Aplicado' },
+  ],
+  revitalizador: [
+    { key: 'tipoRevitalizador', label: 'Tipo' },
+    { key: 'quantidade', label: 'Quantidade' },
+  ],
+  kit_revitalizador: [
+    { key: 'tipoRevitalizador', label: 'Tipo' },
+    { key: 'quantidade', label: 'Quantidade' },
+  ],
+  adicionar_metais: [
+    { key: 'metaisSelecionados', label: 'Metais Selecionados' },
+  ],
+  regata: [
+    { key: 'corRegata', label: 'Cor' },
+    { key: 'descBordadoRegata', label: 'Bordado' },
+  ],
+  bota_pronta_entrega: [
+    { key: 'descricaoProduto', label: 'Descrição do Produto' },
+  ],
+};
+
+// ── Helper: draw a tabular header row ──
+function drawTableHeader(doc: jsPDF, y: number, mx: number, cw: number, headers: { label: string; x: number }[]) {
+  doc.setFillColor(232, 232, 232);
+  doc.rect(mx, y, cw, 8, 'F');
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  headers.forEach(h => doc.text(h.label, h.x, y + 5.5));
+  return y + 8;
+}
+
+// ── Helper: draw a data row with border ──
+function drawTableRow(doc: jsPDF, y: number, mx: number, cw: number, colWidths: number[], rowH: number) {
+  doc.setLineWidth(0.2);
+  doc.rect(mx, y, cw, rowH);
+  let x = mx;
+  colWidths.forEach(w => {
+    x += w;
+    if (x < mx + cw) doc.line(x, y, x, y + rowH);
+  });
+}
 
 const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsProps) => {
   const { allOrders, orders, isAdmin } = useAuth();
@@ -55,14 +152,32 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
   const [filterVendedor, setFilterVendedor] = useState('todos');
   const [filterProgresso, setFilterProgresso] = useState('todos');
 
+  // Extras/Cintos report state
+  const [filterTipoProduto, setFilterTipoProduto] = useState('');
+  const [filterCampos, setFilterCampos] = useState<Set<string>>(new Set());
+
   const vendedores = useMemo(() => [...new Set(sourceOrders.map(o => o.vendedor))].sort(), [sourceOrders]);
 
   const resetFilters = () => {
     setFilterVendedor('todos');
     setFilterProgresso('todos');
+    setFilterTipoProduto('');
+    setFilterCampos(new Set());
   };
 
-  // ── Escalação: pedidos em "Pespontando", agrupar por tamanho+sola+bico+corSola ──
+  const availableFields = useMemo(() => {
+    return PRODUCT_GROUPABLE_FIELDS[filterTipoProduto] || [];
+  }, [filterTipoProduto]);
+
+  const toggleCampo = (key: string) => {
+    setFilterCampos(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
+
+  // ── Escalação: tabular format ──
   const generateEscalacaoPDF = () => {
     const filtered = sourceOrders.filter(o => o.status.toLowerCase() === 'pespontando');
     const groups: Record<string, { tamanho: string; solado: string; formatoBico: string; corSola: string; quantidade: number }> = {};
@@ -74,41 +189,45 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     const rows = Object.values(groups).sort((a, b) => Number(a.tamanho) - Number(b.tamanho));
 
     const doc = new jsPDF();
+    const mx = 14;
+    const cw = 182;
     doc.setFontSize(16);
-    doc.text('Relatório de Escalação — 7ESTRIVOS', 14, 20);
-    doc.setFontSize(9);
-    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`, 14, 27);
-    doc.text(`Filtro: Pespontando | Total de pares: ${rows.reduce((s, r) => s + r.quantidade, 0)}`, 14, 32);
-
-    let y = 40;
-    // Header
-    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('Tamanho', 14, y);
-    doc.text('Tipo de Sola', 40, y);
-    doc.text('Formato Bico', 90, y);
-    doc.text('Cor da Sola', 135, y);
-    doc.text('Qtd', 175, y);
-    y += 2;
-    doc.setLineWidth(0.3);
-    doc.line(14, y, 196, y);
-    y += 5;
+    doc.text('Relatório de Escalação — 7ESTRIVOS', mx, 20);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`, mx, 27);
+    doc.text(`Filtro: Pespontando | Total de pares: ${rows.reduce((s, r) => s + r.quantidade, 0)}`, mx, 32);
+
+    const cols = [30, 55, 45, 35, 17];
+    const cx = [mx, mx + cols[0], mx + cols[0] + cols[1], mx + cols[0] + cols[1] + cols[2], mx + cols[0] + cols[1] + cols[2] + cols[3]];
+
+    let y = drawTableHeader(doc, 38, mx, cw, [
+      { label: 'TAMANHO', x: cx[0] + 2 },
+      { label: 'TIPO DE SOLA', x: cx[1] + 2 },
+      { label: 'FORMATO BICO', x: cx[2] + 2 },
+      { label: 'COR DA SOLA', x: cx[3] + 2 },
+      { label: 'QTD', x: cx[4] + 2 },
+    ]);
 
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const rowH = 7;
     rows.forEach(r => {
-      if (y > 275) { doc.addPage(); y = 20; }
-      doc.text(r.tamanho, 14, y);
-      doc.text(r.solado, 40, y);
-      doc.text(r.formatoBico, 90, y);
-      doc.text(r.corSola, 135, y);
-      doc.text(String(r.quantidade), 175, y);
-      y += 6;
+      if (y + rowH > 280) { doc.addPage(); y = 20; }
+      drawTableRow(doc, y, mx, cw, cols, rowH);
+      doc.text(r.tamanho, cx[0] + 2, y + 5);
+      doc.text(r.solado, cx[1] + 2, y + 5);
+      doc.text(r.formatoBico, cx[2] + 2, y + 5);
+      doc.text(r.corSola, cx[3] + 2, y + 5);
+      doc.text(String(r.quantidade), cx[4] + 2, y + 5);
+      y += rowH;
     });
 
     doc.save('relatorio-escalacao.pdf');
   };
 
-  // ── Forro: agrupar por modelo+tamanho com filtro por progresso ──
+  // ── Forro: tabular format ──
   const generateForroPDF = () => {
     const filtered = sourceOrders.filter(o => filterProgresso === 'todos' || o.status === filterProgresso);
     const groups: Record<string, { modelo: string; tamanho: string; quantidade: number }> = {};
@@ -120,47 +239,59 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     const rows = Object.values(groups).sort((a, b) => a.modelo.localeCompare(b.modelo) || Number(a.tamanho) - Number(b.tamanho));
 
     const doc = new jsPDF();
+    const mx = 14;
+    const cw = 182;
     doc.setFontSize(16);
-    doc.text('Relatório de Forro — 7ESTRIVOS', 14, 20);
-    doc.setFontSize(9);
-    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`, 14, 27);
-    doc.text(`Filtro progresso: ${filterProgresso === 'todos' ? 'Todos' : filterProgresso}`, 14, 32);
-
-    let y = 40;
-    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('Modelo', 14, y);
-    doc.text('Tamanho', 90, y);
-    doc.text('Qtd', 175, y);
-    y += 2;
-    doc.line(14, y, 196, y);
-    y += 5;
+    doc.text('Relatório de Forro — 7ESTRIVOS', mx, 20);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`, mx, 27);
+    doc.text(`Filtro progresso: ${filterProgresso === 'todos' ? 'Todos' : filterProgresso}`, mx, 32);
+
+    const cols = [100, 50, 32];
+    const cx = [mx, mx + cols[0], mx + cols[0] + cols[1]];
+
+    let y = drawTableHeader(doc, 38, mx, cw, [
+      { label: 'MODELO', x: cx[0] + 2 },
+      { label: 'TAMANHO', x: cx[1] + 2 },
+      { label: 'QTD', x: cx[2] + 2 },
+    ]);
 
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const rowH = 7;
     rows.forEach(r => {
-      if (y > 275) { doc.addPage(); y = 20; }
-      doc.text(r.modelo, 14, y);
-      doc.text(r.tamanho, 90, y);
-      doc.text(String(r.quantidade), 175, y);
-      y += 6;
+      if (y + rowH > 280) { doc.addPage(); y = 20; }
+      drawTableRow(doc, y, mx, cw, cols, rowH);
+      doc.text(r.modelo, cx[0] + 2, y + 5);
+      doc.text(r.tamanho, cx[1] + 2, y + 5);
+      doc.text(String(r.quantidade), cx[2] + 2, y + 5);
+      y += rowH;
     });
 
     doc.save('relatorio-forro.pdf');
   };
 
-  // ── Pesponto: listar pedidos por progresso de pesponto ──
+  // ── Pesponto: tabular format ──
   const generatePespontoPDF = () => {
     const statusFilter = filterProgresso === 'todos' ? PESPONTO_STATUSES : [filterProgresso];
     const filtered = sourceOrders.filter(o => statusFilter.some(s => s.toLowerCase() === o.status.toLowerCase()));
 
     const doc = new jsPDF();
+    const mx = 14;
+    const cw = 182;
     doc.setFontSize(16);
-    doc.text('Relatório de Pesponto — 7ESTRIVOS', 14, 20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Relatório de Pesponto — 7ESTRIVOS', mx, 20);
     doc.setFontSize(9);
-    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`, 14, 27);
-    doc.text(`Filtro: ${filterProgresso === 'todos' ? 'Todos os pespontos' : filterProgresso}`, 14, 32);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`, mx, 27);
+    doc.text(`Filtro: ${filterProgresso === 'todos' ? 'Todos os pespontos' : filterProgresso}`, mx, 32);
 
-    let y = 40;
+    const cols = [25, 40, 70, 25, 22];
+    const cx = [mx, mx + cols[0], mx + cols[0] + cols[1], mx + cols[0] + cols[1] + cols[2], mx + cols[0] + cols[1] + cols[2] + cols[3]];
+
     // Group by status
     const byStatus: Record<string, Order[]> = {};
     filtered.forEach(o => {
@@ -168,59 +299,99 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
       byStatus[o.status].push(o);
     });
 
+    let y = 38;
+
     Object.entries(byStatus).forEach(([status, ords]) => {
       if (y > 260) { doc.addPage(); y = 20; }
+      // Status header
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text(status, 14, y);
-      y += 6;
-      doc.setFontSize(8);
+      doc.text(status, mx, y + 5);
+      y += 8;
+
+      y = drawTableHeader(doc, y, mx, cw, [
+        { label: 'Nº PEDIDO', x: cx[0] + 2 },
+        { label: 'VENDEDOR', x: cx[1] + 2 },
+        { label: 'MODELO', x: cx[2] + 2 },
+        { label: 'TAM.', x: cx[3] + 2 },
+        { label: 'QTD', x: cx[4] + 2 },
+      ]);
+
       doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      const rowH = 7;
       ords.forEach(o => {
-        if (y > 275) { doc.addPage(); y = 20; }
-        doc.text(`${o.numero} — ${o.vendedor} — ${o.modelo} tam. ${o.tamanho} — Qtd: ${o.quantidade}`, 14, y);
-        y += 5;
+        if (y + rowH > 280) { doc.addPage(); y = 20; }
+        drawTableRow(doc, y, mx, cw, cols, rowH);
+        doc.text(o.numero, cx[0] + 2, y + 5);
+        doc.text(o.vendedor.substring(0, 20), cx[1] + 2, y + 5);
+        doc.text(o.modelo.substring(0, 35), cx[2] + 2, y + 5);
+        doc.text(o.tamanho, cx[3] + 2, y + 5);
+        doc.text(String(o.quantidade), cx[4] + 2, y + 5);
+        y += rowH;
       });
-      y += 3;
+      y += 5;
     });
 
     doc.save('relatorio-pesponto.pdf');
   };
 
-  // ── Bordados: listar pedidos por progresso de bordado ──
+  // ── Bordados: tabular format ──
   const generateBordadosPDF = () => {
     const statusFilter = filterProgresso === 'todos' ? BORDADO_STATUSES : [filterProgresso];
     const filtered = sourceOrders.filter(o => statusFilter.some(s => s.toLowerCase() === o.status.toLowerCase()));
 
     const doc = new jsPDF();
+    const mx = 14;
+    const cw = 182;
     doc.setFontSize(16);
-    doc.text('Relatório de Bordados — 7ESTRIVOS', 14, 20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Relatório de Bordados — 7ESTRIVOS', mx, 20);
     doc.setFontSize(9);
-    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`, 14, 27);
-    doc.text(`Filtro: ${filterProgresso === 'todos' ? 'Todos os bordados' : filterProgresso}`, 14, 32);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`, mx, 27);
+    doc.text(`Filtro: ${filterProgresso === 'todos' ? 'Todos os bordados' : filterProgresso}`, mx, 32);
 
-    let y = 40;
+    const cols = [25, 35, 95, 27];
+    const cx = [mx, mx + cols[0], mx + cols[0] + cols[1], mx + cols[0] + cols[1] + cols[2]];
+
     const byStatus: Record<string, Order[]> = {};
     filtered.forEach(o => {
       if (!byStatus[o.status]) byStatus[o.status] = [];
       byStatus[o.status].push(o);
     });
 
+    let y = 38;
+
     Object.entries(byStatus).forEach(([status, ords]) => {
       if (y > 260) { doc.addPage(); y = 20; }
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text(status, 14, y);
-      y += 6;
-      doc.setFontSize(8);
+      doc.text(status, mx, y + 5);
+      y += 8;
+
+      y = drawTableHeader(doc, y, mx, cw, [
+        { label: 'Nº PEDIDO', x: cx[0] + 2 },
+        { label: 'VENDEDOR', x: cx[1] + 2 },
+        { label: 'BORDADOS', x: cx[2] + 2 },
+        { label: 'QTD', x: cx[3] + 2 },
+      ]);
+
       doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      const rowH = 7;
       ords.forEach(o => {
-        if (y > 275) { doc.addPage(); y = 20; }
-        const bordados = [o.bordadoCano, o.bordadoGaspea, o.bordadoTaloneira].filter(Boolean).join(', ');
-        doc.text(`${o.numero} — ${o.vendedor} — ${bordados || 'sem bordado'} — Qtd: ${o.quantidade}`, 14, y);
-        y += 5;
+        if (y + rowH > 280) { doc.addPage(); y = 20; }
+        drawTableRow(doc, y, mx, cw, cols, rowH);
+        doc.text(o.numero, cx[0] + 2, y + 5);
+        doc.text(o.vendedor.substring(0, 18), cx[1] + 2, y + 5);
+        const bordados = [o.bordadoCano, o.bordadoGaspea, o.bordadoTaloneira].filter(Boolean).join(', ') || 'sem bordado';
+        const bordLines = doc.splitTextToSize(bordados, cols[2] - 4);
+        doc.text(bordLines[0] || '', cx[2] + 2, y + 5);
+        doc.text(String(o.quantidade), cx[3] + 2, y + 5);
+        y += rowH;
       });
-      y += 3;
+      y += 5;
     });
 
     doc.save('relatorio-bordados.pdf');
@@ -231,30 +402,25 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     const filtered = sourceOrders.filter(o =>
       o.status.toLowerCase() === 'expedição' &&
       (filterVendedor === 'todos' || o.vendedor === filterVendedor)
-    ); // includes extras orders with status 'Expedição'
+    );
 
     const doc = new jsPDF('p', 'mm', 'a4');
     const pw = 210;
     const mx = 14;
-    const cw = pw - mx * 2; // content width
+    const cw = pw - mx * 2;
     const geradoEm = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
     const vendedorLabel = filterVendedor === 'todos' ? 'Todos vendedores' : filterVendedor;
 
-    // Header
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.text(`Expedição  [${geradoEm} — ${vendedorLabel}]`, mx, 20);
 
-    // Table columns: N. PEDIDO(30), CÓD. BARRAS(50), QTD(20), PREÇO(35), ASSINATURA(rest)
     const cols = [30, 50, 20, 35, cw - 30 - 50 - 20 - 35];
-    const colX = cols.reduce<number[]>((acc, w) => { acc.push((acc.length ? acc[acc.length - 1] : mx) + (acc.length ? cols[acc.length - 1] : 0)); return acc; }, []);
-    // Fix colX
     const cx = [mx, mx + cols[0], mx + cols[0] + cols[1], mx + cols[0] + cols[1] + cols[2], mx + cols[0] + cols[1] + cols[2] + cols[3]];
 
     let y = 30;
     const rowH = 16;
 
-    // Header row
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
     doc.setFillColor(232, 232, 232);
@@ -272,16 +438,13 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.setFont('helvetica', 'normal');
     filtered.forEach(o => {
       if (y + rowH > 280) { doc.addPage(); y = 20; }
-      // Row border
       doc.setLineWidth(0.2);
       doc.rect(mx, y, cw, rowH);
-      // Vertical lines
       cols.reduce((x, w) => { doc.line(x + w, y, x + w, y + rowH); return x + w; }, mx);
 
       doc.setFontSize(9);
       doc.text(o.numero, cx[0] + 2, y + 6);
 
-      // Barcode
       const bcVal = orderBarcodeValue(o.numero);
       const bcUrl = barcodeDataUrl(bcVal, { width: 1, height: 20 });
       if (bcUrl) {
@@ -290,7 +453,6 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
 
       doc.text(String(o.quantidade), cx[2] + 2, y + 6);
       doc.text(formatCurrency(o.preco * o.quantidade), cx[3] + 2, y + 6);
-      // Signature line inside cell
       doc.setLineWidth(0.3);
       doc.line(cx[4] + 4, y + rowH - 4, cx[4] + cols[4] - 4, y + rowH - 4);
 
@@ -299,7 +461,6 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
       totalQtd += o.quantidade;
     });
 
-    // Footer total
     if (y + 10 > 285) { doc.addPage(); y = 20; }
     doc.setFillColor(232, 232, 232);
     doc.rect(mx, y, cw, 10, 'F');
@@ -326,18 +487,15 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     const geradoEm = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
     const vendedorLabel = filterVendedor === 'todos' ? 'Todos vendedores' : filterVendedor;
 
-    // Header
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.text(`Cobrança  [${geradoEm} — ${vendedorLabel}]`, mx, 20);
 
-    // Columns: N. PEDIDO(25), COMPOSIÇÃO(80), QTD(15), PREÇO(30), PAGO(rest ~32)
     const cols = [25, 80, 15, 30, cw - 25 - 80 - 15 - 30];
     const cx = [mx, mx + cols[0], mx + cols[0] + cols[1], mx + cols[0] + cols[1] + cols[2], mx + cols[0] + cols[1] + cols[2] + cols[3]];
 
     let y = 30;
 
-    // Header row
     doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
     doc.setFillColor(232, 232, 232);
@@ -354,11 +512,9 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
 
     doc.setFont('helvetica', 'normal');
     filtered.forEach(o => {
-      // Build composition with prices
       const priceItems: [string, number][] = [];
 
       if (o.tipoExtra === 'cinto' && o.extraDetalhes) {
-        // BELT order — detailed composition
         const det = o.extraDetalhes as any;
         priceItems.push(['Cinto', 0]);
         const sizeEntry = BELT_SIZES.find(s => s.label === det.tamanhoCinto);
@@ -423,7 +579,6 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
             break;
         }
       } else {
-        // Normal boot order composition
         const modeloP = MODELOS.find(m => m.label === o.modelo)?.preco;
         if (modeloP) priceItems.push(['Modelo: ' + o.modelo, modeloP]);
         if (o.sobMedida) priceItems.push(['Sob Medida', SOB_MEDIDA_PRECO]);
@@ -479,7 +634,6 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
 
       if (y + rowH > 280) { doc.addPage(); y = 20; }
 
-      // Row border
       doc.setLineWidth(0.2);
       doc.rect(mx, y, cw, rowH);
       cols.reduce((x, w) => { doc.line(x + w, y, x + w, y + rowH); return x + w; }, mx);
@@ -494,7 +648,6 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
       doc.text(String(o.quantidade), cx[2] + 1, y + 5);
       doc.text(formatCurrency(orderTotal), cx[3] + 1, y + 5);
 
-      // Checkbox for PAGO
       const cbSize = 4;
       doc.rect(cx[4] + (cols[4] - cbSize) / 2, y + (rowH - cbSize) / 2, cbSize, cbSize);
 
@@ -503,7 +656,6 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
       totalQtd += o.quantidade;
     });
 
-    // Footer total
     if (y + 10 > 285) { doc.addPage(); y = 20; }
     doc.setFillColor(232, 232, 232);
     doc.rect(mx, y, cw, 10, 'F');
@@ -516,6 +668,93 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.save('relatorio-cobranca.pdf');
   };
 
+  // ── Extras / Cintos: grouping report ──
+  const generateExtrasCintosPDF = () => {
+    if (!filterTipoProduto) return;
+    const selectedFields = Array.from(filterCampos);
+    if (selectedFields.length === 0) return;
+
+    // Filter orders by tipoExtra
+    const filtered = sourceOrders.filter(o => o.tipoExtra === filterTipoProduto && o.extraDetalhes);
+
+    // Group by combination of selected fields
+    const groups: Record<string, { fields: Record<string, string>; quantidade: number }> = {};
+    filtered.forEach(o => {
+      const det = o.extraDetalhes as any;
+      const fieldValues: Record<string, string> = {};
+      selectedFields.forEach(key => {
+        let val = det[key];
+        if (Array.isArray(val)) val = val.join(', ');
+        fieldValues[key] = val != null && val !== '' ? String(val) : '(vazio)';
+      });
+      const groupKey = selectedFields.map(k => fieldValues[k]).join('|||');
+      if (!groups[groupKey]) groups[groupKey] = { fields: fieldValues, quantidade: 0 };
+      groups[groupKey].quantidade += o.quantidade;
+    });
+
+    const rows = Object.values(groups).sort((a, b) => b.quantidade - a.quantidade);
+    const productLabel = EXTRAS_CINTOS_PRODUCTS.find(p => p.value === filterTipoProduto)?.label || filterTipoProduto;
+
+    const doc = new jsPDF();
+    const mx = 14;
+    const cw = 182;
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Relatório: ${productLabel} — 7ESTRIVOS`, mx, 20);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`, mx, 27);
+    doc.text(`Total de pedidos encontrados: ${filtered.length} | Combinações: ${rows.length}`, mx, 32);
+
+    // Build columns dynamically: one per selected field + Qtd Total
+    const fieldLabels = selectedFields.map(k => {
+      const found = availableFields.find(f => f.key === k);
+      return found ? found.label : (EXTRA_DETAIL_LABELS[k] || k);
+    });
+    const totalCols = fieldLabels.length + 1; // +1 for Qtd Total
+    const qtdColW = 25;
+    const fieldColW = Math.floor((cw - qtdColW) / fieldLabels.length);
+
+    const headerItems = fieldLabels.map((label, i) => ({
+      label: label.toUpperCase(),
+      x: mx + i * fieldColW + 2,
+    }));
+    headerItems.push({ label: 'QTD TOTAL', x: mx + fieldLabels.length * fieldColW + 2 });
+
+    const colWidths = fieldLabels.map(() => fieldColW);
+    colWidths.push(qtdColW);
+
+    let y = drawTableHeader(doc, 38, mx, cw, headerItems);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const rowH = 8;
+    rows.forEach(r => {
+      if (y + rowH > 280) { doc.addPage(); y = 20; }
+      drawTableRow(doc, y, mx, cw, colWidths, rowH);
+      selectedFields.forEach((key, i) => {
+        const text = r.fields[key] || '';
+        const truncated = text.length > 30 ? text.substring(0, 28) + '...' : text;
+        doc.text(truncated, mx + i * fieldColW + 2, y + 5.5);
+      });
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(r.quantidade), mx + fieldLabels.length * fieldColW + 2, y + 5.5);
+      doc.setFont('helvetica', 'normal');
+      y += rowH;
+    });
+
+    // Footer total
+    if (y + 10 > 285) { doc.addPage(); y = 20; }
+    doc.setFillColor(232, 232, 232);
+    doc.rect(mx, y, cw, 10, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('TOTAL', mx + 2, y + 7);
+    doc.text(String(rows.reduce((s, r) => s + r.quantidade, 0)), mx + fieldLabels.length * fieldColW + 2, y + 7);
+
+    doc.save(`relatorio-${filterTipoProduto}.pdf`);
+  };
+
   const generateReport = () => {
     if (!activeReport) return;
     switch (activeReport) {
@@ -525,16 +764,17 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
       case 'bordados': generateBordadosPDF(); break;
       case 'expedicao': generateExpedicaoPDF(); break;
       case 'cobranca': generateCobrancaPDF(); break;
+      case 'extras_cintos': generateExtrasCintosPDF(); break;
     }
   };
 
   const needsProgressFilter = activeReport === 'forro' || activeReport === 'pesponto' || activeReport === 'bordados';
   const needsVendedorFilter = activeReport === 'expedicao' || activeReport === 'cobranca';
+  const needsExtrasCintosFilter = activeReport === 'extras_cintos';
 
   const progressOptions = useMemo(() => {
     if (activeReport === 'pesponto') return PESPONTO_STATUSES;
     if (activeReport === 'bordados') return BORDADO_STATUSES;
-    // For forro, all production statuses
     return ['Aguardando', 'Corte', 'Sem bordado', ...BORDADO_STATUSES, ...PESPONTO_STATUSES, 'Montagem', 'Revisão', 'Expedição'];
   }, [activeReport]);
 
@@ -596,7 +836,46 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
             </div>
           )}
 
-          <button onClick={generateReport} className="orange-gradient text-primary-foreground px-6 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity">
+          {needsExtrasCintosFilter && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold mb-1">Produto</label>
+                <Select value={filterTipoProduto} onValueChange={(v) => { setFilterTipoProduto(v); setFilterCampos(new Set()); }}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Selecione o produto..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EXTRAS_CINTOS_PRODUCTS.map(p => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {filterTipoProduto && availableFields.length > 0 && (
+                <div>
+                  <label className="block text-xs font-semibold mb-2">Campos para agrupar</label>
+                  <div className="flex flex-wrap gap-3">
+                    {availableFields.map(f => (
+                      <label key={f.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                        <Checkbox
+                          checked={filterCampos.has(f.key)}
+                          onCheckedChange={() => toggleCampo(f.key)}
+                        />
+                        {f.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={generateReport}
+            disabled={needsExtrasCintosFilter && (!filterTipoProduto || filterCampos.size === 0)}
+            className="orange-gradient text-primary-foreground px-6 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Download size={16} /> GERAR PDF
           </button>
         </div>
