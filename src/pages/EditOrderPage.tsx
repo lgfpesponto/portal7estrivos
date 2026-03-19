@@ -268,7 +268,8 @@ const EditOrderPage = () => {
   const cruzMetalPrecoTotal = cruzMetal ? cruzMetalQtd * CRUZ_METAL_PRECO : 0;
   const bridaoMetalPrecoTotal = bridaoMetal ? bridaoMetalQtd * BRIDAO_METAL_PRECO : 0;
   const soladoPreco = SOLADO.find(s => s.label === solado)?.preco || 0;
-  const corSolaPreco = COR_SOLA.find(c => c.label === corSola)?.preco || 0;
+  const corSolaOptsForPrice = getCorSolaOptions(modelo, solado, formatoBico);
+  const corSolaPreco = corSolaOptsForPrice?.find(c => c.label === corSola)?.preco || 0;
   const corViraPreco = COR_VIRA.find(c => c.label === corVira)?.preco || 0;
   const carimboPreco = CARIMBO.find(c => c.label === carimbo)?.preco || 0;
   const hasAnyLaser = laserCano.length > 0 || laserGaspea.length > 0 || laserTaloneira.length > 0;
