@@ -156,7 +156,7 @@ export const SOLADO: { label: string; preco: number }[] = [
 ];
 
 // ==================== FORMATO DO BICO ====================
-export const FORMATO_BICO = ['Quadrado', 'Redondo', 'Fino Ponta Redonda', 'Fino Ponta Quadrada'];
+export const FORMATO_BICO = ['Quadrado', 'Redondo', 'Fino Ponta Redonda', 'Fino Ponta Quadrada', 'Fino Agulha Ponta Quadrada', 'Fino Agulha Ponta Redonda'];
 
 // ==================== COR DA SOLA ====================
 export const COR_SOLA: { label: string; preco: number }[] = [
