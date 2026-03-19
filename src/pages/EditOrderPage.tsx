@@ -442,10 +442,14 @@ const EditOrderPage = () => {
 
           <Section title="Solados">
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <SelectField label="Tipo de Solado" value={solado} onChange={setSolado} options={SOLADO} />
-              <SelectField label="Formato do Bico" value={formatoBico} onChange={setFormatoBico} options={FORMATO_BICO} />
-              <SelectField label="Cor da Sola" value={corSola} onChange={setCorSola} options={COR_SOLA} />
-              <SelectField label="Cor da Vira" value={corVira} onChange={setCorVira} options={COR_VIRA} />
+              <SelectField label="Tipo de Solado" value={solado} onChange={handleSoladoChange} options={getSoladosForModelo(modelo, formatoBico)} />
+              <SelectField label="Formato do Bico" value={formatoBico} onChange={handleBicoChange} options={getBicosForModeloSolado(modelo, solado)} />
+              {getCorSolaOptions(modelo, solado, formatoBico) !== null && (
+                <SelectField label="Cor da Sola" value={corSola} onChange={setCorSola} options={getCorSolaOptions(modelo, solado, formatoBico)!} />
+              )}
+              {getCorViraOptions(modelo, solado).length > 1 && (
+                <SelectField label="Cor da Vira" value={corVira} onChange={setCorVira} options={getCorViraOptions(modelo, solado)} />
+              )}
             </div>
             <ToggleField label={`Costura Atrás (+R$${COSTURA_ATRAS_PRECO})`} value={costuraAtras} onChange={setCosturaAtras} />
           </Section>

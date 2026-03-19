@@ -102,6 +102,7 @@ export interface Order {
   adicionalValor?: number;
   desconto?: number;
   descontoJustificativa?: string;
+  forma?: string;
 }
 
 export const PRODUCTION_STATUSES = [

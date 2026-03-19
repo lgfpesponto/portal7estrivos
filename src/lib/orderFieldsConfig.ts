@@ -231,3 +231,109 @@ export function getModelosForTamanho(tamanho: string): { label: string; preco: n
   if (allowed.length === 0) return MODELOS;
   return MODELOS.filter(m => allowed.includes(m.label));
 }
+
+// ==================== BLOCOS DE VINCULAÇÃO ====================
+export type ModelBlock = 'infantil' | 'city' | 'tradicional' | 'bicoFinoFeminino' | 'perfilado';
+
+const INFANTIL_MODELOS = ['Bota Infantil', 'Botina Infantil', 'Cano Médio Infantil'];
+const TRADICIONAL_MODELOS = ['Bota Tradicional', 'Bota Feminino', 'Bota Peão', 'Bota Montaria (40)', 'Coturno', 'Destroyer', 'Capota', 'Cano Médio', 'Botina', 'Urbano'];
+const BF_FEMININO_MODELOS = ['Bota Bico Fino Feminino', 'Capota Bico Fino'];
+const PERFILADO_MODELOS = ['Bota Bico Fino Perfilado', 'Bota Ouver Perfilado', 'Capota Bico Fino Perfilado', 'Tradicional Bico Fino'];
+
+export function getBlockForModelo(modelo: string): ModelBlock | null {
+  if (INFANTIL_MODELOS.includes(modelo)) return 'infantil';
+  if (modelo === 'City') return 'city';
+  if (TRADICIONAL_MODELOS.includes(modelo)) return 'tradicional';
+  if (BF_FEMININO_MODELOS.includes(modelo)) return 'bicoFinoFeminino';
+  if (PERFILADO_MODELOS.includes(modelo)) return 'perfilado';
+  return null;
+}
+
+export function getSoladosForModelo(modelo: string, formatoBico?: string): { label: string; preco: number }[] {
+  const block = getBlockForModelo(modelo);
+  if (!block) return SOLADO;
+  switch (block) {
+    case 'infantil': return SOLADO.filter(s => s.label === 'Infantil');
+    case 'city': return SOLADO.filter(s => s.label === 'Borracha City');
+    case 'tradicional': {
+      let result = SOLADO.filter(s => ['Borracha', 'Couro Reta', 'Couro Carrapeta', 'Couro Carrapeta com Espaço Espora', 'Jump', 'Rústica'].includes(s.label));
+      if (formatoBico === 'Redondo') result = result.filter(s => !['Jump', 'Rústica'].includes(s.label));
+      return result;
+    }
+    case 'bicoFinoFeminino': return SOLADO.filter(s => ['PVC', 'Couro Reta'].includes(s.label));
+    case 'perfilado': return SOLADO.filter(s => ['PVC', 'Couro Reta'].includes(s.label));
+    default: return SOLADO;
+  }
+}
+
+export function getBicosForModeloSolado(modelo: string, solado?: string): string[] {
+  const block = getBlockForModelo(modelo);
+  if (!block) return [...FORMATO_BICO];
+  switch (block) {
+    case 'infantil': return ['Quadrado'];
+    case 'city': return ['Fino Ponta Redonda'];
+    case 'tradicional': return ['Quadrado', 'Redondo'];
+    case 'bicoFinoFeminino': return ['Fino Ponta Redonda'];
+    case 'perfilado':
+      if (solado === 'PVC') return ['Fino Agulha Ponta Quadrada'];
+      return ['Fino Agulha Ponta Quadrada', 'Fino Agulha Ponta Redonda'];
+    default: return [...FORMATO_BICO];
+  }
+}
+
+export function getCorSolaOptions(modelo: string, solado: string, formatoBico?: string): { label: string; preco: number }[] | null {
+  const block = getBlockForModelo(modelo);
+  if (!block) return COR_SOLA;
+  switch (block) {
+    case 'infantil': return null;
+    case 'city': return [{ label: 'Preto', preco: 0 }];
+    case 'tradicional':
+      if (solado === 'Borracha') {
+        let opts = COR_SOLA.filter(c => ['Marrom', 'Preto', 'Branco'].includes(c.label));
+        if (formatoBico === 'Redondo') opts = opts.filter(c => ['Preto', 'Branco'].includes(c.label));
+        return opts;
+      }
+      if (['Couro Reta', 'Couro Carrapeta', 'Couro Carrapeta com Espaço Espora'].includes(solado))
+        return COR_SOLA.filter(c => ['Madeira', 'Avermelhada', 'Pintada de Preto'].includes(c.label));
+      if (solado === 'Jump') return null;
+      if (solado === 'Rústica') return COR_SOLA.filter(c => c.label === 'Madeira');
+      return COR_SOLA;
+    case 'bicoFinoFeminino':
+      if (solado === 'PVC') return [{ label: 'Preto', preco: 0 }, { label: 'Off White', preco: 0 }, { label: 'Marrom', preco: 0 }];
+      if (solado === 'Couro Reta') return COR_SOLA.filter(c => ['Madeira', 'Avermelhada', 'Pintada de Preto'].includes(c.label));
+      return COR_SOLA;
+    case 'perfilado':
+      if (solado === 'PVC') return [{ label: 'Marrom', preco: 0 }];
+      if (solado === 'Couro Reta') return COR_SOLA.filter(c => ['Madeira', 'Avermelhada', 'Pintada de Preto'].includes(c.label));
+      return COR_SOLA;
+    default: return COR_SOLA;
+  }
+}
+
+export function getCorViraOptions(modelo: string, solado?: string): { label: string; preco: number }[] {
+  const block = getBlockForModelo(modelo);
+  if (!block) return COR_VIRA;
+  switch (block) {
+    case 'infantil': return COR_VIRA.filter(c => c.label === 'Bege');
+    case 'city': return COR_VIRA.filter(c => c.label === 'Neutra');
+    case 'tradicional':
+      if (solado === 'Borracha') return COR_VIRA.filter(c => ['Bege', 'Rosa', 'Preto'].includes(c.label));
+      return COR_VIRA.filter(c => c.label === 'Neutra');
+    case 'bicoFinoFeminino': return COR_VIRA.filter(c => c.label === 'Neutra');
+    case 'perfilado': return COR_VIRA.filter(c => c.label === 'Neutra');
+    default: return COR_VIRA;
+  }
+}
+
+export function getForma(modelo: string, formatoBico?: string): string {
+  const block = getBlockForModelo(modelo);
+  if (!block) return '';
+  switch (block) {
+    case 'infantil': return '1652';
+    case 'city': return '13446';
+    case 'tradicional': return formatoBico === 'Redondo' ? '7576' : '2300';
+    case 'bicoFinoFeminino': return '6761';
+    case 'perfilado': return '4394';
+    default: return '';
+  }
+}
