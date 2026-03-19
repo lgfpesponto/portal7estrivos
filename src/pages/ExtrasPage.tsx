@@ -92,16 +92,14 @@ const ExtrasPage = () => {
     }
   };
 
-  const handleSubmit = (productId: string) => {
+  const handleSubmit = async (productId: string) => {
     const product = EXTRA_PRODUCTS.find(p => p.id === productId)!;
 
-    // Validate numeroPedidoBota (required for all extras)
     if (!form.numeroPedidoBota.trim()) {
       toast({ title: 'Preencha o Nº do pedido', variant: 'destructive' });
       return;
     }
 
-    // Extra validation for bota_pronta_entrega
     if (productId === 'bota_pronta_entrega') {
       if (!form.valorManual || parseFloat(form.valorManual) <= 0) {
         toast({ title: 'Preencha o valor do produto', variant: 'destructive' });
@@ -111,7 +109,6 @@ const ExtrasPage = () => {
 
     const price = calcPrice(productId);
 
-    // Only save fields relevant to this specific product
     const PRODUCT_FIELDS: Record<string, string[]> = {
       tiras_laterais: ['corTiras'],
       desmanchar: ['qualSola', 'trocaGaspea'],
@@ -133,7 +130,7 @@ const ExtrasPage = () => {
       if (form[key] !== undefined && form[key] !== '') detalhes[key] = form[key];
     }
 
-    addOrder({
+    const success = await addOrder({
       vendedor: user?.nomeCompleto || '',
       tamanho: '-',
       modelo: `Extra — ${product.nome}`,
@@ -167,9 +164,13 @@ const ExtrasPage = () => {
       numeroPedido: form.numeroPedidoBota.trim(),
     });
 
-    setOpenProduct(null);
-    toast({ title: `Pedido de ${product.nome} criado com sucesso!` });
-    navigate('/relatorios');
+    if (success) {
+      setOpenProduct(null);
+      toast({ title: `Pedido de ${product.nome} criado com sucesso!` });
+      navigate('/relatorios');
+    } else {
+      toast({ title: 'Erro ao salvar o pedido. Tente novamente.', variant: 'destructive' });
+    }
   };
 
   const renderForm = (productId: string) => {

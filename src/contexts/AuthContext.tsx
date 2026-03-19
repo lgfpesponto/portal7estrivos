@@ -346,7 +346,7 @@ interface AuthContextType {
   logout: () => void;
   updateProfile: (data: Partial<Omit<User, 'id' | 'isAdmin'>>) => void;
   orders: Order[];
-  addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status' | 'alteracoes'> & { numeroPedido?: string }) => void;
+  addOrder: (order: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status' | 'alteracoes'> & { numeroPedido?: string }) => Promise<boolean>;
   deleteOrder: (id: string) => void;
   updateOrder: (id: string, data: Partial<Order>) => void;
   updateOrderStatus: (id: string, newStatus: string, observacao?: string) => void;
@@ -465,7 +465,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   /* ───── Register ───── */
   const register = useCallback(async (data: Omit<User, 'id' | 'isAdmin'> & { senha: string }): Promise<boolean> => {
-    const email = `${data.nomeUsuario.toLowerCase()}@7estrivos.app`;
+    const sanitized = data.nomeUsuario
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+    if (!sanitized) return false;
+    const email = `${sanitized}@7estrivos.app`;
     const { error } = await supabase.auth.signUp({
       email,
       password: data.senha,
@@ -479,6 +484,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       },
     });
+    if (error) console.error('Register error:', error.message);
     return !error;
   }, []);
 
@@ -518,8 +524,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   /* ───── Add Order ───── */
-  const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status' | 'alteracoes'> & { numeroPedido?: string }) => {
-    if (!user) return;
+  const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status' | 'alteracoes'> & { numeroPedido?: string }): Promise<boolean> => {
+    if (!user) return false;
 
     const { numeroPedido, ...rest } = orderData;
     const dataHoje = formatBrasiliaDate();
@@ -546,12 +552,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data, error } = await supabase.from('orders').insert(dbRow).select().single();
     if (error) {
       console.error('Error adding order:', error);
-      return;
+      return false;
     }
 
     const mapped = dbRowToOrder(data);
     setOrders(prev => [mapped, ...prev]);
     setAllOrders(prev => [mapped, ...prev]);
+    return true;
   }, [user]);
 
   /* ───── Delete Order ───── */

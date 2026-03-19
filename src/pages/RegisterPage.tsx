@@ -13,7 +13,12 @@ const RegisterPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const update = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }));
+  const update = (field: string, value: string) => {
+    if (field === 'nomeUsuario') {
+      value = value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+    }
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
