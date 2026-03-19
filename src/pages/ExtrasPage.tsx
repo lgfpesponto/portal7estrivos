@@ -93,83 +93,88 @@ const ExtrasPage = () => {
   };
 
   const handleSubmit = async (productId: string) => {
-    const product = EXTRA_PRODUCTS.find(p => p.id === productId)!;
+    try {
+      const product = EXTRA_PRODUCTS.find(p => p.id === productId)!;
 
-    if (!form.numeroPedidoBota.trim()) {
-      toast({ title: 'Preencha o Nº do pedido', variant: 'destructive' });
-      return;
-    }
-
-    if (productId === 'bota_pronta_entrega') {
-      if (!form.valorManual || parseFloat(form.valorManual) <= 0) {
-        toast({ title: 'Preencha o valor do produto', variant: 'destructive' });
+      if (!form.numeroPedidoBota.trim()) {
+        toast({ title: 'Preencha o Nº do pedido', variant: 'destructive' });
         return;
       }
-    }
 
-    const price = calcPrice(productId);
+      if (productId === 'bota_pronta_entrega') {
+        if (!form.valorManual || parseFloat(form.valorManual) <= 0) {
+          toast({ title: 'Preencha o valor do produto', variant: 'destructive' });
+          return;
+        }
+      }
 
-    const PRODUCT_FIELDS: Record<string, string[]> = {
-      tiras_laterais: ['corTiras'],
-      desmanchar: ['qualSola', 'trocaGaspea'],
-      kit_canivete: ['tipoCouro', 'corCouro', 'vaiCanivete'],
-      kit_faca: ['tipoCouro', 'corCouro', 'vaiCanivete'],
-      carimbo_fogo: ['qtdCarimbos', 'descCarimbos', 'ondeAplicado'],
-      revitalizador: ['tipoRevitalizador', 'quantidade'],
-      kit_revitalizador: ['tipoRevitalizador', 'quantidade'],
-      gravata_country: ['corTira', 'tipoMetal', 'corBridao'],
-      adicionar_metais: ['metaisSelecionados', 'qtdStrass'],
-      chaveiro_carimbo: ['tipoCouro', 'corCouro', 'descCarimbos'],
-      bainha_cartao: ['tipoCouro', 'corCouro'],
-      regata: ['corRegata', 'descBordadoRegata'],
-      bota_pronta_entrega: ['descricaoProduto', 'valorManual'],
-    };
-    const relevantKeys = PRODUCT_FIELDS[productId] || [];
-    const detalhes: Record<string, any> = {};
-    for (const key of relevantKeys) {
-      if (form[key] !== undefined && form[key] !== '') detalhes[key] = form[key];
-    }
+      const price = calcPrice(productId);
 
-    const success = await addOrder({
-      vendedor: user?.nomeCompleto || '',
-      tamanho: '-',
-      modelo: `Extra — ${product.nome}`,
-      solado: '-',
-      formatoBico: '-',
-      corVira: '-',
-      couroGaspea: '-',
-      couroCano: '-',
-      couroTaloneira: '-',
-      bordadoCano: '-',
-      bordadoGaspea: '-',
-      bordadoTaloneira: '-',
-      personalizacaoNome: '-',
-      personalizacaoBordado: '-',
-      corLinha: '-',
-      corBorrachinha: '-',
-      trisce: '-',
-      tiras: '-',
-      metais: '-',
-      acessorios: '-',
-      desenvolvimento: '-',
-      sobMedida: false,
-      observacao: '',
-      quantidade: productId === 'revitalizador' || productId === 'kit_revitalizador' ? (parseInt(form.quantidade) || 1) : 1,
-      preco: price,
-      temLaser: false,
-      fotos: [],
-      tipoExtra: productId,
-      extraDetalhes: detalhes,
-      numeroPedidoBota: form.numeroPedidoBota.trim(),
-      numeroPedido: form.numeroPedidoBota.trim(),
-    });
+      const PRODUCT_FIELDS: Record<string, string[]> = {
+        tiras_laterais: ['corTiras'],
+        desmanchar: ['qualSola', 'trocaGaspea'],
+        kit_canivete: ['tipoCouro', 'corCouro', 'vaiCanivete'],
+        kit_faca: ['tipoCouro', 'corCouro', 'vaiCanivete'],
+        carimbo_fogo: ['qtdCarimbos', 'descCarimbos', 'ondeAplicado'],
+        revitalizador: ['tipoRevitalizador', 'quantidade'],
+        kit_revitalizador: ['tipoRevitalizador', 'quantidade'],
+        gravata_country: ['corTira', 'tipoMetal', 'corBridao'],
+        adicionar_metais: ['metaisSelecionados', 'qtdStrass'],
+        chaveiro_carimbo: ['tipoCouro', 'corCouro', 'descCarimbos'],
+        bainha_cartao: ['tipoCouro', 'corCouro'],
+        regata: ['corRegata', 'descBordadoRegata'],
+        bota_pronta_entrega: ['descricaoProduto', 'valorManual'],
+      };
+      const relevantKeys = PRODUCT_FIELDS[productId] || [];
+      const detalhes: Record<string, any> = {};
+      for (const key of relevantKeys) {
+        if (form[key] !== undefined && form[key] !== '') detalhes[key] = form[key];
+      }
 
-    if (success) {
-      setOpenProduct(null);
-      toast({ title: `Pedido de ${product.nome} criado com sucesso!` });
-      navigate('/relatorios');
-    } else {
-      toast({ title: 'Erro ao salvar o pedido. Tente novamente.', variant: 'destructive' });
+      const success = await addOrder({
+        vendedor: user?.nomeCompleto || '',
+        tamanho: '-',
+        modelo: `Extra — ${product.nome}`,
+        solado: '-',
+        formatoBico: '-',
+        corVira: '-',
+        couroGaspea: '-',
+        couroCano: '-',
+        couroTaloneira: '-',
+        bordadoCano: '-',
+        bordadoGaspea: '-',
+        bordadoTaloneira: '-',
+        personalizacaoNome: '-',
+        personalizacaoBordado: '-',
+        corLinha: '-',
+        corBorrachinha: '-',
+        trisce: '-',
+        tiras: '-',
+        metais: '-',
+        acessorios: '-',
+        desenvolvimento: '-',
+        sobMedida: false,
+        observacao: '',
+        quantidade: productId === 'revitalizador' || productId === 'kit_revitalizador' ? (parseInt(form.quantidade) || 1) : 1,
+        preco: price,
+        temLaser: false,
+        fotos: [],
+        tipoExtra: productId,
+        extraDetalhes: detalhes,
+        numeroPedidoBota: form.numeroPedidoBota.trim(),
+        numeroPedido: form.numeroPedidoBota.trim(),
+      });
+
+      if (success) {
+        setOpenProduct(null);
+        toast({ title: `Pedido de ${product.nome} criado com sucesso!` });
+        navigate('/relatorios');
+      } else {
+        toast({ title: 'Erro ao salvar o pedido. Faça login novamente e tente.', variant: 'destructive' });
+      }
+    } catch (err) {
+      console.error('handleSubmit error:', err);
+      toast({ title: 'Erro inesperado ao salvar o pedido.', variant: 'destructive' });
     }
   };
 

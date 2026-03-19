@@ -130,67 +130,72 @@ const BeltOrderPage = () => {
   };
 
   const confirmOrder = async () => {
-    const extraDetalhes: Record<string, any> = {
-      tamanhoCinto: tamanho,
-      tipoCouro,
-      corCouro,
-    };
-    if (bordadoP) {
-      extraDetalhes.bordadoP = 'Tem';
-      extraDetalhes.bordadoPDesc = bordadoPDesc;
-      if (bordadoPCor) extraDetalhes.bordadoPCor = bordadoPCor;
-    }
-    if (nomeBordado) {
-      extraDetalhes.nomeBordado = 'Tem';
-      extraDetalhes.nomeBordadoDesc = nomeBordadoDesc;
-      if (nomeBordadoCor) extraDetalhes.nomeBordadoCor = nomeBordadoCor;
-      if (nomeBordadoFonte) extraDetalhes.nomeBordadoFonte = nomeBordadoFonte;
-    }
-    if (carimbo) {
-      extraDetalhes.carimbo = carimbo;
-      if (carimboDesc) extraDetalhes.carimboDesc = carimboDesc;
-      if (carimboOnde) extraDetalhes.ondeAplicado = carimboOnde;
-    }
+    try {
+      const extraDetalhes: Record<string, any> = {
+        tamanhoCinto: tamanho,
+        tipoCouro,
+        corCouro,
+      };
+      if (bordadoP) {
+        extraDetalhes.bordadoP = 'Tem';
+        extraDetalhes.bordadoPDesc = bordadoPDesc;
+        if (bordadoPCor) extraDetalhes.bordadoPCor = bordadoPCor;
+      }
+      if (nomeBordado) {
+        extraDetalhes.nomeBordado = 'Tem';
+        extraDetalhes.nomeBordadoDesc = nomeBordadoDesc;
+        if (nomeBordadoCor) extraDetalhes.nomeBordadoCor = nomeBordadoCor;
+        if (nomeBordadoFonte) extraDetalhes.nomeBordadoFonte = nomeBordadoFonte;
+      }
+      if (carimbo) {
+        extraDetalhes.carimbo = carimbo;
+        if (carimboDesc) extraDetalhes.carimboDesc = carimboDesc;
+        if (carimboOnde) extraDetalhes.ondeAplicado = carimboOnde;
+      }
 
-    const success = await addOrder({
-      numeroPedido: numeroPedido.trim(),
-      vendedor: isAdminUser ? vendedor : (user?.nomeCompleto || ''),
-      tamanho: '-',
-      modelo: '-',
-      solado: '-',
-      formatoBico: '-',
-      corVira: '-',
-      couroGaspea: '-',
-      couroCano: '-',
-      couroTaloneira: '-',
-      bordadoCano: '-',
-      bordadoGaspea: '-',
-      bordadoTaloneira: '-',
-      personalizacaoNome: '-',
-      personalizacaoBordado: '-',
-      corLinha: '-',
-      corBorrachinha: '-',
-      trisce: '-',
-      tiras: '-',
-      metais: '-',
-      acessorios: '-',
-      desenvolvimento: '-',
-      sobMedida: false,
-      observacao,
-      quantidade: 1,
-      preco: total,
-      temLaser: false,
-      fotos: fotoUrl.trim() ? [fotoUrl.trim()] : [],
-      tipoExtra: 'cinto',
-      extraDetalhes,
-    } as any);
+      const success = await addOrder({
+        numeroPedido: numeroPedido.trim(),
+        vendedor: isAdminUser ? vendedor : (user?.nomeCompleto || ''),
+        tamanho: '-',
+        modelo: '-',
+        solado: '-',
+        formatoBico: '-',
+        corVira: '-',
+        couroGaspea: '-',
+        couroCano: '-',
+        couroTaloneira: '-',
+        bordadoCano: '-',
+        bordadoGaspea: '-',
+        bordadoTaloneira: '-',
+        personalizacaoNome: '-',
+        personalizacaoBordado: '-',
+        corLinha: '-',
+        corBorrachinha: '-',
+        trisce: '-',
+        tiras: '-',
+        metais: '-',
+        acessorios: '-',
+        desenvolvimento: '-',
+        sobMedida: false,
+        observacao,
+        quantidade: 1,
+        preco: total,
+        temLaser: false,
+        fotos: fotoUrl.trim() ? [fotoUrl.trim()] : [],
+        tipoExtra: 'cinto',
+        extraDetalhes,
+      } as any);
 
-    if (success) {
-      if (loadedDraftId) deleteDraft(loadedDraftId);
-      toast.success('Pedido de cinto criado com sucesso!');
-      navigate('/relatorios');
-    } else {
-      toast.error('Erro ao salvar o pedido. Tente novamente.');
+      if (success) {
+        if (loadedDraftId) deleteDraft(loadedDraftId);
+        toast.success('Pedido de cinto criado com sucesso!');
+        navigate('/relatorios');
+      } else {
+        toast.error('Erro ao salvar o pedido. Faça login novamente e tente.');
+      }
+    } catch (err) {
+      console.error('confirmOrder error:', err);
+      toast.error('Erro inesperado ao salvar o pedido.');
     }
   };
 
