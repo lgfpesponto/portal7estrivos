@@ -86,7 +86,7 @@ const OrderPage = () => {
   const draftState = (location.state as { draft?: Draft })?.draft;
   const draftId_init = draftState?.id || '';
   const [draftId, setDraftId] = useState(draftId_init);
-
+  const [productChoice, setProductChoice] = useState<'bota' | null>(draftState ? 'bota' : null);
   // Restore draft form data
   const df = draftState?.form || {};
 
