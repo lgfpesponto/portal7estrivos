@@ -50,12 +50,20 @@ const ReportsPage = () => {
   const [scanValue, setScanValue] = useState('');
 
   const [appliedFilters, setAppliedFilters] = useState({
-    searchQuery: '', filterDate: '', filterDateEnd: '', filterStatus: '', filterVendedor: '',
+    searchQuery: '', filterDate: '', filterDateEnd: '', filterStatus: '', filterVendedor: '', filterProduto: new Set(['bota', 'extras']),
   });
 
   const applyFilters = () => {
-    setAppliedFilters({ searchQuery, filterDate, filterDateEnd, filterStatus, filterVendedor });
+    setAppliedFilters({ searchQuery, filterDate, filterDateEnd, filterStatus, filterVendedor, filterProduto: new Set(filterProduto) });
     setSelectedIds(new Set());
+  };
+
+  const toggleProdutoFilter = (val: string) => {
+    setFilterProduto(prev => {
+      const next = new Set(prev);
+      if (next.has(val)) { if (next.size > 1) next.delete(val); } else { next.add(val); }
+      return next;
+    });
   };
 
   const displayOrders = isAdmin && appliedFilters.filterVendedor
