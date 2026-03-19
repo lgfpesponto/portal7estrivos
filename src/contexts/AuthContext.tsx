@@ -117,6 +117,10 @@ export const PRODUCTION_STATUSES = [
   "Entregue", "Cobrado", "Pago"
 ];
 
+export const EXTRAS_STATUSES = [
+  "Em aberto", "Produzindo", "Expedição", "Entregue", "Cobrado", "Pago"
+];
+
 export const PRODUCTION_STATUSES_USER = [
   "Em aberto", "Aguardando", "Emprestado", "Corte", "Sem bordado",
   "Bordado Dinei", "Bordado Sandro", "Bordado 7Estrivos",

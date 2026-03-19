@@ -36,6 +36,7 @@ const App = () => (
             <Route path="/cadastro" element={<RegisterPage />} />
             <Route path="/recuperar-senha" element={<RecoverPasswordPage />} />
             <Route path="/pedido" element={<OrderPage />} />
+            <Route path="/extras" element={<ExtrasPage />} />
             <Route path="/pedido/:id" element={<OrderDetailPage />} />
             <Route path="/pedido/:id/editar" element={<EditOrderPage />} />
             <Route path="/acompanhar" element={<TrackOrderPage />} />
