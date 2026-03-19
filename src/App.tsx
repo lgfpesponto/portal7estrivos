@@ -17,6 +17,7 @@ import ReportsPage from "./pages/ReportsPage";
 import PiecesReportPage from "./pages/PiecesReportPage";
 import ProfilePage from "./pages/ProfilePage";
 import DraftsPage from "./pages/DraftsPage";
+import BeltOrderPage from "./pages/BeltOrderPage";
 import ExtrasPage from "./pages/ExtrasPage";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/recuperar-senha" element={<RecoverPasswordPage />} />
             <Route path="/pedido" element={<OrderPage />} />
             <Route path="/extras" element={<ExtrasPage />} />
+            <Route path="/pedido-cinto" element={<BeltOrderPage />} />
             <Route path="/pedido/:id" element={<OrderDetailPage />} />
             <Route path="/pedido/:id/editar" element={<EditOrderPage />} />
             <Route path="/acompanhar" element={<TrackOrderPage />} />

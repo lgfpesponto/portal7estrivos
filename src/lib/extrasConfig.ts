@@ -25,9 +25,10 @@ export const EXTRA_PRODUCTS: ExtraProduct[] = [
 ];
 
 /** Map tipoExtra id → product name */
-export const EXTRA_PRODUCT_NAME_MAP: Record<string, string> = Object.fromEntries(
-  EXTRA_PRODUCTS.map(p => [p.id, p.nome])
-);
+export const EXTRA_PRODUCT_NAME_MAP: Record<string, string> = {
+  ...Object.fromEntries(EXTRA_PRODUCTS.map(p => [p.id, p.nome])),
+  cinto: 'Cinto',
+};
 
 /** Readable labels for extraDetalhes keys */
 export const EXTRA_DETAIL_LABELS: Record<string, string> = {
@@ -51,6 +52,17 @@ export const EXTRA_DETAIL_LABELS: Record<string, string> = {
   descBordadoRegata: 'Descrição do Bordado',
   descricaoProduto: 'Descrição do Produto',
   valorManual: 'Valor',
+  // Belt (cinto) fields
+  tamanhoCinto: 'Tamanho',
+  bordadoP: 'Bordado P',
+  bordadoPDesc: 'Descrição Bordado P',
+  bordadoPCor: 'Cor Bordado P',
+  nomeBordado: 'Nome Bordado',
+  nomeBordadoDesc: 'Descrição Nome Bordado',
+  nomeBordadoCor: 'Cor Nome Bordado',
+  nomeBordadoFonte: 'Fonte Nome Bordado',
+  carimbo: 'Carimbo a Fogo',
+  carimboDesc: 'Descrição Carimbos',
 };
 
 /** Keys to exclude from display in order details */
@@ -65,3 +77,19 @@ export function isExtraValueEmpty(val: any): boolean {
   if (Array.isArray(val) && val.length === 0) return true;
   return false;
 }
+
+// ==================== BELT (CINTO) CONFIG ====================
+export const BELT_SIZES: { label: string; preco: number }[] = [
+  { label: '1,10 cm', preco: 100 },
+  { label: '1,25 cm', preco: 130 },
+  { label: '50 cm', preco: 70 },
+  { label: '70 cm', preco: 70 },
+];
+
+export const BORDADO_P_PRECO = 10;
+export const NOME_BORDADO_CINTO_PRECO = 40;
+
+export const BELT_CARIMBO: { label: string; preco: number }[] = [
+  { label: '1 a 3 carimbos', preco: 20 },
+  { label: '4 a 6 carimbos', preco: 40 },
+];

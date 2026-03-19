@@ -15,7 +15,7 @@ import {
   BRIDAO_METAL_PRECO, LASER_CANO_PRECO, LASER_GASPEA_PRECO, GLITTER_CANO_PRECO, GLITTER_GASPEA_PRECO,
   VIRA_HIDDEN,
 } from '@/lib/orderFieldsConfig';
-import { EXTRA_PRODUCT_NAME_MAP, EXTRA_DETAIL_LABELS, EXTRA_INTERNAL_KEYS, isExtraValueEmpty } from '@/lib/extrasConfig';
+import { EXTRA_PRODUCT_NAME_MAP, EXTRA_DETAIL_LABELS, EXTRA_INTERNAL_KEYS, isExtraValueEmpty, BELT_SIZES, BORDADO_P_PRECO, NOME_BORDADO_CINTO_PRECO, BELT_CARIMBO } from '@/lib/extrasConfig';
 
 const OrderDetailPage = () => {
   const { id } = useParams();
@@ -289,6 +289,18 @@ const OrderDetailPage = () => {
                   const extraPriceItems: [string, number][] = [];
                   const det = order.extraDetalhes || {};
                   switch (order.tipoExtra) {
+                    case 'cinto': {
+                      // Belt price composition
+                      const sizeItem = BELT_SIZES.find((s: any) => det.tamanhoCinto?.startsWith(s.label));
+                      if (sizeItem) extraPriceItems.push([`Tamanho: ${sizeItem.label}`, sizeItem.preco]);
+                      if (det.bordadoP === 'Tem') extraPriceItems.push(['Bordado P', BORDADO_P_PRECO]);
+                      if (det.nomeBordado === 'Tem') extraPriceItems.push(['Nome Bordado', NOME_BORDADO_CINTO_PRECO]);
+                      if (det.carimbo) {
+                        const car = BELT_CARIMBO.find((c: any) => c.label === det.carimbo);
+                        if (car) extraPriceItems.push([det.carimbo, car.preco]);
+                      }
+                      break;
+                    }
                     case 'tiras_laterais':
                       extraPriceItems.push(['Tiras Laterais', 15]);
                       break;

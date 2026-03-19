@@ -86,7 +86,7 @@ const OrderPage = () => {
   const draftState = (location.state as { draft?: Draft })?.draft;
   const draftId_init = draftState?.id || '';
   const [draftId, setDraftId] = useState(draftId_init);
-
+  const [productChoice, setProductChoice] = useState<'bota' | null>(draftState ? 'bota' : null);
   // Restore draft form data
   const df = draftState?.form || {};
 
@@ -224,6 +224,36 @@ const OrderPage = () => {
           <h2 className="text-xl font-display font-bold mb-2">Faça login para criar pedidos</h2>
           <button onClick={() => navigate('/login')} className="orange-gradient text-primary-foreground px-6 py-2 rounded-lg font-bold">LOGIN</button>
         </div>
+      </div>
+    );
+  }
+
+  // Product selection screen
+  if (!productChoice) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-3xl font-display font-bold mb-6 text-center">Faça seu Pedido</h1>
+          <p className="text-center text-muted-foreground mb-8">Selecione o tipo de produto:</p>
+          <div className="grid sm:grid-cols-2 gap-6">
+            <button
+              onClick={() => setProductChoice('bota')}
+              className="bg-card rounded-xl p-8 western-shadow hover:shadow-xl transition-shadow text-center group"
+            >
+              <div className="text-5xl mb-4">👢</div>
+              <h2 className="text-xl font-display font-bold mb-2 group-hover:text-primary transition-colors">Bota</h2>
+              <p className="text-sm text-muted-foreground">Ficha de produção completa para botas</p>
+            </button>
+            <button
+              onClick={() => navigate('/pedido-cinto')}
+              className="bg-card rounded-xl p-8 western-shadow hover:shadow-xl transition-shadow text-center group"
+            >
+              <div className="text-5xl mb-4">🪢</div>
+              <h2 className="text-xl font-display font-bold mb-2 group-hover:text-primary transition-colors">Cinto</h2>
+              <p className="text-sm text-muted-foreground">Ficha de produção para cintos</p>
+            </button>
+          </div>
+        </motion.div>
       </div>
     );
   }
