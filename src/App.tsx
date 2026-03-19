@@ -49,6 +49,7 @@ const App = () => (
             <Route path="/perfil" element={<ProfilePage />} />
             <Route path="/rascunhos" element={<DraftsPage />} />
             <Route path="/usuarios" element={<UsersManagementPage />} />
+            <Route path="/verificar" element={<VerifyCodePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

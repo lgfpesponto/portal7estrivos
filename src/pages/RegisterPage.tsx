@@ -32,7 +32,7 @@ const RegisterPage = () => {
     const success = await register(data);
     setLoading(false);
     if (success) {
-      navigate('/');
+      navigate('/login');
     } else {
       setError('Nome de usuário já existe.');
     }
