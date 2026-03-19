@@ -203,7 +203,7 @@ const ReportsPage = () => {
 
       const orderNumClean = order.numero.replace('7E-', '');
 
-      // ─── HEADER ───
+      // ─── HEADER (shared by boots and belts) ───
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
       doc.text('7ESTRIVOS', m + 2, m + 8);
@@ -241,9 +241,139 @@ const ReportsPage = () => {
       const dateStr = `${order.dataCriacao.slice(8, 10)}/${order.dataCriacao.slice(5, 7)} ${order.horaCriacao}`;
       printHeaderField('Data:      ', dateStr, hx, hy + hGap * 2);
 
+      // ─── BELT-SPECIFIC LAYOUT ───
+      if (order.tipoExtra === 'cinto') {
+        const rhMaxW = qrX - hx2 - 4;
+
+        // Right column: Produto + Tamanho
+        let rhY = hy;
+        printHeaderField('Produto:   ', 'CINTO', hx2, rhY);
+        rhY += hGap;
+        const det = order.extraDetalhes || {};
+        if (det.tamanhoCinto) {
+          printHeaderField('Tamanho:   ', String(det.tamanhoCinto), hx2, rhY);
+          rhY += hGap;
+        }
+        if (hasQR) {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'italic');
+          doc.text('Escaneie para ver a foto ->', hx2, rhY);
+        }
+
+        // Separator
+        const headerBottom = m + 37;
+        doc.setLineWidth(0.4);
+        doc.line(m, headerBottom, pw - m, headerBottom);
+
+        // Description area
+        const descTop = headerBottom + 5;
+        const fs = 11;
+        const fieldGap = 5.5;
+        const catGap = 3;
+        const descBottom = (ph - 34) - 4;
+
+        type CatField = { label: string; value: string };
+        type Category = { title: string; fields: CatField[] };
+        const categories: Category[] = [];
+
+        // COURO
+        const couroFields: CatField[] = [];
+        if (det.tipoCouro) couroFields.push({ label: 'Tipo:', value: String(det.tipoCouro).toLowerCase() });
+        if (det.corCouro) couroFields.push({ label: 'Cor:', value: String(det.corCouro).toLowerCase() });
+        if (couroFields.length) categories.push({ title: 'COURO', fields: couroFields });
+
+        // BORDADOS
+        const bordFields: CatField[] = [];
+        if (det.bordadoP === 'Tem') bordFields.push({ label: 'Bordado P:', value: `${det.bordadoPDesc || ''}${det.bordadoPCor ? ' ' + det.bordadoPCor : ''}`.toLowerCase() });
+        if (det.nomeBordado === 'Tem') bordFields.push({ label: 'Nome:', value: `${det.nomeBordadoDesc || ''}${det.nomeBordadoCor ? ' cor: ' + det.nomeBordadoCor : ''}${det.nomeBordadoFonte ? ' fonte: ' + det.nomeBordadoFonte : ''}`.toLowerCase() });
+        if (bordFields.length) categories.push({ title: 'BORDADOS', fields: bordFields });
+
+        // CARIMBO
+        const carFields: CatField[] = [];
+        if (det.carimbo) carFields.push({ label: 'Carimbo:', value: `${det.carimbo}${det.carimboDesc ? ' - ' + det.carimboDesc : ''}` });
+        if (det.ondeAplicado) carFields.push({ label: 'Onde:', value: String(det.ondeAplicado) });
+        if (carFields.length) categories.push({ title: 'CARIMBO', fields: carFields });
+
+        // OBS
+        if (order.observacao) categories.push({ title: 'OBS', fields: [{ label: '', value: order.observacao }] });
+
+        // Render categories in a single column for belts (simpler layout)
+        const colWidth = (pw - m * 2 - 4);
+        const startX = m + 3;
+        let cy = descTop;
+        categories.forEach(cat => {
+          if (cy > descBottom) return;
+          doc.setFillColor(232, 232, 232);
+          doc.rect(startX - 1, cy - 3.5, colWidth, 5, 'F');
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text(cat.title, startX, cy);
+          cy += fieldGap;
+          cat.fields.forEach(f => {
+            if (cy > descBottom) return;
+            doc.setFontSize(fs);
+            if (f.label) {
+              doc.setFont('helvetica', 'bold');
+              doc.text(f.label, startX, cy);
+              const lw = doc.getTextWidth(f.label) + 3;
+              doc.setFont('helvetica', 'normal');
+              const valLines = doc.splitTextToSize(f.value, colWidth - lw - 3);
+              valLines.forEach((line: string, li: number) => {
+                if (cy + li * (fieldGap * 0.8) <= descBottom) doc.text(line, startX + lw, cy + li * (fieldGap * 0.8));
+              });
+              cy += Math.max(valLines.length, 1) * (fieldGap * 0.8);
+            } else {
+              doc.setFont('helvetica', 'normal');
+              const valLines = doc.splitTextToSize(f.value, colWidth - 3);
+              valLines.forEach((line: string, li: number) => {
+                if (cy + li * (fieldGap * 0.8) <= descBottom) doc.text(line, startX, cy + li * (fieldGap * 0.8));
+              });
+              cy += Math.max(valLines.length, 1) * (fieldGap * 0.8);
+            }
+          });
+          cy += catGap;
+        });
+
+        // ─── STUBS (2 for belts: PESPONTO + EXPEDIÇÃO) ───
+        const stubTop = ph - 34;
+        doc.setLineWidth(0.3);
+        (doc as any).setLineDash([1, 1]);
+        doc.line(m, stubTop - 2, pw - m, stubTop - 2);
+        (doc as any).setLineDash([]);
+
+        const stubAreaW = pw - m * 2;
+        const stubW = stubAreaW / 2;
+        const bcVal = orderBarcodeValue(order.numero);
+        const bcUrl = barcodeDataUrl(bcVal, { width: 1.2, height: 28 });
+
+        // Stub 1: PESPONTO
+        let stubX = m;
+        doc.setLineWidth(0.3);
+        doc.line(stubX + stubW, stubTop, stubX + stubW, ph - m);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PESPONTO', stubX + stubW / 2, stubTop + 4, { align: 'center' });
+        if (bcUrl) { try { doc.addImage(bcUrl, 'PNG', stubX + 6, stubTop + 6, stubW - 12, 14); } catch {} }
+        doc.setFontSize(10);
+        doc.text(orderNumClean, stubX + stubW / 2, stubTop + 24, { align: 'center' });
+
+        // Stub 2: EXPEDIÇÃO
+        stubX += stubW;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text('EXPEDIÇÃO', stubX + stubW / 2, stubTop + 4, { align: 'center' });
+        if (bcUrl) { try { doc.addImage(bcUrl, 'PNG', stubX + 6, stubTop + 6, stubW - 12, 14); } catch {} }
+        doc.setFontSize(10);
+        doc.text(orderNumClean, stubX + stubW / 2, stubTop + 24, { align: 'center' });
+
+        continue; // skip boot layout below
+      }
+
+      // ─── BOOT LAYOUT (existing) ───
+
       // Right column — dynamic Y with wrapping
+      const rhMaxW = qrX - hx2 - 4;
       let rhY = hy;
-      const rhMaxW = qrX - hx2 - 4; // max width before QR code
 
       let tamText = `${order.tamanho || ''}${order.genero ? ' ' + order.genero.substring(0, 3).toLowerCase() + '.' : ''}`;
       if (order.sobMedida) {
@@ -294,9 +424,8 @@ const ReportsPage = () => {
       const fs = 11;
       const fieldGap = 5.5;
       const catGap = 3;
-      const descBottom = (ph - 34) - 4; // stubTop - 4mm safety
+      const descBottom = (ph - 34) - 4;
 
-      // Build categories with filled fields only
       type CatField = { label: string; value: string };
       type Category = { title: string; fields: CatField[] };
       const categories: Category[] = [];

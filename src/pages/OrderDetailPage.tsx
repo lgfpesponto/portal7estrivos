@@ -289,6 +289,19 @@ const OrderDetailPage = () => {
                   const extraPriceItems: [string, number][] = [];
                   const det = order.extraDetalhes || {};
                   switch (order.tipoExtra) {
+                    case 'cinto': {
+                      // Belt price composition
+                      const { BELT_SIZES, BORDADO_P_PRECO, NOME_BORDADO_CINTO_PRECO, BELT_CARIMBO } = require('@/lib/extrasConfig');
+                      const sizeItem = BELT_SIZES.find((s: any) => det.tamanhoCinto?.startsWith(s.label));
+                      if (sizeItem) extraPriceItems.push([`Tamanho: ${sizeItem.label}`, sizeItem.preco]);
+                      if (det.bordadoP === 'Tem') extraPriceItems.push(['Bordado P', BORDADO_P_PRECO]);
+                      if (det.nomeBordado === 'Tem') extraPriceItems.push(['Nome Bordado', NOME_BORDADO_CINTO_PRECO]);
+                      if (det.carimbo) {
+                        const car = BELT_CARIMBO.find((c: any) => c.label === det.carimbo);
+                        if (car) extraPriceItems.push([det.carimbo, car.preco]);
+                      }
+                      break;
+                    }
                     case 'tiras_laterais':
                       extraPriceItems.push(['Tiras Laterais', 15]);
                       break;
