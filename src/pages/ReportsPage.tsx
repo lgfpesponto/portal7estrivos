@@ -717,6 +717,7 @@ const ReportsPage = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <span className="font-display font-bold">{order.numero}</span>
+                    {order.tipoExtra && <span className="text-xs font-semibold text-primary ml-2">— {EXTRA_PRODUCT_NAME_MAP[order.tipoExtra] || order.tipoExtra}</span>}
                     {isAdmin && <span className="text-sm text-muted-foreground ml-2">— {order.vendedor}</span>}
                   </div>
                   <div className="flex items-center gap-4 text-sm flex-wrap">
