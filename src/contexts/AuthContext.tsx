@@ -121,6 +121,11 @@ export const EXTRAS_STATUSES = [
   "Em aberto", "Produzindo", "Expedição", "Entregue", "Cobrado", "Pago"
 ];
 
+export const BELT_STATUSES = [
+  "Em aberto", "Corte", "Bordado", "Pesponto",
+  "Expedição", "Entregue", "Cobrado", "Pago"
+];
+
 export const PRODUCTION_STATUSES_USER = [
   "Em aberto", "Aguardando", "Emprestado", "Corte", "Sem bordado",
   "Bordado Dinei", "Bordado Sandro", "Bordado 7Estrivos",
@@ -328,7 +333,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { numeroPedido, ...rest } = orderData;
     const dataHoje = formatBrasiliaDate();
     const horaAgora = formatBrasiliaTime();
-    const totalBizDays = rest.temLaser ? 30 : 10;
+    const totalBizDays = rest.tipoExtra === 'cinto' ? 5 : rest.tipoExtra ? 1 : rest.temLaser ? 30 : 10;
     const newOrder: Order = {
       ...rest,
       id: `order-${Date.now()}`,

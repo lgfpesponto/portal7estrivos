@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth, formatBrasiliaDate, formatBrasiliaTime } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { saveDraft, deleteDraft } from '@/lib/drafts';
@@ -27,6 +27,8 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
 const BeltOrderPage = () => {
   const { isLoggedIn, user, addOrder } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const draftData = (location.state as any)?.draft;
 
   const isAdminUser = user?.nomeCompleto === 'Juliana Cristina Ribeiro' || user?.nomeCompleto === 'Fernanda ADM';
 
@@ -56,6 +58,32 @@ const BeltOrderPage = () => {
   const [observacao, setObservacao] = useState('');
   const [fotoUrl, setFotoUrl] = useState('');
   const [showMirror, setShowMirror] = useState(false);
+  const [loadedDraftId, setLoadedDraftId] = useState<string | null>(null);
+
+  // Load draft data
+  useEffect(() => {
+    if (draftData && !loadedDraftId) {
+      const f = draftData.form || {};
+      setVendedor(f.vendedor || user?.nomeCompleto || '');
+      setNumeroPedido(draftData.numeroPedido || '');
+      setTamanho(f.tamanho || '');
+      setTipoCouro(f.tipoCouro || '');
+      setCorCouro(f.corCouro || '');
+      setBordadoP(f.bordadoP === 'true');
+      setBordadoPDesc(f.bordadoPDesc || '');
+      setBordadoPCor(f.bordadoPCor || '');
+      setNomeBordado(f.nomeBordado === 'true');
+      setNomeBordadoDesc(f.nomeBordadoDesc || '');
+      setNomeBordadoCor(f.nomeBordadoCor || '');
+      setNomeBordadoFonte(f.nomeBordadoFonte || '');
+      setCarimbo(f.carimbo || '');
+      setCarimboDesc(f.carimboDesc || '');
+      setCarimboOnde(f.carimboOnde || '');
+      setObservacao(f.observacao || '');
+      setFotoUrl(draftData.fotos?.[0] || '');
+      setLoadedDraftId(draftData.id);
+    }
+  }, [draftData]);
 
   if (!isLoggedIn) {
     return (
@@ -103,7 +131,7 @@ const BeltOrderPage = () => {
 
   const confirmOrder = () => {
     const extraDetalhes: Record<string, any> = {
-      tamanhoCinto: `${tamanho} (${formatCurrency(tamanhoPreco)})`,
+      tamanhoCinto: tamanho,
       tipoCouro,
       corCouro,
     };
@@ -157,6 +185,7 @@ const BeltOrderPage = () => {
       extraDetalhes,
     } as any);
 
+    if (loadedDraftId) deleteDraft(loadedDraftId);
     toast.success('Pedido de cinto criado com sucesso!');
     navigate('/relatorios');
   };

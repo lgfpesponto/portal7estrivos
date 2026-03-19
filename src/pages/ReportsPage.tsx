@@ -1,4 +1,4 @@
-import { useAuth, PRODUCTION_STATUSES, PRODUCTION_STATUSES_USER, EXTRAS_STATUSES, orderBarcodeValue } from '@/contexts/AuthContext';
+import { useAuth, PRODUCTION_STATUSES, PRODUCTION_STATUSES_USER, EXTRAS_STATUSES, BELT_STATUSES, orderBarcodeValue } from '@/contexts/AuthContext';
 import { EXTRA_PRODUCTS, EXTRA_PRODUCT_NAME_MAP } from '@/lib/extrasConfig';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -903,7 +903,7 @@ const ReportsPage = () => {
                     <span className="text-muted-foreground">{formatDateBR(order.dataCriacao, order.horaCriacao)}</span>
                     <span className="px-2 py-0.5 rounded-full bg-muted text-xs font-bold">{order.status}</span>
                     <span className="font-bold text-primary">{formatCurrency(order.preco * order.quantidade)}</span>
-                    {!order.tipoExtra && <span className="text-xs text-muted-foreground">{order.diasRestantes > 0 ? `${order.diasRestantes}d úteis` : '✓'}</span>}
+                    <span className="text-xs text-muted-foreground">{order.diasRestantes > 0 ? `${order.diasRestantes}d úteis` : '✓'}</span>
                   </div>
                 </div>
               </div>
@@ -945,9 +945,13 @@ const ReportsPage = () => {
           </p>
           {(() => {
             const selectedOrders = filteredOrders.filter(o => selectedIds.has(o.id));
-            const hasExtras = selectedOrders.some(o => !!o.tipoExtra);
+            const hasBelts = selectedOrders.some(o => o.tipoExtra === 'cinto');
+            const hasExtras = selectedOrders.some(o => o.tipoExtra && o.tipoExtra !== 'cinto');
             const hasBotas = selectedOrders.some(o => !o.tipoExtra);
-            const statusList = hasExtras && !hasBotas ? EXTRAS_STATUSES : hasBotas && !hasExtras ? PRODUCTION_STATUSES : [...new Set([...PRODUCTION_STATUSES, ...EXTRAS_STATUSES])];
+            const statusList = hasBelts && !hasExtras && !hasBotas ? BELT_STATUSES
+              : hasExtras && !hasBelts && !hasBotas ? EXTRAS_STATUSES
+              : hasBotas && !hasBelts && !hasExtras ? PRODUCTION_STATUSES
+              : [...new Set([...PRODUCTION_STATUSES, ...BELT_STATUSES, ...EXTRAS_STATUSES])];
             return (
               <select
                 value={selectedProgress}
