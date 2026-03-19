@@ -151,6 +151,8 @@ export const SOLADO: { label: string; preco: number }[] = [
   { label: 'Jump', preco: 30 },
   { label: 'Rústica', preco: 0 },
   { label: 'Infantil', preco: 0 },
+  { label: 'PVC', preco: 0 },
+  { label: 'Borracha City', preco: 0 },
 ];
 
 // ==================== FORMATO DO BICO ====================
