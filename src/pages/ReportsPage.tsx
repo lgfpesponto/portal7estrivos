@@ -1,4 +1,4 @@
-import { useAuth, PRODUCTION_STATUSES, PRODUCTION_STATUSES_USER, orderBarcodeValue } from '@/contexts/AuthContext';
+import { useAuth, PRODUCTION_STATUSES, PRODUCTION_STATUSES_USER, EXTRAS_STATUSES, orderBarcodeValue } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
@@ -36,6 +36,7 @@ const ReportsPage = () => {
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVendedor, setFilterVendedor] = useState('');
+  const [filterProduto, setFilterProduto] = useState<Set<string>>(new Set(['bota', 'extras']));
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Bulk progress modal
@@ -49,12 +50,20 @@ const ReportsPage = () => {
   const [scanValue, setScanValue] = useState('');
 
   const [appliedFilters, setAppliedFilters] = useState({
-    searchQuery: '', filterDate: '', filterDateEnd: '', filterStatus: '', filterVendedor: '',
+    searchQuery: '', filterDate: '', filterDateEnd: '', filterStatus: '', filterVendedor: '', filterProduto: new Set(['bota', 'extras']),
   });
 
   const applyFilters = () => {
-    setAppliedFilters({ searchQuery, filterDate, filterDateEnd, filterStatus, filterVendedor });
+    setAppliedFilters({ searchQuery, filterDate, filterDateEnd, filterStatus, filterVendedor, filterProduto: new Set(filterProduto) });
     setSelectedIds(new Set());
+  };
+
+  const toggleProdutoFilter = (val: string) => {
+    setFilterProduto(prev => {
+      const next = new Set(prev);
+      if (next.has(val)) { if (next.size > 1) next.delete(val); } else { next.add(val); }
+      return next;
+    });
   };
 
   const displayOrders = isAdmin && appliedFilters.filterVendedor
@@ -67,6 +76,10 @@ const ReportsPage = () => {
       if (appliedFilters.filterDate && o.dataCriacao < appliedFilters.filterDate) return false;
       if (appliedFilters.filterDateEnd && o.dataCriacao > appliedFilters.filterDateEnd) return false;
       if (appliedFilters.filterStatus && o.status !== appliedFilters.filterStatus) return false;
+      // Produto filter
+      const isExtra = !!o.tipoExtra;
+      if (isExtra && !appliedFilters.filterProduto.has('extras')) return false;
+      if (!isExtra && !appliedFilters.filterProduto.has('bota')) return false;
       return true;
     });
   }, [displayOrders, appliedFilters]);
@@ -610,6 +623,23 @@ const ReportsPage = () => {
                 </select>
               </div>
             )}
+            <div>
+              <label className="block text-xs font-semibold mb-1">Produto</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => toggleProdutoFilter('bota')}
+                  className={`px-3 py-2 rounded-lg text-sm font-bold border-2 transition-colors ${filterProduto.has('bota') ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-border hover:border-primary'}`}
+                >
+                  Bota
+                </button>
+                <button
+                  onClick={() => toggleProdutoFilter('extras')}
+                  className={`px-3 py-2 rounded-lg text-sm font-bold border-2 transition-colors ${filterProduto.has('extras') ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-border hover:border-primary'}`}
+                >
+                  Extras
+                </button>
+              </div>
+            </div>
             <div className="flex items-end">
               <button onClick={applyFilters} className="orange-gradient text-primary-foreground px-6 py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity flex items-center gap-2">
                 <Filter size={14} /> FILTRAR
@@ -727,14 +757,22 @@ const ReportsPage = () => {
           <p className="text-sm text-muted-foreground mb-3">
             Selecione a nova etapa para {selectedIds.size} pedido(s):
           </p>
-          <select
-            value={selectedProgress}
-            onChange={e => setSelectedProgress(e.target.value)}
-            className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary outline-none"
-          >
-            <option value="">Selecione a etapa...</option>
-            {PRODUCTION_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+          {(() => {
+            const selectedOrders = filteredOrders.filter(o => selectedIds.has(o.id));
+            const hasExtras = selectedOrders.some(o => !!o.tipoExtra);
+            const hasBotas = selectedOrders.some(o => !o.tipoExtra);
+            const statusList = hasExtras && !hasBotas ? EXTRAS_STATUSES : hasBotas && !hasExtras ? PRODUCTION_STATUSES : [...new Set([...PRODUCTION_STATUSES, ...EXTRAS_STATUSES])];
+            return (
+              <select
+                value={selectedProgress}
+                onChange={e => setSelectedProgress(e.target.value)}
+                className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary outline-none"
+              >
+                <option value="">Selecione a etapa...</option>
+                {statusList.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            );
+          })()}
           <div className="mt-3">
             <label className="block text-xs font-semibold mb-1">Observação (opcional)</label>
             <textarea

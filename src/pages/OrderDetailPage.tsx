@@ -216,16 +216,39 @@ const OrderDetailPage = () => {
             </div>
           </div>
 
-          {/* Detalhes da Bota */}
-          <h2 className="text-lg font-display font-bold mb-3">Detalhes da Bota</h2>
-          <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 mb-6">
-            {details.map(([label, value]) => (
-              <div key={label} className="flex justify-between py-1.5 border-b border-border/50">
-                <span className="text-sm text-muted-foreground">{label}</span>
-                <span className="text-sm font-semibold text-right max-w-[60%]">{value}</span>
-              </div>
-            ))}
-          </div>
+          {/* Detalhes */}
+          <h2 className="text-lg font-display font-bold mb-3">
+            {order.tipoExtra ? 'Detalhes do Extra' : 'Detalhes da Bota'}
+          </h2>
+          {order.tipoExtra && order.extraDetalhes ? (
+            <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 mb-6">
+              {order.numeroPedidoBota && (
+                <div className="flex justify-between py-1.5 border-b border-border/50">
+                  <span className="text-sm text-muted-foreground">Pedido da Bota</span>
+                  <span className="text-sm font-semibold text-right">{order.numeroPedidoBota}</span>
+                </div>
+              )}
+              {Object.entries(order.extraDetalhes).map(([key, val]) => {
+                if (!val || key === 'valor' || key === 'valorTotal') return null;
+                const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+                return (
+                  <div key={key} className="flex justify-between py-1.5 border-b border-border/50">
+                    <span className="text-sm text-muted-foreground">{label}</span>
+                    <span className="text-sm font-semibold text-right max-w-[60%]">{String(val)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 mb-6">
+              {details.map(([label, value]) => (
+                <div key={label} className="flex justify-between py-1.5 border-b border-border/50">
+                  <span className="text-sm text-muted-foreground">{label}</span>
+                  <span className="text-sm font-semibold text-right max-w-[60%]">{value}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {order.observacao && (
             <div className="bg-muted rounded-lg p-3 mb-6">

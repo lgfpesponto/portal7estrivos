@@ -230,7 +230,7 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     const filtered = sourceOrders.filter(o =>
       o.status.toLowerCase() === 'expedição' &&
       (filterVendedor === 'todos' || o.vendedor === filterVendedor)
-    );
+    ); // includes extras orders with status 'Expedição'
 
     const doc = new jsPDF('p', 'mm', 'a4');
     const pw = 210;
@@ -342,7 +342,7 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.setFillColor(232, 232, 232);
     doc.rect(mx, y, cw, 8, 'F');
     doc.text('Nº PEDIDO', cx[0] + 1, y + 5.5);
-    doc.text('COMPOSIÇÃO DA BOTA', cx[1] + 1, y + 5.5);
+    doc.text('COMPOSIÇÃO', cx[1] + 1, y + 5.5);
     doc.text('QTD', cx[2] + 1, y + 5.5);
     doc.text('PREÇO', cx[3] + 1, y + 5.5);
     doc.text('PAGO', cx[4] + 1, y + 5.5);
@@ -353,54 +353,69 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
 
     doc.setFont('helvetica', 'normal');
     filtered.forEach(o => {
-      // Build composition with prices (same logic as OrderDetailPage)
+      // Build composition with prices
       const priceItems: [string, number][] = [];
-      const modeloP = MODELOS.find(m => m.label === o.modelo)?.preco;
-      if (modeloP) priceItems.push(['Modelo: ' + o.modelo, modeloP]);
-      if (o.sobMedida) priceItems.push(['Sob Medida', SOB_MEDIDA_PRECO]);
-      if (o.acessorios) {
-        o.acessorios.split(', ').filter(Boolean).forEach(a => {
-          const p = ACESSORIOS.find(x => x.label === a)?.preco;
-          if (p) priceItems.push([a, p]);
-        });
-      }
-      [o.couroCano, o.couroGaspea, o.couroTaloneira].forEach(t => {
-        if (t && COURO_PRECOS[t]) priceItems.push(['Couro: ' + t, COURO_PRECOS[t]]);
-      });
-      const desenvP = DESENVOLVIMENTO.find(d => d.label === o.desenvolvimento)?.preco;
-      if (desenvP) priceItems.push(['Desenvolvimento: ' + o.desenvolvimento, desenvP]);
-      [o.bordadoCano, o.bordadoGaspea, o.bordadoTaloneira].forEach(bStr => {
-        if (bStr) bStr.split(', ').filter(Boolean).forEach(b => {
-          const p = BORDADOS.find(x => x.label === b)?.preco;
-          if (p) priceItems.push([b, p]);
-        });
-      });
-      if (o.nomeBordadoDesc || o.personalizacaoNome) priceItems.push(['Nome Bordado', NOME_BORDADO_PRECO]);
-      if (o.laserCano) priceItems.push(['Laser Cano', LASER_CANO_PRECO]);
-      if (o.corGlitterCano) priceItems.push(['Glitter/Tecido Cano', GLITTER_CANO_PRECO]);
-      if (o.laserGaspea) priceItems.push(['Laser Gáspea', LASER_GASPEA_PRECO]);
-      if (o.corGlitterGaspea) priceItems.push(['Glitter/Tecido Gáspea', GLITTER_GASPEA_PRECO]);
-      if (o.pintura === 'Sim') priceItems.push(['Pintura', PINTURA_PRECO]);
-      if (o.estampa === 'Sim') priceItems.push(['Estampa', ESTAMPA_PRECO]);
-      const areaP = AREA_METAL.find(a => a.label === o.metais)?.preco;
-      if (areaP) priceItems.push(['Área Metal: ' + o.metais, areaP]);
-      if (o.strassQtd) priceItems.push([`Strass (${o.strassQtd} un.)`, o.strassQtd * STRASS_PRECO]);
-      if (o.cruzMetalQtd) priceItems.push([`Cruz metal (${o.cruzMetalQtd} un.)`, o.cruzMetalQtd * CRUZ_METAL_PRECO]);
-      if (o.bridaoMetalQtd) priceItems.push([`Bridão metal (${o.bridaoMetalQtd} un.)`, o.bridaoMetalQtd * BRIDAO_METAL_PRECO]);
-      if (o.trisce === 'Sim') priceItems.push(['Tricê', TRICE_PRECO]);
-      if (o.tiras === 'Sim') priceItems.push(['Tiras', TIRAS_PRECO]);
-      const soladoP = SOLADO.find(s => s.label === o.solado)?.preco;
-      if (soladoP) priceItems.push(['Solado: ' + o.solado, soladoP]);
-      const corSolaP = COR_SOLA.find(c => c.label === o.corSola)?.preco;
-      if (corSolaP) priceItems.push(['Cor Sola: ' + o.corSola, corSolaP]);
-      const corViraP = (o.corVira && !['Bege', 'Neutra'].includes(o.corVira)) ? (COR_VIRA.find(c => c.label === o.corVira)?.preco || 0) : 0;
-      if (corViraP) priceItems.push(['Cor Vira: ' + o.corVira, corViraP]);
-      if (o.costuraAtras === 'Sim') priceItems.push(['Costura Atrás', COSTURA_ATRAS_PRECO]);
-      const carimboP = CARIMBO.find(c => c.label === o.carimbo)?.preco;
-      if (carimboP) priceItems.push([o.carimbo!, carimboP]);
-      if (o.adicionalValor && o.adicionalValor > 0) priceItems.push(['Adicional: ' + (o.adicionalDesc || ''), o.adicionalValor]);
 
-      const orderTotal = priceItems.reduce((s, [, v]) => s + v, 0);
+      if (o.tipoExtra && o.extraDetalhes) {
+        // EXTRAS order — show extra details as composition
+        const extraLabel = o.modelo.replace('Extra — ', '');
+        priceItems.push([extraLabel, o.preco]);
+        // Add detail lines from extraDetalhes
+        Object.entries(o.extraDetalhes).forEach(([key, val]) => {
+          if (key === 'valor' || key === 'valorTotal' || !val) return;
+          if (typeof val === 'object') return;
+          // skip internal keys
+          if (['tipo', 'numeroPedidoBota'].includes(key)) return;
+        });
+      } else {
+        // Normal boot order composition
+        const modeloP = MODELOS.find(m => m.label === o.modelo)?.preco;
+        if (modeloP) priceItems.push(['Modelo: ' + o.modelo, modeloP]);
+        if (o.sobMedida) priceItems.push(['Sob Medida', SOB_MEDIDA_PRECO]);
+        if (o.acessorios) {
+          o.acessorios.split(', ').filter(Boolean).forEach(a => {
+            const p = ACESSORIOS.find(x => x.label === a)?.preco;
+            if (p) priceItems.push([a, p]);
+          });
+        }
+        [o.couroCano, o.couroGaspea, o.couroTaloneira].forEach(t => {
+          if (t && COURO_PRECOS[t]) priceItems.push(['Couro: ' + t, COURO_PRECOS[t]]);
+        });
+        const desenvP = DESENVOLVIMENTO.find(d => d.label === o.desenvolvimento)?.preco;
+        if (desenvP) priceItems.push(['Desenvolvimento: ' + o.desenvolvimento, desenvP]);
+        [o.bordadoCano, o.bordadoGaspea, o.bordadoTaloneira].forEach(bStr => {
+          if (bStr) bStr.split(', ').filter(Boolean).forEach(b => {
+            const p = BORDADOS.find(x => x.label === b)?.preco;
+            if (p) priceItems.push([b, p]);
+          });
+        });
+        if (o.nomeBordadoDesc || o.personalizacaoNome) priceItems.push(['Nome Bordado', NOME_BORDADO_PRECO]);
+        if (o.laserCano) priceItems.push(['Laser Cano', LASER_CANO_PRECO]);
+        if (o.corGlitterCano) priceItems.push(['Glitter/Tecido Cano', GLITTER_CANO_PRECO]);
+        if (o.laserGaspea) priceItems.push(['Laser Gáspea', LASER_GASPEA_PRECO]);
+        if (o.corGlitterGaspea) priceItems.push(['Glitter/Tecido Gáspea', GLITTER_GASPEA_PRECO]);
+        if (o.pintura === 'Sim') priceItems.push(['Pintura', PINTURA_PRECO]);
+        if (o.estampa === 'Sim') priceItems.push(['Estampa', ESTAMPA_PRECO]);
+        const areaP = AREA_METAL.find(a => a.label === o.metais)?.preco;
+        if (areaP) priceItems.push(['Área Metal: ' + o.metais, areaP]);
+        if (o.strassQtd) priceItems.push([`Strass (${o.strassQtd} un.)`, o.strassQtd * STRASS_PRECO]);
+        if (o.cruzMetalQtd) priceItems.push([`Cruz metal (${o.cruzMetalQtd} un.)`, o.cruzMetalQtd * CRUZ_METAL_PRECO]);
+        if (o.bridaoMetalQtd) priceItems.push([`Bridão metal (${o.bridaoMetalQtd} un.)`, o.bridaoMetalQtd * BRIDAO_METAL_PRECO]);
+        if (o.trisce === 'Sim') priceItems.push(['Tricê', TRICE_PRECO]);
+        if (o.tiras === 'Sim') priceItems.push(['Tiras', TIRAS_PRECO]);
+        const soladoP = SOLADO.find(s => s.label === o.solado)?.preco;
+        if (soladoP) priceItems.push(['Solado: ' + o.solado, soladoP]);
+        const corSolaP = COR_SOLA.find(c => c.label === o.corSola)?.preco;
+        if (corSolaP) priceItems.push(['Cor Sola: ' + o.corSola, corSolaP]);
+        const corViraP = (o.corVira && !['Bege', 'Neutra'].includes(o.corVira)) ? (COR_VIRA.find(c => c.label === o.corVira)?.preco || 0) : 0;
+        if (corViraP) priceItems.push(['Cor Vira: ' + o.corVira, corViraP]);
+        if (o.costuraAtras === 'Sim') priceItems.push(['Costura Atrás', COSTURA_ATRAS_PRECO]);
+        const carimboP = CARIMBO.find(c => c.label === o.carimbo)?.preco;
+        if (carimboP) priceItems.push([o.carimbo!, carimboP]);
+        if (o.adicionalValor && o.adicionalValor > 0) priceItems.push(['Adicional: ' + (o.adicionalDesc || ''), o.adicionalValor]);
+      }
+
+      const orderTotal = o.tipoExtra ? o.preco : priceItems.reduce((s, [, v]) => s + v, 0);
       const compText = priceItems.map(([name, val]) => `${name} ${formatCurrency(val)}`).join('\n');
 
       doc.setFontSize(6);
