@@ -677,9 +677,21 @@ const ReportsPage = () => {
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="flex items-end">
+            <div className="flex items-end gap-2">
               <button onClick={applyFilters} className="orange-gradient text-primary-foreground px-6 py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity flex items-center gap-2">
                 <Filter size={14} /> FILTRAR
+              </button>
+              <button onClick={() => {
+                setSearchQuery('');
+                setFilterDate('');
+                setFilterDateEnd('');
+                setFilterStatus('');
+                setFilterVendedor('');
+                setFilterProduto(new Set(['bota', ...EXTRA_PRODUCTS.map(p => p.id)]));
+                setAppliedFilters({ searchQuery: '', filterDate: '', filterDateEnd: '', filterStatus: '', filterVendedor: '', filterProduto: new Set(['bota', ...EXTRA_PRODUCTS.map(p => p.id)]) });
+                setSelectedIds(new Set());
+              }} className="border border-border text-muted-foreground px-4 py-2 rounded-lg font-bold text-sm hover:bg-muted transition-colors flex items-center gap-2">
+                <RefreshCw size={14} /> LIMPAR
               </button>
             </div>
           </div>
