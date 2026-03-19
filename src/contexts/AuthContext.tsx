@@ -53,6 +53,9 @@ export interface Order {
   corBordadoCano?: string;
   corBordadoGaspea?: string;
   corBordadoTaloneira?: string;
+  bordadoVariadoDescCano?: string;
+  bordadoVariadoDescGaspea?: string;
+  bordadoVariadoDescTaloneira?: string;
   personalizacaoNome: string;
   personalizacaoBordado: string;
   nomeBordadoDesc?: string;
