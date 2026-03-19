@@ -1,153 +1,67 @@
 
 
-## Plano: Nova Ficha de Produção — CINTOS
+## Plano: Correções de cintos — rascunhos, status, prazos, alertas e PDF
 
-### Visão Geral
+### 1. Corrigir rascunho de cintos
 
-Criar um fluxo completo de pedidos de Cintos, paralelo ao de Botas e Extras, com ficha própria, cálculo automático de valor, impressão em PDF e integração nos filtros/listagem.
+**`src/pages/DraftsPage.tsx`** — No `handleEdit`, detectar rascunhos de cinto (`draft.id.startsWith('draft-belt-')`) e navegar para `/pedido-cinto` em vez de `/pedido`.
 
----
+**`src/pages/BeltOrderPage.tsx`** — Ler `location.state.draft` e pré-popular os campos do formulário (vendedor, tamanho, couro, bordados, carimbo, observação, foto, número do pedido). Ao salvar, deletar o rascunho anterior.
 
-### 1. Tela de Seleção de Produto (antes do formulário)
+### 2. Status de produção específicos para cintos
 
-**Arquivo:** `src/pages/OrderPage.tsx`
-
-Ao entrar em `/pedido`, exibir uma tela inicial com duas opções: **Bota** e **Cinto**.
-- Se selecionar **Bota** → mostrar o formulário atual (sem alterações)
-- Se selecionar **Cinto** → redirecionar para `/pedido-cinto`
-
-Implementar via estado `productChoice` no início do componente. Quando `null`, mostrar a tela de seleção; quando `'bota'`, renderizar o formulário existente.
-
-### 2. Nova Página: Ficha de Produção de Cintos
-
-**Novo arquivo:** `src/pages/BeltOrderPage.tsx`
-**Nova rota em:** `src/App.tsx` → `/pedido-cinto`
-
-Formulário com os campos:
-
-| Campo | Tipo | Regras |
-|---|---|---|
-| Vendedor | Auto-preenchido (read-only para revendedores, editável por admins) | Mesmo padrão de botas |
-| Número do Pedido | Input texto obrigatório | Manual |
-| Tamanho | Select com preço: `1,10cm → R$100`, `1,25cm → R$130`, `50cm → R$70`, `70cm → R$70` | Soma ao total |
-| Tipo de couro | Select usando `TIPOS_COURO` de `orderFieldsConfig.ts` | Reutiliza dados existentes |
-| Cor do couro | Select usando `CORES_COURO` de `orderFieldsConfig.ts` | Reutiliza dados existentes |
-| Bordado P (R$10) | Toggle Tem/Não tem. Se Tem: campo descrição + campo cor | +R$10 |
-| Nome Bordado (R$40) | Toggle Tem/Não tem. Se Tem: campo descrição + campo cor + campo fonte | +R$40 |
-| Carimbo a fogo | Select: `1 a 3 → R$20`, `4 a 6 → R$40`. Se selecionado: campo descrição + onde aplicado | Soma valor |
-| Quantidade | Fixo em 1, read-only | — |
-| Observação | Textarea opcional | — |
-| Link Foto | Input URL (padrão botas) | — |
-
-Botões: **"Conferir e Finalizar Pedido"** (abre espelho) + **"Salvar Rascunho"**
-
-Cálculo de valor em tempo real somando tamanho + bordado P + nome bordado + carimbo.
-
-### 3. Integração no Sistema de Pedidos
-
-**Arquivo:** `src/contexts/AuthContext.tsx`
-
-O pedido de cinto será salvo como `Order` usando `tipoExtra: 'cinto'` para distinguir. Campos de bota não aplicáveis recebem `'-'` (mesmo padrão dos extras).
-
-O `addOrder` já suporta `tipoExtra` e `extraDetalhes`, então não precisa de alteração no contexto.
-
-### 4. Configuração de Produto
-
-**Arquivo:** `src/lib/extrasConfig.ts`
-
-Adicionar constante `BELT_PRODUCT` separada (não misturar com `EXTRA_PRODUCTS` que são acessórios avulsos):
-
+**`src/contexts/AuthContext.tsx`** — Adicionar:
 ```typescript
-export const BELT_SIZES = [
-  { label: '1,10 cm', preco: 100 },
-  { label: '1,25 cm', preco: 130 },
-  { label: '50 cm', preco: 70 },
-  { label: '70 cm', preco: 70 },
+export const BELT_STATUSES = [
+  "Em aberto", "Corte", "Bordado", "Pesponto",
+  "Expedição", "Entregue", "Cobrado", "Pago"
 ];
-export const BORDADO_P_PRECO = 10;
-export const NOME_BORDADO_CINTO_PRECO = 40;
 ```
 
-Adicionar labels para `EXTRA_DETAIL_LABELS` e `EXTRA_PRODUCT_NAME_MAP`:
+**`src/pages/ReportsPage.tsx`** (linha ~948-950) — Na lógica de seleção de status no modal de progresso, detectar cintos (`tipoExtra === 'cinto'`) e usar `BELT_STATUSES`. Lógica: se só cintos → `BELT_STATUSES`, se só extras (não-cinto) → `EXTRAS_STATUSES`, se só botas → `PRODUCTION_STATUSES`, se mistura → union de todos.
+
+### 3. Prazo de produção: 5 dias para cintos, 1 dia para extras
+
+**`src/contexts/AuthContext.tsx`** (linha ~331) — No `addOrder`, ajustar `totalBizDays`:
+- `tipoExtra === 'cinto'` → 5
+- `tipoExtra` existe (outros extras) → 1
+- Senão (bota) → lógica atual (10 ou 30)
+
+### 4. Mostrar prazo em cintos e extras
+
+**`src/pages/ReportsPage.tsx`** (linha ~906) — Remover condição `!order.tipoExtra` que esconde o countdown.
+
+**`src/pages/OrderDetailPage.tsx`** (linha ~46-47, ~167) — Ajustar `totalBizDays` para considerar `tipoExtra`: cinto=5, extras=1, botas=10/30. Remover condição `!order.tipoExtra` que esconde seção de dias restantes.
+
+**`src/pages/TrackOrderPage.tsx`** (linha ~60) — Remover condição `!order.tipoExtra`.
+
+### 5. Incluir cintos e extras nos alertas
+
+**`src/pages/Index.tsx`** (linha ~168) — Remover `if (o.tipoExtra) return false;` para que cintos e extras entrem nos alertas de prazo.
+
+### 6. Ficha de produção impressa: remover valor do tamanho
+
+**`src/pages/BeltOrderPage.tsx`** (linha ~106) — Alterar `tamanhoCinto` para salvar apenas o tamanho sem o preço:
 ```typescript
-// Mapa de nome para cinto
-cinto: 'Cinto'
+// De:
+tamanhoCinto: `${tamanho} (${formatCurrency(tamanhoPreco)})`,
+// Para:
+tamanhoCinto: tamanho,
 ```
 
-### 5. Filtro de Produtos na Listagem
-
-**Arquivo:** `src/pages/ReportsPage.tsx`
-
-No popover de filtro de produto, adicionar **"Cinto"** como opção entre Bota e os Extras. Inicializar `filterProduto` com `'cinto'` incluído.
-
-Na lógica de filtro, pedidos com `tipoExtra === 'cinto'` são filtrados pela checkbox "Cinto".
-
-### 6. Listagem de Pedidos
-
-**Arquivo:** `src/pages/ReportsPage.tsx` (linha ~763)
-
-Já existe exibição do tipo de produto para extras: `EXTRA_PRODUCT_NAME_MAP[order.tipoExtra]`. Basta mapear `'cinto' → 'Cinto'` no `EXTRA_PRODUCT_NAME_MAP`.
-
-### 7. Visualização do Pedido (Detalhes)
-
-**Arquivo:** `src/pages/OrderDetailPage.tsx`
-
-Pedidos de cinto usam `tipoExtra === 'cinto'`, então entram no fluxo de exibição de extras (mostra `extraDetalhes` com labels legíveis). Adicionar labels para campos do cinto em `EXTRA_DETAIL_LABELS`:
-- `tamanhoCinto: 'Tamanho'`
-- `tipoCouro: 'Tipo de Couro'`
-- `corCouro: 'Cor do Couro'`
-- `bordadoP: 'Bordado P'`
-- `bordadoPDesc: 'Descrição Bordado P'`
-- `bordadoPCor: 'Cor Bordado P'`
-- `nomeBordado: 'Nome Bordado'`
-- `nomeBordadoDesc: 'Descrição Nome Bordado'`
-- `nomeBordadoCor: 'Cor Nome Bordado'`
-- `nomeBordadoFonte: 'Fonte Nome Bordado'`
-- `carimbo: 'Carimbo a Fogo'`
-- `carimboDesc: 'Descrição Carimbos'`
-- `ondeAplicado: 'Onde Aplicado'`
-
-Sem prazo de produção (mesma regra dos extras, `!order.tipoExtra`).
-
-### 8. Ficha de Produção Impressa (PDF)
-
-**Arquivo:** `src/pages/ReportsPage.tsx` (dentro de `generateProductionSheetPDF`)
-
-Para pedidos com `tipoExtra === 'cinto'`, gerar ficha com layout simplificado:
-- **Cabeçalho**: mesmo layout (7ESTRIVOS, Código, Vendedor, Data, QR)
-- **Descrição**: categorias com campos do cinto (Couro, Bordado, Carimbo, Observação)
-- **Canhotos** (2 ao invés de 3):
-  - Primeiro: **"PESPONTO"** + código de barras
-  - Segundo: **"EXPEDIÇÃO"** + código de barras
-  - Terceiro: removido
-
-### 9. Status de Produção
-
-Cintos usam os mesmos status de `EXTRAS_STATUSES` (Em aberto, Produzindo, Expedição, Entregue, Cobrado, Pago), sem prazo de produção.
-
-### 10. Vendedor editável para admins
-
-Na ficha de cinto, o campo vendedor funciona igual à de botas:
-- Auto-preenchido com `user.nomeCompleto`
-- Read-only para revendedores
-- Editável somente para Juliana ADM e Fernanda ADM
+Isso garante que a ficha PDF (que lê `det.tamanhoCinto`) mostre apenas "1,10 cm" sem valor.
 
 ---
 
-### Arquivos Alterados/Criados
+### Arquivos alterados
 
-| Arquivo | Ação |
+| Arquivo | Alteração |
 |---|---|
-| `src/pages/BeltOrderPage.tsx` | **Criar** — formulário completo de cintos |
-| `src/pages/OrderPage.tsx` | Adicionar tela de seleção Bota/Cinto |
-| `src/App.tsx` | Adicionar rota `/pedido-cinto` |
-| `src/lib/extrasConfig.ts` | Adicionar configurações do cinto (tamanhos, preços, labels) |
-| `src/pages/ReportsPage.tsx` | Filtro + ficha PDF com layout customizado para cintos |
-| `src/pages/OrderDetailPage.tsx` | Composição de preço para cintos |
-| `src/pages/Index.tsx` | Excluir cintos dos alertas de prazo (mesmo tratamento dos extras) |
-
-### Restrições Respeitadas
-- Ficha de botas: nenhuma alteração no formulário existente
-- Layout geral: mantido
-- Estrutura do sistema: apenas adições
+| `src/contexts/AuthContext.tsx` | `BELT_STATUSES` + `totalBizDays` condicional |
+| `src/pages/DraftsPage.tsx` | Redirecionar rascunhos belt para `/pedido-cinto` |
+| `src/pages/BeltOrderPage.tsx` | Carregar rascunho + remover preço do `tamanhoCinto` |
+| `src/pages/ReportsPage.tsx` | `BELT_STATUSES` no modal + mostrar prazo para todos |
+| `src/pages/OrderDetailPage.tsx` | `totalBizDays` condicional + mostrar prazo para todos |
+| `src/pages/TrackOrderPage.tsx` | Mostrar prazo para todos |
+| `src/pages/Index.tsx` | Incluir cintos/extras nos alertas |
 
