@@ -630,23 +630,52 @@ const ReportsPage = () => {
             )}
             <div>
               <label className="block text-xs font-semibold mb-1">Produto</label>
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => toggleProdutoFilter('bota')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-colors ${filterProduto.has('bota') ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-border hover:border-primary'}`}
-                >
-                  Bota
-                </button>
-                {EXTRA_PRODUCTS.map(ep => (
-                  <button
-                    key={ep.id}
-                    onClick={() => toggleProdutoFilter(ep.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-colors ${filterProduto.has(ep.id) ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-border hover:border-primary'}`}
-                  >
-                    {ep.nome}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="bg-muted rounded-lg px-3 py-2 text-sm border border-border focus:border-primary outline-none min-w-[180px] text-left">
+                    {filterProduto.size === 0
+                      ? 'Todos'
+                      : `${filterProduto.size} selecionado${filterProduto.size > 1 ? 's' : ''}`}
                   </button>
-                ))}
-              </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 max-h-72 overflow-y-auto p-3" align="start">
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      onClick={() => {
+                        const all = new Set(['bota', ...EXTRA_PRODUCTS.map(p => p.id)]);
+                        setFilterProduto(all);
+                      }}
+                      className="text-xs font-semibold text-primary hover:underline"
+                    >
+                      Todos
+                    </button>
+                    <button
+                      onClick={() => setFilterProduto(new Set())}
+                      className="text-xs font-semibold text-muted-foreground hover:underline"
+                    >
+                      Nenhum
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={filterProduto.has('bota')}
+                        onCheckedChange={() => toggleProdutoFilter('bota')}
+                      />
+                      <span className="text-sm">Bota</span>
+                    </label>
+                    {EXTRA_PRODUCTS.map(ep => (
+                      <label key={ep.id} className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={filterProduto.has(ep.id)}
+                          onCheckedChange={() => toggleProdutoFilter(ep.id)}
+                        />
+                        <span className="text-sm">{ep.nome}</span>
+                      </label>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="flex items-end">
               <button onClick={applyFilters} className="orange-gradient text-primary-foreground px-6 py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity flex items-center gap-2">
