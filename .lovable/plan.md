@@ -1,65 +1,59 @@
 
 
-## Plano: Melhorias nos EXTRAS — preço Regata, novo produto, número manual, filtro detalhado, visualização
+## Plano: Corrigir detalhes de extras + compactar filtro de produto
 
-### 1. Regata — valor padrão R$50
+### Problema 1 — Detalhes do pedido mostrando campos irrelevantes
 
-Em `ExtrasPage.tsx`:
-- Mudar `precoBase` de `null` para `50` e `precoLabel` para `'R$ 50,00'`
-- Em `calcPrice`, retornar `50` para `'regata'`
+O `handleSubmit` em `ExtrasPage.tsx` salva `{ ...form }` (todas as 20+ keys do formulário) em `extraDetalhes`, mesmo que o produto use apenas 2-3 campos. Campos como `quantidade: '1'`, `qtdStrass: '1'` não são "vazios" então passam pelo filtro `isExtraValueEmpty`.
 
-### 2. Novo produto: Bota Pronta Entrega
+**Solução**: Em `handleSubmit`, filtrar `detalhes` para incluir apenas as keys relevantes ao produto específico, usando um mapa de campos por produto.
 
-Adicionar ao array `PRODUCTS`:
-```
-{ id: 'bota_pronta_entrega', nome: 'Bota Pronta Entrega', descricao: 'Bota pronta para entrega', precoBase: null, precoLabel: 'Valor manual' }
-```
+Arquivo: `src/pages/ExtrasPage.tsx`
 
-Formulário: campos `numeroPedido` (obrigatório, manual), `descricao`, `valor` (manual), quantidade fixa 1.
-
-Em `handleSubmit`, para este produto: usar o número digitado como `numeroPedido` (em vez de gerar automático), e o valor digitado como preço.
-
-### 3. Número do pedido manual em TODOS os extras
-
-- Adicionar campo `numeroPedido` (obrigatório) em TODOS os formulários de extras
-- No `emptyForm()`, adicionar `numeroPedido: ''`
-- No `handleSubmit`, passar `numeroPedido: form.numeroPedido` para que o `addOrder` use esse número em vez de gerar automático
-- Validar que `numeroPedido` não está vazio antes de submeter
-
-### 4. Filtro de produção detalhado por produto extra
-
-No `ReportsPage.tsx`, substituir o botão único "Extras" por botões individuais para cada tipo de extra:
-- Tiras Laterais, Desmanchar, Kit Canivete, Kit Faca, Carimbo a Fogo, Revitalizador, Kit 2 Revitalizador, Gravata Country, Adicionar Metais, Chaveiro c/ Carimbo, Bainha de Cartão, Regata, Bota Pronta Entrega
-
-Lógica de filtro: manter `filterProduto` como `Set<string>` com valores `'bota'` e cada `tipoExtra` id. Atualizar `appliedFilters` e a lógica de filtragem para comparar `o.tipoExtra` com os ids selecionados.
-
-### 5. Nome do produto visível na lista de pedidos
-
-Em `ReportsPage.tsx`, na renderização da lista de pedidos (linha ~713), para pedidos com `tipoExtra`, exibir o nome do produto (ex: "Kit Faca") ao lado do número:
-```
-{order.numero} — Kit Faca
+```typescript
+const PRODUCT_FIELDS: Record<string, string[]> = {
+  tiras_laterais: ['corTiras'],
+  desmanchar: ['qualSola', 'trocaGaspea'],
+  kit_canivete: ['tipoCouro', 'corCouro', 'vaiCanivete'],
+  kit_faca: ['tipoCouro', 'corCouro', 'vaiCanivete'],
+  carimbo_fogo: ['qtdCarimbos', 'descCarimbos', 'ondeAplicado'],
+  revitalizador: ['tipoRevitalizador', 'quantidade'],
+  kit_revitalizador: ['tipoRevitalizador', 'quantidade'],
+  gravata_country: ['corTira', 'tipoMetal', 'corBridao'],
+  adicionar_metais: ['metaisSelecionados', 'qtdStrass'],
+  chaveiro_carimbo: ['tipoCouro', 'corCouro', 'descCarimbos'],
+  bainha_cartao: ['tipoCouro', 'corCouro'],
+  regata: ['corRegata', 'descBordadoRegata'],
+  bota_pronta_entrega: ['descricaoProduto', 'valorManual'],
+};
 ```
 
-Usar um mapa `tipoExtra → nome` derivado dos PRODUCTS.
+No `handleSubmit`, substituir `const detalhes = { ...form }` por:
+```typescript
+const relevantKeys = PRODUCT_FIELDS[productId] || [];
+const detalhes: Record<string, any> = {};
+for (const key of relevantKeys) {
+  if (form[key] !== undefined && form[key] !== '') detalhes[key] = form[key];
+}
+```
 
-### 6. Detalhes do Extra — mostrar apenas campos preenchidos
+### Problema 2 — Filtro de produto ocupando muito espaço
 
-Em `OrderDetailPage.tsx`, na seção "Detalhes do Extra" (linha ~231):
-- Filtrar `extraDetalhes` para excluir valores vazios, `''`, `'Não'`, arrays vazios, e keys internas (`valor`, `valorTotal`, `numeroPedidoBota`, `numeroPedido`)
-- Exibir `numeroPedidoBota` separadamente se preenchido
-- Melhorar labels com um mapa legível (ex: `corTiras` → `Cor das Tiras`)
+Atualmente são 14 botões expostos em `flex-wrap`. Substituir por um `Popover` com checkboxes.
 
-### 7. Composição do Pedido — mostrar apenas itens com valor
+Arquivo: `src/pages/ReportsPage.tsx` (linhas 629-648)
 
-Em `OrderDetailPage.tsx`, para pedidos extras, construir `priceItems` específico baseado no `tipoExtra` e `extraDetalhes`, mostrando apenas os componentes de preço reais (ex: "Valor base: R$65", "Sola preta borracha: R$25") em vez de tentar usar as configs de bota.
+Substituir o bloco de botões por:
+- Um botão/trigger que mostra "Produto: X selecionados"
+- Um Popover com lista de checkboxes (Bota + cada extra)
+- Botões "Todos" / "Nenhum" para conveniência
 
----
+Usar os componentes `Popover` e `Checkbox` já existentes no projeto.
 
 ### Arquivos alterados
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/ExtrasPage.tsx` | Regata R$50, novo produto Bota Pronta Entrega, campo numeroPedido obrigatório em todos, validação |
-| `src/pages/ReportsPage.tsx` | Filtro detalhado por tipo de extra, nome do produto na lista |
-| `src/pages/OrderDetailPage.tsx` | Detalhes/composição limpos para extras |
+| `src/pages/ExtrasPage.tsx` | Salvar apenas campos relevantes ao produto em `extraDetalhes` |
+| `src/pages/ReportsPage.tsx` | Trocar botões expostos por Popover com checkboxes |
 
