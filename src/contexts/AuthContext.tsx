@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react'; // v2
 
 /** Get current date/time in Brasília timezone */
 function nowBrasilia(): Date {
