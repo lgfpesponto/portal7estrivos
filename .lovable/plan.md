@@ -1,67 +1,48 @@
 
 
-## Plano: Correções de cintos — rascunhos, status, prazos, alertas e PDF
+## Plano: Composição de cintos no relatório de Cobrança
 
-### 1. Corrigir rascunho de cintos
+### Problema
+No relatório de Cobrança, pedidos de cinto entram no bloco genérico de extras (linha 359-369), que apenas mostra o nome do produto e o preço total numa única linha, sem detalhamento da composição.
 
-**`src/pages/DraftsPage.tsx`** — No `handleEdit`, detectar rascunhos de cinto (`draft.id.startsWith('draft-belt-')`) e navegar para `/pedido-cinto` em vez de `/pedido`.
+### Solução
 
-**`src/pages/BeltOrderPage.tsx`** — Ler `location.state.draft` e pré-popular os campos do formulário (vendedor, tamanho, couro, bordados, carimbo, observação, foto, número do pedido). Ao salvar, deletar o rascunho anterior.
+**Arquivo:** `src/components/SpecializedReports.tsx` (dentro de `generateCobrancaPDF`, linhas 359-369)
 
-### 2. Status de produção específicos para cintos
+Adicionar um bloco específico para `o.tipoExtra === 'cinto'` antes do bloco genérico de extras:
 
-**`src/contexts/AuthContext.tsx`** — Adicionar:
 ```typescript
-export const BELT_STATUSES = [
-  "Em aberto", "Corte", "Bordado", "Pesponto",
-  "Expedição", "Entregue", "Cobrado", "Pago"
-];
+if (o.tipoExtra === 'cinto' && o.extraDetalhes) {
+  const det = o.extraDetalhes as any;
+  // Linha 1: produto
+  priceItems.push(['Cinto', 0]); // header sem valor próprio
+
+  // Tamanho com preço
+  const sizeEntry = BELT_SIZES.find(s => s.label === det.tamanhoCinto);
+  if (sizeEntry) priceItems.push([`Tamanho: ${sizeEntry.label}`, sizeEntry.preco]);
+
+  // Bordado P
+  if (det.bordadoP === 'Sim') priceItems.push(['Bordado P', BORDADO_P_PRECO]);
+
+  // Nome Bordado
+  if (det.nomeBordado === 'Sim') priceItems.push(['Nome Bordado', NOME_BORDADO_CINTO_PRECO]);
+
+  // Carimbo
+  const carimboEntry = BELT_CARIMBO.find(c => c.label === det.carimbo);
+  if (carimboEntry) priceItems.push([det.carimbo, carimboEntry.preco]);
+
+} else if (o.tipoExtra && o.extraDetalhes) {
+  // extras genéricos (código existente)
+}
 ```
 
-**`src/pages/ReportsPage.tsx`** (linha ~948-950) — Na lógica de seleção de status no modal de progresso, detectar cintos (`tipoExtra === 'cinto'`) e usar `BELT_STATUSES`. Lógica: se só cintos → `BELT_STATUSES`, se só extras (não-cinto) → `EXTRAS_STATUSES`, se só botas → `PRODUCTION_STATUSES`, se mistura → union de todos.
+Também importar `BELT_SIZES`, `BORDADO_P_PRECO`, `NOME_BORDADO_CINTO_PRECO`, `BELT_CARIMBO` de `extrasConfig.ts`.
 
-### 3. Prazo de produção: 5 dias para cintos, 1 dia para extras
-
-**`src/contexts/AuthContext.tsx`** (linha ~331) — No `addOrder`, ajustar `totalBizDays`:
-- `tipoExtra === 'cinto'` → 5
-- `tipoExtra` existe (outros extras) → 1
-- Senão (bota) → lógica atual (10 ou 30)
-
-### 4. Mostrar prazo em cintos e extras
-
-**`src/pages/ReportsPage.tsx`** (linha ~906) — Remover condição `!order.tipoExtra` que esconde o countdown.
-
-**`src/pages/OrderDetailPage.tsx`** (linha ~46-47, ~167) — Ajustar `totalBizDays` para considerar `tipoExtra`: cinto=5, extras=1, botas=10/30. Remover condição `!order.tipoExtra` que esconde seção de dias restantes.
-
-**`src/pages/TrackOrderPage.tsx`** (linha ~60) — Remover condição `!order.tipoExtra`.
-
-### 5. Incluir cintos e extras nos alertas
-
-**`src/pages/Index.tsx`** (linha ~168) — Remover `if (o.tipoExtra) return false;` para que cintos e extras entrem nos alertas de prazo.
-
-### 6. Ficha de produção impressa: remover valor do tamanho
-
-**`src/pages/BeltOrderPage.tsx`** (linha ~106) — Alterar `tamanhoCinto` para salvar apenas o tamanho sem o preço:
-```typescript
-// De:
-tamanhoCinto: `${tamanho} (${formatCurrency(tamanhoPreco)})`,
-// Para:
-tamanhoCinto: tamanho,
-```
-
-Isso garante que a ficha PDF (que lê `det.tamanhoCinto`) mostre apenas "1,10 cm" sem valor.
-
----
+E ajustar o cálculo de `orderTotal` para cintos: usar a soma dos `priceItems` em vez de `o.preco` (ou manter `o.preco` se já estiver correto — ambos devem bater).
 
 ### Arquivos alterados
 
 | Arquivo | Alteração |
 |---|---|
-| `src/contexts/AuthContext.tsx` | `BELT_STATUSES` + `totalBizDays` condicional |
-| `src/pages/DraftsPage.tsx` | Redirecionar rascunhos belt para `/pedido-cinto` |
-| `src/pages/BeltOrderPage.tsx` | Carregar rascunho + remover preço do `tamanhoCinto` |
-| `src/pages/ReportsPage.tsx` | `BELT_STATUSES` no modal + mostrar prazo para todos |
-| `src/pages/OrderDetailPage.tsx` | `totalBizDays` condicional + mostrar prazo para todos |
-| `src/pages/TrackOrderPage.tsx` | Mostrar prazo para todos |
-| `src/pages/Index.tsx` | Incluir cintos/extras nos alertas |
+| `src/components/SpecializedReports.tsx` | Bloco de composição específico para cintos no PDF de cobrança + imports |
 
