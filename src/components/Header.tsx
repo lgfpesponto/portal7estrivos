@@ -9,11 +9,14 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
+  const isJuliana = user?.nomeUsuario?.toLowerCase() === '7estrivos';
+
   const navItems = isLoggedIn
     ? [
         { label: 'FAÇA SEU PEDIDO', path: '/pedido' },
         { label: 'EXTRAS', path: '/extras' },
         { label: 'MEUS PEDIDOS', path: '/relatorios' },
+        ...(isJuliana ? [{ label: 'USUÁRIOS', path: '/usuarios' }] : []),
         { label: 'MEU PERFIL', path: '/perfil' },
       ]
     : [

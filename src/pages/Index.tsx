@@ -162,7 +162,7 @@ const Index = () => {
       </div>
 
       {/* Pedidos de Alerta — only Juliana (admin-1) */}
-      {user?.id === 'admin-1' && (() => {
+      {user?.nomeUsuario?.toLowerCase() === '7estrivos' && (() => {
         const FINAL_STAGES = ['Expedição', 'Entregue', 'Cobrado', 'Pago'];
         const alertOrders = sourceOrders.filter(o => {
           

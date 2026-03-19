@@ -450,7 +450,7 @@ const OrderDetailPage = () => {
           </div>
 
           {/* Discount input — Juliana ADM only */}
-          {isAdmin && user?.id === 'admin-1' && !isFernanda && (
+          {isAdmin && user?.nomeUsuario?.toLowerCase() === '7estrivos' && !isFernanda && (
             <div className="border border-border rounded-lg p-4 mt-4">
               <h3 className="text-sm font-bold mb-3">Aplicar Desconto</h3>
               <div className="space-y-3">
