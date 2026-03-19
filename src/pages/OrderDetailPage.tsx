@@ -291,7 +291,6 @@ const OrderDetailPage = () => {
                   switch (order.tipoExtra) {
                     case 'cinto': {
                       // Belt price composition
-                      const { BELT_SIZES, BORDADO_P_PRECO, NOME_BORDADO_CINTO_PRECO, BELT_CARIMBO } = require('@/lib/extrasConfig');
                       const sizeItem = BELT_SIZES.find((s: any) => det.tamanhoCinto?.startsWith(s.label));
                       if (sizeItem) extraPriceItems.push([`Tamanho: ${sizeItem.label}`, sizeItem.preco]);
                       if (det.bordadoP === 'Tem') extraPriceItems.push(['Bordado P', BORDADO_P_PRECO]);
