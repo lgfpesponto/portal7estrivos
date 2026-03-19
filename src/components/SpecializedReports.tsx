@@ -342,7 +342,7 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.setFillColor(232, 232, 232);
     doc.rect(mx, y, cw, 8, 'F');
     doc.text('Nº PEDIDO', cx[0] + 1, y + 5.5);
-    doc.text('COMPOSIÇÃO DA BOTA', cx[1] + 1, y + 5.5);
+    doc.text('COMPOSIÇÃO', cx[1] + 1, y + 5.5);
     doc.text('QTD', cx[2] + 1, y + 5.5);
     doc.text('PREÇO', cx[3] + 1, y + 5.5);
     doc.text('PAGO', cx[4] + 1, y + 5.5);

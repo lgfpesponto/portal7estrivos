@@ -757,14 +757,22 @@ const ReportsPage = () => {
           <p className="text-sm text-muted-foreground mb-3">
             Selecione a nova etapa para {selectedIds.size} pedido(s):
           </p>
-          <select
-            value={selectedProgress}
-            onChange={e => setSelectedProgress(e.target.value)}
-            className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary outline-none"
-          >
-            <option value="">Selecione a etapa...</option>
-            {PRODUCTION_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+          {(() => {
+            const selectedOrders = filteredOrders.filter(o => selectedIds.has(o.id));
+            const hasExtras = selectedOrders.some(o => !!o.tipoExtra);
+            const hasBotas = selectedOrders.some(o => !o.tipoExtra);
+            const statusList = hasExtras && !hasBotas ? EXTRAS_STATUSES : hasBotas && !hasExtras ? PRODUCTION_STATUSES : [...new Set([...PRODUCTION_STATUSES, ...EXTRAS_STATUSES])];
+            return (
+              <select
+                value={selectedProgress}
+                onChange={e => setSelectedProgress(e.target.value)}
+                className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary outline-none"
+              >
+                <option value="">Selecione a etapa...</option>
+                {statusList.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            );
+          })()}
           <div className="mt-3">
             <label className="block text-xs font-semibold mb-1">Observação (opcional)</label>
             <textarea
