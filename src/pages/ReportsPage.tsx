@@ -25,7 +25,7 @@ function barcodeDataUrl(value: string, opts?: { width?: number; height?: number 
   const canvas = document.createElement('canvas');
   try {
     JsBarcode(canvas, value, {
-      format: 'CODE128', width: opts?.width ?? 1, height: opts?.height ?? 30,
+      format: 'CODE128', width: opts?.width ?? 2, height: opts?.height ?? 50,
       displayValue: false, margin: 2,
     });
     return canvas.toDataURL('image/png');

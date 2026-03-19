@@ -24,7 +24,7 @@ const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'curren
 function barcodeDataUrl(value: string, opts?: { width?: number; height?: number }): string {
   const canvas = document.createElement('canvas');
   try {
-    JsBarcode(canvas, value, { format: 'CODE128', width: opts?.width ?? 1, height: opts?.height ?? 30, displayValue: false, margin: 2 });
+    JsBarcode(canvas, value, { format: 'CODE128', width: opts?.width ?? 2, height: opts?.height ?? 50, displayValue: false, margin: 2 });
     return canvas.toDataURL('image/png');
   } catch { return ''; }
 }
