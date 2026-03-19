@@ -11,18 +11,22 @@ const RegisterPage = () => {
     nomeCompleto: '', nomeUsuario: '', telefone: '', email: '', cpfCnpj: '', senha: '', confirmarSenha: '',
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const update = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (Object.values(form).some(v => !v)) { setError('Preencha todos os campos.'); return; }
     if (form.senha.length < 6) { setError('Senha deve ter no mínimo 6 caracteres.'); return; }
     if (form.senha !== form.confirmarSenha) { setError('Senhas não conferem.'); return; }
 
+    setLoading(true);
     const { confirmarSenha, ...data } = form;
-    if (register(data)) {
+    const success = await register(data);
+    setLoading(false);
+    if (success) {
       navigate('/');
     } else {
       setError('Nome de usuário já existe.');
@@ -65,8 +69,8 @@ const RegisterPage = () => {
 
             {error && <p className="text-destructive text-sm">{error}</p>}
 
-            <button type="submit" className="w-full orange-gradient text-primary-foreground py-3 rounded-lg font-bold tracking-wider hover:opacity-90 transition-opacity">
-              CRIAR CONTA
+            <button type="submit" disabled={loading} className="w-full orange-gradient text-primary-foreground py-3 rounded-lg font-bold tracking-wider hover:opacity-90 transition-opacity disabled:opacity-50">
+              {loading ? 'CRIANDO...' : 'CRIAR CONTA'}
             </button>
           </form>
 

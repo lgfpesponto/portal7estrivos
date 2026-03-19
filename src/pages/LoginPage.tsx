@@ -10,15 +10,19 @@ const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!username || !password) { setError('Preencha todos os campos.'); return; }
-    if (login(username, password)) {
+    setLoading(true);
+    const success = await login(username, password);
+    setLoading(false);
+    if (success) {
       navigate('/');
     } else {
-      setError('Usuário ou senha incorretos. Use demo/123456 para testar.');
+      setError('Usuário ou senha incorretos.');
     }
   };
 
@@ -56,8 +60,8 @@ const LoginPage = () => {
 
             {error && <p className="text-destructive text-sm">{error}</p>}
 
-            <button type="submit" className="w-full orange-gradient text-primary-foreground py-3 rounded-lg font-bold tracking-wider hover:opacity-90 transition-opacity">
-              ENTRAR
+            <button type="submit" disabled={loading} className="w-full orange-gradient text-primary-foreground py-3 rounded-lg font-bold tracking-wider hover:opacity-90 transition-opacity disabled:opacity-50">
+              {loading ? 'ENTRANDO...' : 'ENTRAR'}
             </button>
           </form>
 

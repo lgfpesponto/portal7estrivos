@@ -13,6 +13,7 @@ const RecoverPasswordPage = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,11 +22,14 @@ const RecoverPasswordPage = () => {
     setStep(2);
   };
 
-  const handleDigits = (e: React.FormEvent) => {
+  const handleDigits = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (digits.length < 3) { setError('Digite os 3 primeiros dígitos.'); return; }
-    if (recoverPassword(cpfCnpj, digits)) {
+    setLoading(true);
+    const ok = await recoverPassword(cpfCnpj, digits);
+    setLoading(false);
+    if (ok) {
       setStep(3);
     } else {
       setError('Dígitos incorretos.');
@@ -37,7 +41,6 @@ const RecoverPasswordPage = () => {
     setError('');
     if (newPassword.length < 6) { setError('Senha deve ter no mínimo 6 caracteres.'); return; }
     if (newPassword !== confirmPassword) { setError('Senhas não conferem.'); return; }
-    // In a real app, would update password via API
     navigate('/login');
   };
 
@@ -69,7 +72,9 @@ const RecoverPasswordPage = () => {
                 <input type="text" maxLength={3} value={digits} onChange={e => setDigits(e.target.value.replace(/\D/g, '').slice(0, 3))} placeholder="000" className="w-full bg-muted rounded-lg px-4 py-3 text-sm border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none text-center text-2xl tracking-[0.5em]" />
               </div>
               {error && <p className="text-destructive text-sm">{error}</p>}
-              <button type="submit" className="w-full orange-gradient text-primary-foreground py-3 rounded-lg font-bold tracking-wider hover:opacity-90 transition-opacity">VERIFICAR</button>
+              <button type="submit" disabled={loading} className="w-full orange-gradient text-primary-foreground py-3 rounded-lg font-bold tracking-wider hover:opacity-90 transition-opacity disabled:opacity-50">
+                {loading ? 'VERIFICANDO...' : 'VERIFICAR'}
+              </button>
             </form>
           )}
 
