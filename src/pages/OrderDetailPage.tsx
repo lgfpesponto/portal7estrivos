@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth, businessDaysRemaining, formatBrasiliaDate, formatBrasiliaTime, orderBarcodeValue } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CheckCircle2, Clock, History, ScanBarcode } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock, History, Pencil, ScanBarcode } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
