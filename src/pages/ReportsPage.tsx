@@ -647,6 +647,7 @@ const ReportsPage = () => {
   };
 
   const [showReportOptions, setShowReportOptions] = useState(false);
+  const [showSpecializedReports, setShowSpecializedReports] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handleDelete = (id: string) => {
