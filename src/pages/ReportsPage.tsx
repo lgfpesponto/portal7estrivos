@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { Filter, FileText, Download, Printer, CheckCircle, StickyNote, Pencil, Trash2, RefreshCw, ScanBarcode } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
+import SpecializedReports from '@/components/SpecializedReports';
 import JsBarcode from 'jsbarcode';
 import QRCode from 'qrcode';
 import {
