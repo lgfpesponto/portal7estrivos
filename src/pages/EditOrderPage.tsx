@@ -109,6 +109,9 @@ const EditOrderPage = () => {
   const [corBordadoGaspea, setCorBordadoGaspea] = useState('');
   const [bordadoTaloneira, setBordadoTaloneira] = useState<string[]>([]);
   const [corBordadoTaloneira, setCorBordadoTaloneira] = useState('');
+  const [bordadoVariadoDescCano, setBordadoVariadoDescCano] = useState('');
+  const [bordadoVariadoDescGaspea, setBordadoVariadoDescGaspea] = useState('');
+  const [bordadoVariadoDescTaloneira, setBordadoVariadoDescTaloneira] = useState('');
   const [nomeBordado, setNomeBordado] = useState(false);
   const [nomeBordadoDesc, setNomeBordadoDesc] = useState('');
   const [laserCano, setLaserCano] = useState<string[]>([]);
