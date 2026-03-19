@@ -174,6 +174,7 @@ export const COR_VIRA: { label: string; preco: number }[] = [
   { label: 'Bege', preco: 0 },
   { label: 'Preto', preco: 10 },
   { label: 'Rosa', preco: 10 },
+  { label: 'Neutra', preco: 0 },
 ];
 
 // ==================== CARIMBO A FOGO ====================
