@@ -372,8 +372,8 @@ const OrderPage = () => {
     setShowMirror(true);
   };
 
-  const confirmOrder = () => {
-    addOrder({
+  const confirmOrder = async () => {
+    const success = await addOrder({
       numeroPedido: numeroPedido.trim(),
       vendedor: user?.nomeCompleto || '',
       tamanho, genero, modelo, sobMedida, sobMedidaDesc,
@@ -407,9 +407,13 @@ const OrderPage = () => {
       personalizacaoNome: nomeBordado ? nomeBordadoDesc : '',
       personalizacaoBordado: '',
     } as any);
-    if (draftId) deleteDraft(draftId);
-    toast.success('Pedido criado com sucesso!');
-    navigate('/relatorios');
+    if (success) {
+      if (draftId) deleteDraft(draftId);
+      toast.success('Pedido criado com sucesso!');
+      navigate('/relatorios');
+    } else {
+      toast.error('Erro ao salvar o pedido. Tente novamente.');
+    }
   };
 
   const handleSaveDraft = () => {

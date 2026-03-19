@@ -129,7 +129,7 @@ const BeltOrderPage = () => {
     setShowMirror(true);
   };
 
-  const confirmOrder = () => {
+  const confirmOrder = async () => {
     const extraDetalhes: Record<string, any> = {
       tamanhoCinto: tamanho,
       tipoCouro,
@@ -152,7 +152,7 @@ const BeltOrderPage = () => {
       if (carimboOnde) extraDetalhes.ondeAplicado = carimboOnde;
     }
 
-    addOrder({
+    const success = await addOrder({
       numeroPedido: numeroPedido.trim(),
       vendedor: isAdminUser ? vendedor : (user?.nomeCompleto || ''),
       tamanho: '-',
@@ -185,9 +185,13 @@ const BeltOrderPage = () => {
       extraDetalhes,
     } as any);
 
-    if (loadedDraftId) deleteDraft(loadedDraftId);
-    toast.success('Pedido de cinto criado com sucesso!');
-    navigate('/relatorios');
+    if (success) {
+      if (loadedDraftId) deleteDraft(loadedDraftId);
+      toast.success('Pedido de cinto criado com sucesso!');
+      navigate('/relatorios');
+    } else {
+      toast.error('Erro ao salvar o pedido. Tente novamente.');
+    }
   };
 
   const handleSaveDraft = () => {

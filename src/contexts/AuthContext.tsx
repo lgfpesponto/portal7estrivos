@@ -524,8 +524,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   /* ───── Add Order ───── */
-  const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status' | 'alteracoes'> & { numeroPedido?: string }) => {
-    if (!user) return;
+  const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'numero' | 'dataCriacao' | 'horaCriacao' | 'diasRestantes' | 'historico' | 'status' | 'alteracoes'> & { numeroPedido?: string }): Promise<boolean> => {
+    if (!user) return false;
 
     const { numeroPedido, ...rest } = orderData;
     const dataHoje = formatBrasiliaDate();
@@ -552,12 +552,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data, error } = await supabase.from('orders').insert(dbRow).select().single();
     if (error) {
       console.error('Error adding order:', error);
-      return;
+      return false;
     }
 
     const mapped = dbRowToOrder(data);
     setOrders(prev => [mapped, ...prev]);
     setAllOrders(prev => [mapped, ...prev]);
+    return true;
   }, [user]);
 
   /* ───── Delete Order ───── */
