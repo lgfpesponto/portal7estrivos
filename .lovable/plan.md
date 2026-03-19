@@ -1,41 +1,35 @@
 
 
-## Plano: Corrigir carregamento infinito na página de Usuários
+## Plano: Corrigir Cadastro de Usuários e Salvamento de Pedidos
 
-### Problema
+### Problema 1 — Cadastro falha com "usuário já existe"
 
-A página `UsersManagementPage` não espera o estado de autenticação carregar. Quando monta, `isLoggedIn` ainda é `false` (auth carregando), então `isJuliana` é `false`, e o useEffect redireciona para `/` antes do auth terminar. Mesmo se não redirecionar, o componente retorna `null` prematuramente.
+Os logs mostram erros `400: Unable to validate email address: invalid format`. O sistema mapeia o nome de usuário para email (`usuario@7estrivos.app`), mas nomes com espaços ou caracteres especiais geram emails inválidos (ex: `joão silva@7estrivos.app`).
 
-### Solução
+**Solução em `src/contexts/AuthContext.tsx` → `register()`:**
+- Sanitizar o `nomeUsuario` antes de criar o email: remover espaços, acentos e caracteres especiais
+- Adicionar melhor tratamento de erro para mostrar mensagens mais claras ao usuário
 
-**Arquivo: `src/pages/UsersManagementPage.tsx`**
+**Solução em `src/pages/RegisterPage.tsx`:**
+- Sanitizar o campo `nomeUsuario` em tempo real no input (remover espaços, forçar lowercase, só alfanuméricos)
 
-1. Importar `loading` do `useAuth()`
-2. Enquanto `loading` for `true`, exibir spinner de carregamento (não redirecionar nem retornar null)
-3. Só verificar `isLoggedIn` e `isJuliana` após `loading === false`
-4. No useEffect, adicionar `loading` como dependência e só executar lógica quando `loading === false`
+### Problema 2 — Pedidos não são salvos
 
-```typescript
-const { isLoggedIn, user, loading: authLoading } = useAuth();
+As funções `confirmOrder` em `OrderPage.tsx`, `BeltOrderPage.tsx` e `ExtrasPage.tsx` chamam `addOrder()` (que é `async`) **sem `await`**. O código navega para `/relatorios` imediatamente, antes do INSERT no banco completar. Se houver erro, é silenciosamente ignorado.
 
-useEffect(() => {
-  if (authLoading) return; // esperar auth carregar
-  if (!isLoggedIn || !isJuliana) {
-    navigate('/');
-    return;
-  }
-  fetchProfiles();
-}, [isLoggedIn, isJuliana, authLoading]);
+**Solução nos 3 arquivos:**
+- Tornar `confirmOrder` `async` e fazer `await addOrder(...)`
+- Só navegar e mostrar toast de sucesso se o pedido foi salvo
+- Mostrar toast de erro se falhar
+- `addOrder` no AuthContext precisa retornar um boolean indicando sucesso/falha
 
-if (authLoading) {
-  return <div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div>;
-}
-if (!isLoggedIn || !isJuliana) return null;
-```
-
-### Arquivo alterado
+### Arquivos alterados
 
 | Arquivo | Alteração |
 |---|---|
-| `src/pages/UsersManagementPage.tsx` | Aguardar `loading` do auth antes de verificar permissões |
+| `src/contexts/AuthContext.tsx` | Sanitizar username no register; addOrder retornar boolean |
+| `src/pages/RegisterPage.tsx` | Sanitizar input de nomeUsuario em tempo real |
+| `src/pages/OrderPage.tsx` | `await addOrder()` + tratamento de erro |
+| `src/pages/BeltOrderPage.tsx` | `await addOrder()` + tratamento de erro |
+| `src/pages/ExtrasPage.tsx` | `await addOrder()` + tratamento de erro |
 
