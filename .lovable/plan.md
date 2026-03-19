@@ -1,81 +1,97 @@
 
 
-## Plano: Composição detalhada de extras no relatório de Cobrança
+## Plano: Relatórios Especializados para Extras/Cintos + Melhorias visuais de PDF
 
-### Problema
-Pedidos de extras no relatório de Cobrança mostram apenas uma linha com nome e valor total (linha 370-373 de `SpecializedReports.tsx`), sem detalhar os componentes que formam o preço.
+### Escopo
 
-### Solução
+4 blocos de mudanças em 2 arquivos principais:
 
-**Arquivo:** `src/components/SpecializedReports.tsx` (bloco `else if (o.tipoExtra && o.extraDetalhes)`, linhas 370-373)
+---
 
-Substituir o bloco genérico por composição detalhada por tipo de extra, usando `o.tipoExtra` e `o.extraDetalhes`:
+### 1. Novo tipo de relatório: `extras_cintos` no SpecializedReports
+
+**`src/components/SpecializedReports.tsx`**
+
+- Adicionar `'extras_cintos'` ao `ReportType` union e `REPORT_LABELS`
+- Novo estado: `filterTipoProduto` (cinto, kit_faca, kit_canivete, desmanchar, etc.), `filterCampos` (campos selecionáveis do produto), ambos com Select/Checkbox UI
+- Ao selecionar produto, exibir checkboxes com os campos relevantes daquele produto (usar mapa `PRODUCT_GROUPABLE_FIELDS`):
+  - kit_faca/kit_canivete: `tipoCouro`, `corCouro`, `vaiCanivete`
+  - desmanchar: `qualSola`, `trocaGaspea`
+  - cinto: `tamanhoCinto`, `bordadoP`, `nomeBordado`, `carimbo`
+  - tiras_laterais: `corTiras`
+  - gravata_country: `corTira`, `tipoMetal`
+  - etc.
+- `generateExtrasCintosPDF()`: filtra `sourceOrders` por `tipoExtra === filterTipoProduto`, agrupa por combinação dos campos selecionados, soma quantidade, gera PDF tabular com:
+  - Cabeçalho: nome do produto
+  - Tabela: colunas = campos selecionados + "Qtd Total"
+  - Linhas = cada combinação única com soma
+- Validar que pedidos tenham dados preenchidos antes de agrupar
+
+---
+
+### 2. Melhoria visual dos PDFs existentes (tabular com bordas)
+
+**`src/components/SpecializedReports.tsx`**
+
+Reformatar os PDFs de **Escalação**, **Forro**, **Pesponto** e **Bordados** para usar layout tabular com:
+- `doc.rect()` para bordas de cada linha
+- `doc.line()` para separadores verticais entre colunas
+- Cabeçalho com fundo cinza (`setFillColor`)
+- Alinhamento consistente (igual ao padrão já usado em Expedição/Cobrança)
+
+Os relatórios de Expedição e Cobrança já estão tabulares, não precisam de mudança.
+
+---
+
+### 3. Adicionar relatórios especializados no dropdown "GERAR RELATÓRIO" da ReportsPage
+
+**`src/pages/ReportsPage.tsx`** (linhas ~848-863, dropdown `showReportOptions`)
+
+- Para **admin**: adicionar botão "Relatórios Especializados" que renderiza o componente `SpecializedReports` inline (ou navega para seção) com os relatórios `['escalacao', 'forro', 'pesponto', 'bordados', 'expedicao', 'cobranca', 'extras_cintos']`
+- Para **revendedor**: manter apenas "Relatório por Filtros" no dropdown. Adicionar "Expedição" e "Cobrança" como opções (filtrados pelos pedidos do revendedor). **NÃO** mostrar relatórios especializados (extras_cintos, escalação, etc.)
+
+Implementação: renderizar `<SpecializedReports>` abaixo dos filtros na ReportsPage, passando os relatórios corretos por perfil:
+- Admin: `['escalacao', 'forro', 'pesponto', 'bordados', 'expedicao', 'cobranca', 'extras_cintos']`
+- Revendedor: `['expedicao', 'cobranca']`
+
+---
+
+### 4. Mapa de campos agrupáveis por produto
+
+Constante no `SpecializedReports.tsx`:
 
 ```typescript
-} else if (o.tipoExtra && o.extraDetalhes) {
-  const det = o.extraDetalhes as any;
-  const extraLabel = o.modelo.replace('Extra — ', '');
-  
-  switch (o.tipoExtra) {
-    case 'desmanchar': {
-      priceItems.push(['Desmanchar (base)', 65]);
-      if (det.qualSola === 'Preta borracha') priceItems.push(['Sola preta borracha', 25]);
-      else if (det.qualSola === 'De cor borracha') priceItems.push(['Sola de cor borracha', 40]);
-      else if (det.qualSola === 'De couro') priceItems.push(['Sola de couro', 60]);
-      if (det.trocaGaspea === 'Sim') priceItems.push(['Troca Gáspea/Taloneira', 35]);
-      break;
-    }
-    case 'kit_canivete': {
-      priceItems.push(['Kit Canivete', 30]);
-      if (det.vaiCanivete === 'Sim') priceItems.push(['Com canivete', 30]);
-      break;
-    }
-    case 'kit_faca': {
-      priceItems.push(['Kit Faca', 35]);
-      if (det.vaiCanivete === 'Sim') priceItems.push(['Com faca', 35]);
-      break;
-    }
-    case 'carimbo_fogo': {
-      const qty = parseInt(det.qtdCarimbos) || 1;
-      priceItems.push([`Carimbo a Fogo (${qty} un.)`, qty >= 4 ? 40 : 20]);
-      break;
-    }
-    case 'revitalizador': {
-      const qty = parseInt(det.quantidade) || 1;
-      priceItems.push([`Revitalizador (${qty} un.)`, 10 * qty]);
-      break;
-    }
-    case 'kit_revitalizador': {
-      const qty = parseInt(det.quantidade) || 1;
-      priceItems.push([`Kit 2 Revitalizador (${qty} un.)`, 26 * qty]);
-      break;
-    }
-    case 'adicionar_metais': {
-      const sel = det.metaisSelecionados || [];
-      if (sel.includes('Bola grande')) priceItems.push(['Bola grande', 15]);
-      if (sel.includes('Strass')) {
-        const qtd = parseInt(det.qtdStrass) || 1;
-        priceItems.push([`Strass (${qtd} un.)`, 0.60 * qtd]);
-      }
-      break;
-    }
-    case 'bota_pronta_entrega': {
-      priceItems.push([det.descricaoProduto || 'Bota Pronta Entrega', parseFloat(det.valorManual) || o.preco]);
-      break;
-    }
-    default:
-      // tiras_laterais, gravata_country, chaveiro_carimbo, bainha_cartao, regata
-      priceItems.push([extraLabel, o.preco]);
-      break;
-  }
-}
+const PRODUCT_GROUPABLE_FIELDS: Record<string, { key: string; label: string }[]> = {
+  cinto: [
+    { key: 'tamanhoCinto', label: 'Tamanho' },
+    { key: 'bordadoP', label: 'Bordado P' },
+    { key: 'nomeBordado', label: 'Nome Bordado' },
+    { key: 'carimbo', label: 'Carimbo' },
+  ],
+  kit_faca: [
+    { key: 'tipoCouro', label: 'Tipo de Couro' },
+    { key: 'corCouro', label: 'Cor do Couro' },
+    { key: 'vaiCanivete', label: 'Vai a Faca' },
+  ],
+  kit_canivete: [
+    { key: 'tipoCouro', label: 'Tipo de Couro' },
+    { key: 'corCouro', label: 'Cor do Couro' },
+    { key: 'vaiCanivete', label: 'Vai o Canivete' },
+  ],
+  desmanchar: [
+    { key: 'qualSola', label: 'Sola' },
+    { key: 'trocaGaspea', label: 'Troca Gáspea' },
+  ],
+  // ... demais produtos
+};
 ```
 
-Extras simples com preço fixo (tiras, gravata, chaveiro, bainha, regata) continuam em uma linha, pois não têm composição. Extras compostos (desmanchar, kits, carimbo, metais) mostram cada componente com seu valor.
+---
 
 ### Arquivos alterados
 
 | Arquivo | Alteração |
 |---|---|
-| `src/components/SpecializedReports.tsx` | Substituir bloco genérico de extras por composição detalhada por tipo |
+| `src/components/SpecializedReports.tsx` | Novo relatório `extras_cintos` com filtro por produto + campos + agrupamento; melhoria visual tabular nos PDFs de Escalação, Forro, Pesponto e Bordados |
+| `src/pages/ReportsPage.tsx` | Adicionar `<SpecializedReports>` na página com relatórios corretos por perfil (admin vs revendedor) |
 
