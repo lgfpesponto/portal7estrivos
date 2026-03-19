@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth, businessDaysRemaining, formatBrasiliaDate, formatBrasiliaTime } from '@/contexts/AuthContext';
+import { useAuth, businessDaysRemaining, formatBrasiliaDate, formatBrasiliaTime, orderBarcodeValue } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CheckCircle2, Clock, History } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock, History, ScanBarcode } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -19,12 +19,32 @@ import { EXTRA_PRODUCT_NAME_MAP, EXTRA_DETAIL_LABELS, EXTRA_INTERNAL_KEYS, isExt
 
 const OrderDetailPage = () => {
   const { id } = useParams();
-  const { orders, isAdmin, user, updateOrder, isFernanda } = useAuth();
+  const { orders, isAdmin, user, updateOrder, isFernanda, allOrders } = useAuth();
   const navigate = useNavigate();
   const order = orders.find(o => o.id === id);
 
   const [descontoInput, setDescontoInput] = useState('');
   const [justificativaInput, setJustificativaInput] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanValue, setScanValue] = useState('');
+  const scanInputRef = useRef<HTMLInputElement>(null);
+
+  const handleScanSubmit = useCallback(() => {
+    if (!scanValue.trim()) return;
+    const cleanVal = scanValue.trim().replace(/\D/g, '');
+    const sourceOrders = isAdmin ? allOrders : orders;
+    const match = sourceOrders.find(o => {
+      const bcVal = orderBarcodeValue(o.numero);
+      return bcVal === cleanVal || o.numero === scanValue.trim() || o.numero.replace(/\D/g, '') === cleanVal;
+    });
+    if (match) {
+      setScanValue('');
+      setShowScanner(false);
+      navigate('/pedido/' + match.id);
+    } else {
+      setScanValue('');
+    }
+  }, [scanValue, isAdmin, allOrders, orders, navigate]);
 
   if (!order) {
     return (
@@ -147,9 +167,27 @@ const OrderDetailPage = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
-          <ArrowLeft size={16} /> Voltar
-        </button>
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft size={16} /> Voltar
+          </button>
+          <Button variant="outline" size="sm" onClick={() => { setShowScanner(!showScanner); setTimeout(() => scanInputRef.current?.focus(), 100); }}>
+            <ScanBarcode size={16} /> Escanear
+          </Button>
+        </div>
+        {showScanner && (
+          <div className="mb-4">
+            <input
+              ref={scanInputRef}
+              value={scanValue}
+              onChange={e => setScanValue(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleScanSubmit(); }}
+              placeholder="Escaneie o código de barras..."
+              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              autoFocus
+            />
+          </div>
+        )}
 
         <div className="bg-card rounded-xl p-6 md:p-8 western-shadow">
           {/* Header: order number + vendedor (admin only) + value */}

@@ -24,7 +24,7 @@ const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'curren
 function barcodeDataUrl(value: string, opts?: { width?: number; height?: number }): string {
   const canvas = document.createElement('canvas');
   try {
-    JsBarcode(canvas, value, { format: 'CODE128', width: opts?.width ?? 1, height: opts?.height ?? 30, displayValue: false, margin: 2 });
+    JsBarcode(canvas, value, { format: 'CODE128', width: opts?.width ?? 2, height: opts?.height ?? 50, displayValue: false, margin: 2 });
     return canvas.toDataURL('image/png');
   } catch { return ''; }
 }
@@ -446,7 +446,7 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
       doc.text(o.numero, cx[0] + 2, y + 6);
 
       const bcVal = orderBarcodeValue(o.numero);
-      const bcUrl = barcodeDataUrl(bcVal, { width: 1, height: 20 });
+      const bcUrl = barcodeDataUrl(bcVal, { width: 2, height: 40 });
       if (bcUrl) {
         try { doc.addImage(bcUrl, 'PNG', cx[1] + 2, y + 2, cols[1] - 4, 10); } catch {}
       }
