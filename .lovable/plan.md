@@ -1,64 +1,83 @@
 
 
-## Plano: Atualização dos Bordados — Listas separadas por região + Bordado Variado com descrição
+## Plano: Migração para Banco de Dados Persistente + Limpeza de Dados
 
 ### Resumo
 
-Substituir a lista única `BORDADOS` por 3 listas separadas (`BORDADOS_CANO`, `BORDADOS_GASPEA`, `BORDADOS_TALONEIRA`) com valores e opções distintos, adicionar "Bordado Variado R$5/R$10" com campo de descrição obrigatório, e ajustar a ficha impressa para exibir apenas a descrição quando for Variado.
+Migrar todo o sistema de armazenamento em memória (React state) para o banco de dados persistente via Lovable Cloud, mantendo o layout, navegação e lógica existentes intactos. Limpar dados mock, manter apenas os 3 usuários especificados, e garantir que todos os novos cadastros e pedidos sejam persistidos.
 
 ---
 
-### 1. Nova configuração em `src/lib/orderFieldsConfig.ts`
+### 1. Criar tabelas no banco de dados
 
-Remover os antigos `Bordado Variado R$15/20/30/40/50` e criar 3 constantes:
+**Tabela `profiles`** — dados do usuário
+- `id` (uuid, FK auth.users ON DELETE CASCADE)
+- `nome_completo`, `nome_usuario` (unique), `telefone`, `email`, `cpf_cnpj`
+- `created_at`
 
-**BORDADOS_CANO:**
-Florência R$25, Linhas R$25 (novo), Peão Elite G R$35, Velho Barreiro R$70, Rozeta R$35, Nelore R$25, Cruz Bordada R$25, Milionário R$35, Monster R$35, Cruz Básica R$25, Mulas R$25, Ramos R$25 (novo), + itens não mencionados mantidos (Peão Elite P, N. Senhora, Logo Marca, N. Senhora P, Rozeta P, Cruz P, Monster P, Bandeira P), + Bordado Variado R$5, Bordado Variado R$10
+**Tabela `user_roles`** — controle de admin
+- `id` (uuid), `user_id` (FK auth.users), `role` (enum: admin, user)
+- Unique(user_id, role)
 
-Removidos do cano: Meia Florência, Florão Básico, Florão B
+**Tabela `orders`** — pedidos com todos os ~60 campos
+- Todas as colunas do tipo `Order` atual como colunas individuais
+- `user_id` (FK auth.users) — quem criou o pedido
+- `fotos` (jsonb), `historico` (jsonb), `alteracoes` (jsonb), `extra_detalhes` (jsonb)
 
-**BORDADOS_GASPEA:**
-Florência R$15, Peão Elite G R$20, Nelore R$15, Mulas R$15, Cruz Bordada R$15, Milionário R$20, Monster R$20, Cruz Básica R$15, Rozeta R$20, N. Senhora R$20, Velho Barreiro R$35, + itens não mencionados (Peão Elite P, Logo Marca, N. Senhora P, Rozeta P, Cruz P, Monster P, Bandeira P), + Bordado Variado R$5, Bordado Variado R$10
+**Função `has_role`** (security definer) para RLS sem recursão.
 
-Removidos da gáspea: Meia Florência, Florão B
-
-**BORDADOS_TALONEIRA:**
-Florência R$10, Nelore R$10, Mulas R$10, Cruz Bordada R$10, + itens não mencionados (Peão Elite P, Logo Marca, N. Senhora P, Rozeta P, Cruz P, Monster P, Bandeira P), + Bordado Variado R$5, Bordado Variado R$10
-
-Removidos da taloneira: Meia Florência, Peão Elite G, Florão B, Florão Básico, Milionário, Monster, Cruz Básica, Rozeta, N. Senhora, Velho Barreiro
-
-Manter `BORDADOS` original (para compatibilidade com relatórios que buscam preço por label — ajustar lookup para usar a lista correta por região).
-
----
-
-### 2. Campos de descrição do Bordado Variado
-
-**`src/contexts/AuthContext.tsx`** — Adicionar campos opcionais ao tipo `Order`:
-- `bordadoVariadoDescCano?: string`
-- `bordadoVariadoDescGaspea?: string`
-- `bordadoVariadoDescTaloneira?: string`
-
-**`src/pages/OrderPage.tsx`** e **`src/pages/EditOrderPage.tsx`**:
-- Novos estados: `bordadoVariadoDescCano`, `bordadoVariadoDescGaspea`, `bordadoVariadoDescTaloneira`
-- Trocar `items={BORDADOS}` por `items={BORDADOS_CANO}`, `BORDADOS_GASPEA`, `BORDADOS_TALONEIRA`
-- Após cada MultiSelect de bordado, se algum item selecionado contém "Bordado Variado", mostrar input obrigatório "Descrever bordado"
-- Na validação: se Bordado Variado selecionado e descrição vazia, bloquear envio
-- No `confirmOrder`: incluir os 3 novos campos no objeto
-- Atualizar cálculo de preço: buscar preço na lista específica da região (BORDADOS_CANO, BORDADOS_GASPEA, BORDADOS_TALONEIRA)
+**RLS:**
+- `profiles`: usuários leem/editam apenas seu próprio perfil; admins leem todos
+- `orders`: admins leem/editam todos; revendedores leem/editam apenas seus próprios (via `user_id = auth.uid()`)
+- `user_roles`: somente leitura para o próprio usuário
 
 ---
 
-### 3. Ficha de produção impressa (PDF)
+### 2. Seed de usuários administradores e demo
 
-**`src/pages/ReportsPage.tsx`** — Na seção BORDADOS da ficha:
-- Ao montar o texto do bordado de cada região, substituir "Bordado Variado R$5" / "Bordado Variado R$10" pelo conteúdo de `bordadoVariadoDescCano` (ou Gaspea/Taloneira)
-- Exemplo: se bordadoCano = "Florência, Bordado Variado R$10" e bordadoVariadoDescCano = "Cruz com rosas", exibir: "florência, cruz com rosas"
+Criar via Supabase Auth (com auto-confirm habilitado temporariamente para seed):
+1. **7estrivos** → email interno `7estrivos@7estrivos.app`, senha `admin123`, role `admin`
+2. **fernanda** → email interno `fernanda@7estrivos.app`, senha `admin123`, role `admin`
+3. **demo** → email interno `demo@7estrivos.app`, senha `123456`, role `user`
+
+Inserir profiles correspondentes com os dados atuais (nome completo, telefone, etc.).
 
 ---
 
-### 4. Relatórios especializados
+### 3. Reescrever `AuthContext.tsx`
 
-**`src/components/SpecializedReports.tsx`** — Mesma lógica de substituição do Variado pela descrição na exibição. Atualizar lookup de preços nos relatórios de cobrança para usar as listas corretas por região.
+Manter a mesma interface (`useAuth`) para não alterar nenhuma página consumidora.
+
+**Mudanças internas:**
+- `login()`: chama `supabase.auth.signInWithPassword()` usando `username@7estrivos.app` como email
+- `register()`: chama `supabase.auth.signUp()` + insere profile
+- `logout()`: chama `supabase.auth.signOut()`
+- `user`: carregado do profile via `onAuthStateChange`
+- `isAdmin`: consultado via `has_role()` ou join com `user_roles`
+- `orders` / `allOrders`: queries ao banco com RLS (admin vê tudo, revendedor vê só seus)
+- `addOrder()`: INSERT no banco
+- `updateOrder()`: UPDATE no banco + registra alterações
+- `updateOrderStatus()`: UPDATE status + append historico/alteracoes
+- `deleteOrder()`: DELETE no banco
+- `updateProfile()`: UPDATE na tabela profiles
+- `recoverPassword()`: valida CPF/CNPJ no banco + reset via Supabase Auth
+
+Remover: `generateMockOrders()`, array `registeredUsers`, todo state in-memory.
+
+---
+
+### 4. Ajustar `drafts.ts`
+
+Manter rascunhos em localStorage (já funciona por usuário). Nenhuma mudança necessária — os IDs de usuário continuarão consistentes pois virão do auth.
+
+---
+
+### 5. Validação final
+
+- Verificar que OrderPage, EditOrderPage, BeltOrderPage, ExtrasPage funcionam com as mesmas chamadas (`addOrder`, `updateOrder`)
+- Verificar que ReportsPage e SpecializedReports continuam usando `orders` e `allOrders` do contexto
+- Verificar que TrackOrderPage, OrderDetailPage, Index, ProfilePage continuam funcionando
+- Nenhuma página precisa de alteração além do AuthContext — a interface se mantém idêntica
 
 ---
 
@@ -66,10 +85,19 @@ Manter `BORDADOS` original (para compatibilidade com relatórios que buscam pre�
 
 | Arquivo | Alteração |
 |---|---|
-| `src/lib/orderFieldsConfig.ts` | 3 novas constantes BORDADOS_CANO/GASPEA/TALONEIRA com valores atualizados |
-| `src/contexts/AuthContext.tsx` | 3 novos campos opcionais no tipo Order |
-| `src/pages/OrderPage.tsx` | Listas separadas, campo descrição variado, validação, cálculo de preço |
-| `src/pages/EditOrderPage.tsx` | Idem OrderPage |
-| `src/pages/ReportsPage.tsx` | Substituir Variado pela descrição na ficha impressa + lookup de preço por região |
-| `src/components/SpecializedReports.tsx` | Idem na exibição e cálculo |
+| **Migração SQL** | Criar tabelas profiles, user_roles, orders + RLS + função has_role |
+| **Edge Function** (seed) | Criar usuários admin e demo no auth + profiles |
+| `src/contexts/AuthContext.tsx` | Reescrever para usar Supabase Auth + banco de dados, mantendo a mesma interface |
+
+### Arquivos NÃO alterados
+
+Todas as páginas (OrderPage, EditOrderPage, ReportsPage, Index, TrackOrderPage, etc.) continuam iguais pois consomem a mesma interface `useAuth()`.
+
+---
+
+### Riscos e mitigações
+
+- **Login por username**: Supabase Auth usa email — mapeamos internamente `username@7estrivos.app`
+- **Performance**: queries de orders podem ser lentas com muitos pedidos — adicionar índices em `user_id`, `status`, `numero`
+- **Fotos**: atualmente armazenadas como base64 no state — serão armazenadas como JSONB (array de strings). Se forem grandes, futuramente migrar para Storage.
 
