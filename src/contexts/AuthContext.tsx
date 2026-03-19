@@ -465,7 +465,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   /* ───── Register ───── */
   const register = useCallback(async (data: Omit<User, 'id' | 'isAdmin'> & { senha: string }): Promise<boolean> => {
-    const email = `${data.nomeUsuario.toLowerCase()}@7estrivos.app`;
+    const sanitized = data.nomeUsuario
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+    if (!sanitized) return false;
+    const email = `${sanitized}@7estrivos.app`;
     const { error } = await supabase.auth.signUp({
       email,
       password: data.senha,
@@ -479,6 +484,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       },
     });
+    if (error) console.error('Register error:', error.message);
     return !error;
   }, []);
 
