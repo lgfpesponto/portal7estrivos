@@ -110,7 +110,28 @@ const ExtrasPage = () => {
     }
 
     const price = calcPrice(productId);
-    const detalhes: Record<string, any> = { ...form };
+
+    // Only save fields relevant to this specific product
+    const PRODUCT_FIELDS: Record<string, string[]> = {
+      tiras_laterais: ['corTiras'],
+      desmanchar: ['qualSola', 'trocaGaspea'],
+      kit_canivete: ['tipoCouro', 'corCouro', 'vaiCanivete'],
+      kit_faca: ['tipoCouro', 'corCouro', 'vaiCanivete'],
+      carimbo_fogo: ['qtdCarimbos', 'descCarimbos', 'ondeAplicado'],
+      revitalizador: ['tipoRevitalizador', 'quantidade'],
+      kit_revitalizador: ['tipoRevitalizador', 'quantidade'],
+      gravata_country: ['corTira', 'tipoMetal', 'corBridao'],
+      adicionar_metais: ['metaisSelecionados', 'qtdStrass'],
+      chaveiro_carimbo: ['tipoCouro', 'corCouro', 'descCarimbos'],
+      bainha_cartao: ['tipoCouro', 'corCouro'],
+      regata: ['corRegata', 'descBordadoRegata'],
+      bota_pronta_entrega: ['descricaoProduto', 'valorManual'],
+    };
+    const relevantKeys = PRODUCT_FIELDS[productId] || [];
+    const detalhes: Record<string, any> = {};
+    for (const key of relevantKeys) {
+      if (form[key] !== undefined && form[key] !== '') detalhes[key] = form[key];
+    }
 
     addOrder({
       vendedor: user?.nomeCompleto || '',
