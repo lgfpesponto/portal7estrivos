@@ -295,7 +295,7 @@ const OrderPage = () => {
       [corVivo, 'Cor do Vivo'],
       [solado, 'Tipo do Solado'],
       [formatoBico, 'Formato do Bico'],
-      [corSola, 'Cor da Sola'],
+      ...(getCorSolaOptions(modelo, solado, formatoBico) !== null ? [[corSola, 'Cor da Sola'] as [string, string]] : []),
       [corVira, 'Cor da Vira'],
     ];
     const missing = required.filter(([val]) => !val);
