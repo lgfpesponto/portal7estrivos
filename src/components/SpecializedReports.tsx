@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import jsPDF from 'jspdf';
 import JsBarcode from 'jsbarcode';
 import {
-  MODELOS, ACESSORIOS, BORDADOS, COURO_PRECOS, SOLADO, COR_SOLA, COR_VIRA,
+  MODELOS, ACESSORIOS, BORDADOS_CANO, BORDADOS_GASPEA, BORDADOS_TALONEIRA, COURO_PRECOS, SOLADO, COR_SOLA, COR_VIRA,
   CARIMBO, AREA_METAL, DESENVOLVIMENTO,
   SOB_MEDIDA_PRECO, NOME_BORDADO_PRECO, ESTAMPA_PRECO, PINTURA_PRECO,
   TRICE_PRECO, TIRAS_PRECO, COSTURA_ATRAS_PRECO, STRASS_PRECO, CRUZ_METAL_PRECO,
@@ -593,10 +593,16 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
         });
         const desenvP = DESENVOLVIMENTO.find(d => d.label === o.desenvolvimento)?.preco;
         if (desenvP) priceItems.push(['Desenvolvimento: ' + o.desenvolvimento, desenvP]);
-        [o.bordadoCano, o.bordadoGaspea, o.bordadoTaloneira].forEach(bStr => {
+        // Bordados — use region-specific price lists
+        const bordadoLists: [string | undefined, typeof BORDADOS_CANO][] = [
+          [o.bordadoCano, BORDADOS_CANO],
+          [o.bordadoGaspea, BORDADOS_GASPEA],
+          [o.bordadoTaloneira, BORDADOS_TALONEIRA],
+        ];
+        bordadoLists.forEach(([bStr, list]) => {
           if (bStr) bStr.split(', ').filter(Boolean).forEach(b => {
-            const p = BORDADOS.find(x => x.label === b)?.preco;
-            if (p) priceItems.push([b, p]);
+            const p = list.find(x => x.label === b)?.preco;
+            if (p) priceItems.push([b.includes('Bordado Variado') ? (b + ' (variado)') : b, p]);
           });
         });
         if (o.nomeBordadoDesc || o.personalizacaoNome) priceItems.push(['Nome Bordado', NOME_BORDADO_PRECO]);

@@ -7,7 +7,7 @@ import { saveDraft, deleteDraft, Draft } from '@/lib/drafts';
 import { Link2, X, Eye } from 'lucide-react';
 import {
   MODELOS, TAMANHOS, GENEROS, ACESSORIOS, TIPOS_COURO, CORES_COURO, COURO_PRECOS,
-  BORDADOS, LASER_OPTIONS, LASER_CANO_PRECO, LASER_GASPEA_PRECO, LASER_TALONEIRA_PRECO,
+  BORDADOS_CANO, BORDADOS_GASPEA, BORDADOS_TALONEIRA, LASER_OPTIONS, LASER_CANO_PRECO, LASER_GASPEA_PRECO, LASER_TALONEIRA_PRECO,
   GLITTER_CANO_PRECO, GLITTER_GASPEA_PRECO, GLITTER_TALONEIRA_PRECO,
   COR_GLITTER, COR_LINHA, COR_BORRACHINHA,
   COR_VIVO, DESENVOLVIMENTO, AREA_METAL, TIPO_METAL, COR_METAL,
@@ -117,6 +117,11 @@ const OrderPage = () => {
   const [corBordadoGaspea, setCorBordadoGaspea] = useState(df.corBordadoGaspea || '');
   const [bordadoTaloneira, setBordadoTaloneira] = useState<string[]>(df.bordadoTaloneira ? df.bordadoTaloneira.split('||') : []);
   const [corBordadoTaloneira, setCorBordadoTaloneira] = useState(df.corBordadoTaloneira || '');
+
+  // bordado variado descriptions
+  const [bordadoVariadoDescCano, setBordadoVariadoDescCano] = useState(df.bordadoVariadoDescCano || '');
+  const [bordadoVariadoDescGaspea, setBordadoVariadoDescGaspea] = useState(df.bordadoVariadoDescGaspea || '');
+  const [bordadoVariadoDescTaloneira, setBordadoVariadoDescTaloneira] = useState(df.bordadoVariadoDescTaloneira || '');
 
   // nome bordado
   const [nomeBordado, setNomeBordado] = useState(df.nomeBordado === 'true');
@@ -263,8 +268,10 @@ const OrderPage = () => {
   const acessoriosPreco = acessorios.reduce((sum, a) => sum + (ACESSORIOS.find(x => x.label === a)?.preco || 0), 0);
   const couroPreco = [tipoCouroCano, tipoCouroGaspea, tipoCouroTaloneira]
     .reduce((sum, t) => sum + (COURO_PRECOS[t] || 0), 0);
-  const bordadoPreco = [...bordadoCano, ...bordadoGaspea, ...bordadoTaloneira]
-    .reduce((sum, b) => sum + (BORDADOS.find(x => x.label === b)?.preco || 0), 0);
+  const bordadoPreco =
+    bordadoCano.reduce((sum, b) => sum + (BORDADOS_CANO.find(x => x.label === b)?.preco || 0), 0) +
+    bordadoGaspea.reduce((sum, b) => sum + (BORDADOS_GASPEA.find(x => x.label === b)?.preco || 0), 0) +
+    bordadoTaloneira.reduce((sum, b) => sum + (BORDADOS_TALONEIRA.find(x => x.label === b)?.preco || 0), 0);
 
   const laserCanoPreco = laserCano.length > 0 ? LASER_CANO_PRECO : 0;
   const glitterCanoPreco = corGlitterCano ? GLITTER_CANO_PRECO : 0;
@@ -333,6 +340,17 @@ const OrderPage = () => {
       toast.error(`Preencha os campos obrigatórios: ${missing.map(([, l]) => l).join(', ')}`);
       return;
     }
+    // Validate bordado variado descriptions
+    const variadoChecks: [string[], string, string][] = [
+      [bordadoCano, bordadoVariadoDescCano, 'Descrição do Bordado Variado (Cano)'],
+      [bordadoGaspea, bordadoVariadoDescGaspea, 'Descrição do Bordado Variado (Gáspea)'],
+      [bordadoTaloneira, bordadoVariadoDescTaloneira, 'Descrição do Bordado Variado (Taloneira)'],
+    ];
+    const missingVariado = variadoChecks.filter(([sel, desc]) => sel.some(s => s.includes('Bordado Variado')) && !desc.trim());
+    if (missingVariado.length > 0) {
+      toast.error(`Preencha: ${missingVariado.map(([,, l]) => l).join(', ')}`);
+      return;
+    }
     // Validate toggle descriptions (TEM requires description)
     const toggleChecks: [boolean, string, string][] = [
       [sobMedida, sobMedidaDesc, 'Sob Medida'],
@@ -365,6 +383,7 @@ const OrderPage = () => {
       bordadoCano: bordadoCano.join(', '), bordadoGaspea: bordadoGaspea.join(', '),
       bordadoTaloneira: bordadoTaloneira.join(', '),
       corBordadoCano, corBordadoGaspea, corBordadoTaloneira,
+      bordadoVariadoDescCano, bordadoVariadoDescGaspea, bordadoVariadoDescTaloneira,
       nomeBordadoDesc: nomeBordado ? nomeBordadoDesc : '',
       laserCano: laserCano.map(l => l === 'Outro' && laserOutroCanoText ? laserOutroCanoText : l).join(', '), corGlitterCano,
       laserGaspea: laserGaspea.map(l => l === 'Outro' && laserOutroGaspeaText ? laserOutroGaspeaText : l).join(', '), corGlitterGaspea,
@@ -404,6 +423,7 @@ const OrderPage = () => {
       bordadoCano: bordadoCano.join('||'), corBordadoCano,
       bordadoGaspea: bordadoGaspea.join('||'), corBordadoGaspea,
       bordadoTaloneira: bordadoTaloneira.join('||'), corBordadoTaloneira,
+      bordadoVariadoDescCano, bordadoVariadoDescGaspea, bordadoVariadoDescTaloneira,
       nomeBordado: String(nomeBordado), nomeBordadoDesc,
       laserCano: laserCano.join('||'), corGlitterCano,
       laserGaspea: laserGaspea.join('||'), corGlitterGaspea,
@@ -548,13 +568,22 @@ const OrderPage = () => {
 
           {/* 8-13 Bordados */}
           <Section title="Bordados">
-            <MultiSelect label="Bordado do Cano" items={BORDADOS} selected={bordadoCano} onChange={setBordadoCano} />
+            <MultiSelect label="Bordado do Cano" items={BORDADOS_CANO} selected={bordadoCano} onChange={setBordadoCano} />
+            {bordadoCano.some(b => b.includes('Bordado Variado')) && (
+              <div><label className={cls.label}>Descrever bordado (Cano)<span className="text-destructive ml-0.5">*</span></label><input type="text" value={bordadoVariadoDescCano} onChange={e => setBordadoVariadoDescCano(e.target.value)} placeholder="Descreva o bordado variado..." className={cls.input} /></div>
+            )}
             <div><label className={cls.label}>Cor do Bordado do Cano</label><input type="text" value={corBordadoCano} onChange={e => setCorBordadoCano(e.target.value)} className={cls.input} /></div>
 
-            <MultiSelect label="Bordado da Gáspea" items={BORDADOS} selected={bordadoGaspea} onChange={setBordadoGaspea} />
+            <MultiSelect label="Bordado da Gáspea" items={BORDADOS_GASPEA} selected={bordadoGaspea} onChange={setBordadoGaspea} />
+            {bordadoGaspea.some(b => b.includes('Bordado Variado')) && (
+              <div><label className={cls.label}>Descrever bordado (Gáspea)<span className="text-destructive ml-0.5">*</span></label><input type="text" value={bordadoVariadoDescGaspea} onChange={e => setBordadoVariadoDescGaspea(e.target.value)} placeholder="Descreva o bordado variado..." className={cls.input} /></div>
+            )}
             <div><label className={cls.label}>Cor do Bordado da Gáspea</label><input type="text" value={corBordadoGaspea} onChange={e => setCorBordadoGaspea(e.target.value)} className={cls.input} /></div>
 
-            <MultiSelect label="Bordado da Taloneira" items={BORDADOS} selected={bordadoTaloneira} onChange={setBordadoTaloneira} />
+            <MultiSelect label="Bordado da Taloneira" items={BORDADOS_TALONEIRA} selected={bordadoTaloneira} onChange={setBordadoTaloneira} />
+            {bordadoTaloneira.some(b => b.includes('Bordado Variado')) && (
+              <div><label className={cls.label}>Descrever bordado (Taloneira)<span className="text-destructive ml-0.5">*</span></label><input type="text" value={bordadoVariadoDescTaloneira} onChange={e => setBordadoVariadoDescTaloneira(e.target.value)} placeholder="Descreva o bordado variado..." className={cls.input} /></div>
+            )}
             <div><label className={cls.label}>Cor do Bordado da Taloneira</label><input type="text" value={corBordadoTaloneira} onChange={e => setCorBordadoTaloneira(e.target.value)} className={cls.input} /></div>
           </Section>
 
