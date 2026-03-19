@@ -131,7 +131,7 @@ const BeltOrderPage = () => {
 
   const confirmOrder = () => {
     const extraDetalhes: Record<string, any> = {
-      tamanhoCinto: `${tamanho} (${formatCurrency(tamanhoPreco)})`,
+      tamanhoCinto: tamanho,
       tipoCouro,
       corCouro,
     };
