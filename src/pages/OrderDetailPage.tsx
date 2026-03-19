@@ -25,6 +25,26 @@ const OrderDetailPage = () => {
 
   const [descontoInput, setDescontoInput] = useState('');
   const [justificativaInput, setJustificativaInput] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanValue, setScanValue] = useState('');
+  const scanInputRef = useRef<HTMLInputElement>(null);
+
+  const handleScanSubmit = useCallback(() => {
+    if (!scanValue.trim()) return;
+    const cleanVal = scanValue.trim().replace(/\D/g, '');
+    const sourceOrders = isAdmin ? allOrders : orders;
+    const match = sourceOrders.find(o => {
+      const bcVal = orderBarcodeValue(o.numero);
+      return bcVal === cleanVal || o.numero === scanValue.trim() || o.numero.replace(/\D/g, '') === cleanVal;
+    });
+    if (match) {
+      setScanValue('');
+      setShowScanner(false);
+      navigate('/pedido/' + match.id);
+    } else {
+      setScanValue('');
+    }
+  }, [scanValue, isAdmin, allOrders, orders, navigate]);
 
   if (!order) {
     return (
