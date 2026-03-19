@@ -462,10 +462,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [loadProfile, loadOrders]);
 
   /* ───── Login ───── */
-  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
-    const email = `${username.toLowerCase()}@7estrivos.app`;
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return !error;
+  const login = useCallback(async (username: string, password: string): Promise<'ok' | 'verify' | 'error'> => {
+    const sanitized = username.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+    const email = `${sanitized}@7estrivos.app`;
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return 'error';
+
+    // Check if verified
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('verificado')
+      .eq('id', authData.user.id)
+      .single();
+
+    const verificado = (profile as any)?.verificado ?? true;
+    setNeedsVerification(!verificado);
+    return verificado ? 'ok' : 'verify';
   }, []);
 
   /* ───── Register ───── */
