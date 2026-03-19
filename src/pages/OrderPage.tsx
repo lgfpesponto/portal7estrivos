@@ -424,6 +424,7 @@ const OrderPage = () => {
       bordadoCano: bordadoCano.join('||'), corBordadoCano,
       bordadoGaspea: bordadoGaspea.join('||'), corBordadoGaspea,
       bordadoTaloneira: bordadoTaloneira.join('||'), corBordadoTaloneira,
+      bordadoVariadoDescCano, bordadoVariadoDescGaspea, bordadoVariadoDescTaloneira,
       nomeBordado: String(nomeBordado), nomeBordadoDesc,
       laserCano: laserCano.join('||'), corGlitterCano,
       laserGaspea: laserGaspea.join('||'), corGlitterGaspea,
