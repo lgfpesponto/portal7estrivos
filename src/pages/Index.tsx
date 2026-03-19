@@ -165,6 +165,7 @@ const Index = () => {
       {user?.id === 'admin-1' && (() => {
         const FINAL_STAGES = ['Expedição', 'Entregue', 'Cobrado', 'Pago'];
         const alertOrders = sourceOrders.filter(o => {
+          if (o.tipoExtra) return false; // extras have no production deadline
           const overdue = o.diasRestantes === 0 && !FINAL_STAGES.includes(o.status);
           const regressed = o.historico.some(h => FINAL_STAGES.includes(h.local)) && !FINAL_STAGES.includes(o.status);
           return overdue || regressed;
