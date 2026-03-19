@@ -1,4 +1,5 @@
 import { useAuth, PRODUCTION_STATUSES, PRODUCTION_STATUSES_USER, EXTRAS_STATUSES, orderBarcodeValue } from '@/contexts/AuthContext';
+import { EXTRA_PRODUCTS, EXTRA_PRODUCT_NAME_MAP } from '@/lib/extrasConfig';
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
@@ -36,7 +37,7 @@ const ReportsPage = () => {
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVendedor, setFilterVendedor] = useState('');
-  const [filterProduto, setFilterProduto] = useState<Set<string>>(new Set(['bota', 'extras']));
+  const [filterProduto, setFilterProduto] = useState<Set<string>>(new Set(['bota', ...EXTRA_PRODUCTS.map(p => p.id)]));
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Bulk progress modal
@@ -50,7 +51,7 @@ const ReportsPage = () => {
   const [scanValue, setScanValue] = useState('');
 
   const [appliedFilters, setAppliedFilters] = useState({
-    searchQuery: '', filterDate: '', filterDateEnd: '', filterStatus: '', filterVendedor: '', filterProduto: new Set(['bota', 'extras']),
+    searchQuery: '', filterDate: '', filterDateEnd: '', filterStatus: '', filterVendedor: '', filterProduto: new Set(['bota', ...EXTRA_PRODUCTS.map(p => p.id)]),
   });
 
   const applyFilters = () => {
@@ -76,10 +77,12 @@ const ReportsPage = () => {
       if (appliedFilters.filterDate && o.dataCriacao < appliedFilters.filterDate) return false;
       if (appliedFilters.filterDateEnd && o.dataCriacao > appliedFilters.filterDateEnd) return false;
       if (appliedFilters.filterStatus && o.status !== appliedFilters.filterStatus) return false;
-      // Produto filter
-      const isExtra = !!o.tipoExtra;
-      if (isExtra && !appliedFilters.filterProduto.has('extras')) return false;
-      if (!isExtra && !appliedFilters.filterProduto.has('bota')) return false;
+      // Produto filter: bota or specific extra type
+      if (o.tipoExtra) {
+        if (!appliedFilters.filterProduto.has(o.tipoExtra)) return false;
+      } else {
+        if (!appliedFilters.filterProduto.has('bota')) return false;
+      }
       return true;
     });
   }, [displayOrders, appliedFilters]);
@@ -625,19 +628,22 @@ const ReportsPage = () => {
             )}
             <div>
               <label className="block text-xs font-semibold mb-1">Produto</label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => toggleProdutoFilter('bota')}
-                  className={`px-3 py-2 rounded-lg text-sm font-bold border-2 transition-colors ${filterProduto.has('bota') ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-border hover:border-primary'}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-colors ${filterProduto.has('bota') ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-border hover:border-primary'}`}
                 >
                   Bota
                 </button>
-                <button
-                  onClick={() => toggleProdutoFilter('extras')}
-                  className={`px-3 py-2 rounded-lg text-sm font-bold border-2 transition-colors ${filterProduto.has('extras') ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-border hover:border-primary'}`}
-                >
-                  Extras
-                </button>
+                {EXTRA_PRODUCTS.map(ep => (
+                  <button
+                    key={ep.id}
+                    onClick={() => toggleProdutoFilter(ep.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition-colors ${filterProduto.has(ep.id) ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-border hover:border-primary'}`}
+                  >
+                    {ep.nome}
+                  </button>
+                ))}
               </div>
             </div>
             <div className="flex items-end">
@@ -711,6 +717,7 @@ const ReportsPage = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <span className="font-display font-bold">{order.numero}</span>
+                    {order.tipoExtra && <span className="text-xs font-semibold text-primary ml-2">— {EXTRA_PRODUCT_NAME_MAP[order.tipoExtra] || order.tipoExtra}</span>}
                     {isAdmin && <span className="text-sm text-muted-foreground ml-2">— {order.vendedor}</span>}
                   </div>
                   <div className="flex items-center gap-4 text-sm flex-wrap">

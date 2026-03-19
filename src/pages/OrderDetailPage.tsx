@@ -15,6 +15,7 @@ import {
   BRIDAO_METAL_PRECO, LASER_CANO_PRECO, LASER_GASPEA_PRECO, GLITTER_CANO_PRECO, GLITTER_GASPEA_PRECO,
   VIRA_HIDDEN,
 } from '@/lib/orderFieldsConfig';
+import { EXTRA_PRODUCT_NAME_MAP, EXTRA_DETAIL_LABELS, EXTRA_INTERNAL_KEYS, isExtraValueEmpty } from '@/lib/extrasConfig';
 
 const OrderDetailPage = () => {
   const { id } = useParams();
@@ -218,26 +219,28 @@ const OrderDetailPage = () => {
 
           {/* Detalhes */}
           <h2 className="text-lg font-display font-bold mb-3">
-            {order.tipoExtra ? 'Detalhes do Extra' : 'Detalhes da Bota'}
+            {order.tipoExtra ? `Detalhes — ${EXTRA_PRODUCT_NAME_MAP[order.tipoExtra] || order.tipoExtra}` : 'Detalhes da Bota'}
           </h2>
           {order.tipoExtra && order.extraDetalhes ? (
             <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 mb-6">
               {order.numeroPedidoBota && (
                 <div className="flex justify-between py-1.5 border-b border-border/50">
-                  <span className="text-sm text-muted-foreground">Pedido da Bota</span>
+                  <span className="text-sm text-muted-foreground">Nº do Pedido</span>
                   <span className="text-sm font-semibold text-right">{order.numeroPedidoBota}</span>
                 </div>
               )}
-              {Object.entries(order.extraDetalhes).map(([key, val]) => {
-                if (!val || key === 'valor' || key === 'valorTotal') return null;
-                const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
-                return (
-                  <div key={key} className="flex justify-between py-1.5 border-b border-border/50">
-                    <span className="text-sm text-muted-foreground">{label}</span>
-                    <span className="text-sm font-semibold text-right max-w-[60%]">{String(val)}</span>
-                  </div>
-                );
-              })}
+              {Object.entries(order.extraDetalhes)
+                .filter(([key, val]) => !EXTRA_INTERNAL_KEYS.has(key) && !isExtraValueEmpty(val))
+                .map(([key, val]) => {
+                  const label = EXTRA_DETAIL_LABELS[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+                  const displayVal = Array.isArray(val) ? val.join(', ') : String(val);
+                  return (
+                    <div key={key} className="flex justify-between py-1.5 border-b border-border/50">
+                      <span className="text-sm text-muted-foreground">{label}</span>
+                      <span className="text-sm font-semibold text-right max-w-[60%]">{displayVal}</span>
+                    </div>
+                  );
+                })}
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 mb-6">
@@ -278,16 +281,102 @@ const OrderDetailPage = () => {
           {/* Composição do Pedido */}
           <h2 className="text-lg font-display font-bold mb-3">Composição do Pedido</h2>
           <div className="border border-border rounded-lg p-4 mb-2">
-            {priceItems.map(([label, value], i) => (
-              <div key={i} className="flex justify-between py-1 border-b border-border/30 last:border-0">
-                <span className="text-sm">{label}</span>
-                <span className="text-sm font-semibold">{formatCurrency(value)}</span>
-              </div>
-            ))}
-            <div className="flex justify-between pt-2 mt-2 border-t border-border font-bold text-lg">
-              <span>Total</span>
-              <span className="text-primary">{formatCurrency(totalCalc || order.preco * order.quantidade)}</span>
-            </div>
+            {order.tipoExtra ? (
+              <>
+                {(() => {
+                  const extraPriceItems: [string, number][] = [];
+                  const det = order.extraDetalhes || {};
+                  switch (order.tipoExtra) {
+                    case 'tiras_laterais':
+                      extraPriceItems.push(['Tiras Laterais', 15]);
+                      break;
+                    case 'desmanchar': {
+                      extraPriceItems.push(['Valor base (Desmanchar)', 65]);
+                      if (det.qualSola === 'Preta borracha') extraPriceItems.push(['Sola preta borracha', 25]);
+                      else if (det.qualSola === 'De cor borracha') extraPriceItems.push(['Sola de cor borracha', 40]);
+                      else if (det.qualSola === 'De couro') extraPriceItems.push(['Sola de couro', 60]);
+                      if (det.trocaGaspea === 'Sim') extraPriceItems.push(['Troca de gáspea/taloneira', 35]);
+                      break;
+                    }
+                    case 'kit_canivete':
+                      extraPriceItems.push(['Kit Canivete', 30]);
+                      if (det.vaiCanivete === 'Sim') extraPriceItems.push(['Canivete incluso', 30]);
+                      break;
+                    case 'kit_faca':
+                      extraPriceItems.push(['Kit Faca', 35]);
+                      if (det.vaiCanivete === 'Sim') extraPriceItems.push(['Faca inclusa', 35]);
+                      break;
+                    case 'carimbo_fogo': {
+                      const qty = parseInt(det.qtdCarimbos) || 1;
+                      extraPriceItems.push([`Carimbo a Fogo (${qty}x)`, qty >= 4 ? 40 : 20]);
+                      break;
+                    }
+                    case 'revitalizador': {
+                      const qty = parseInt(det.quantidade) || 1;
+                      extraPriceItems.push([`Revitalizador (${qty}x)`, 10 * qty]);
+                      break;
+                    }
+                    case 'kit_revitalizador': {
+                      const qty = parseInt(det.quantidade) || 1;
+                      extraPriceItems.push([`Kit 2 Revitalizador (${qty}x)`, 26 * qty]);
+                      break;
+                    }
+                    case 'gravata_country':
+                      extraPriceItems.push(['Gravata Country', 30]);
+                      break;
+                    case 'adicionar_metais': {
+                      const sel = (det.metaisSelecionados as string[]) || [];
+                      if (sel.includes('Bola grande')) extraPriceItems.push(['Bola grande', 15]);
+                      if (sel.includes('Strass')) {
+                        const qty = parseInt(det.qtdStrass) || 1;
+                        extraPriceItems.push([`Strass (${qty}x R$0,60)`, 0.60 * qty]);
+                      }
+                      break;
+                    }
+                    case 'chaveiro_carimbo':
+                      extraPriceItems.push(['Chaveiro c/ Carimbo a Fogo', 50]);
+                      break;
+                    case 'bainha_cartao':
+                      extraPriceItems.push(['Bainha de Cartão', 15]);
+                      break;
+                    case 'regata':
+                      extraPriceItems.push(['Regata', 50]);
+                      break;
+                    case 'bota_pronta_entrega':
+                      extraPriceItems.push(['Bota Pronta Entrega', order.preco]);
+                      break;
+                  }
+                  const extraTotal = extraPriceItems.reduce((s, [, v]) => s + v, 0);
+                  return (
+                    <>
+                      {extraPriceItems.map(([label, value], i) => (
+                        <div key={i} className="flex justify-between py-1 border-b border-border/30 last:border-0">
+                          <span className="text-sm">{label}</span>
+                          <span className="text-sm font-semibold">{formatCurrency(value)}</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between pt-2 mt-2 border-t border-border font-bold text-lg">
+                        <span>Total</span>
+                        <span className="text-primary">{formatCurrency(extraTotal || order.preco * order.quantidade)}</span>
+                      </div>
+                    </>
+                  );
+                })()}
+              </>
+            ) : (
+              <>
+                {priceItems.map(([label, value], i) => (
+                  <div key={i} className="flex justify-between py-1 border-b border-border/30 last:border-0">
+                    <span className="text-sm">{label}</span>
+                    <span className="text-sm font-semibold">{formatCurrency(value)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between pt-2 mt-2 border-t border-border font-bold text-lg">
+                  <span>Total</span>
+                  <span className="text-primary">{formatCurrency(totalCalc || order.preco * order.quantidade)}</span>
+                </div>
+              </>
+            )}
             {/* Desconto display */}
             {order.desconto && order.desconto > 0 && (
               <>
