@@ -17,6 +17,9 @@ export const MODELOS: { label: string; preco: number }[] = [
   { label: 'Urbano', preco: 260 },
   { label: 'Bota Bico Fino Feminino', preco: 260 },
   { label: 'Bota Bico Fino Perfilado', preco: 260 },
+  { label: 'Tradicional Bico Fino', preco: 260 },
+  { label: 'Cano Médio Infantil', preco: 160 },
+  { label: 'City', preco: 270 },
 ];
 
 // ==================== TAMANHOS ====================
