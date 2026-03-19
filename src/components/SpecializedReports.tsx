@@ -11,6 +11,7 @@ import {
   TRICE_PRECO, TIRAS_PRECO, COSTURA_ATRAS_PRECO, STRASS_PRECO, CRUZ_METAL_PRECO,
   BRIDAO_METAL_PRECO, LASER_CANO_PRECO, LASER_GASPEA_PRECO, GLITTER_CANO_PRECO, GLITTER_GASPEA_PRECO,
 } from '@/lib/orderFieldsConfig';
+import { BELT_SIZES, BORDADO_P_PRECO, NOME_BORDADO_CINTO_PRECO, BELT_CARIMBO } from '@/lib/extrasConfig';
 
 const formatDateBR = (date: string) => {
   const [y, m, d] = date.split('-');
@@ -356,17 +357,20 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
       // Build composition with prices
       const priceItems: [string, number][] = [];
 
-      if (o.tipoExtra && o.extraDetalhes) {
+      if (o.tipoExtra === 'cinto' && o.extraDetalhes) {
+        // BELT order — detailed composition
+        const det = o.extraDetalhes as any;
+        priceItems.push(['Cinto', 0]);
+        const sizeEntry = BELT_SIZES.find(s => s.label === det.tamanhoCinto);
+        if (sizeEntry) priceItems.push([`Tamanho: ${sizeEntry.label}`, sizeEntry.preco]);
+        if (det.bordadoP === 'Sim') priceItems.push(['Bordado P', BORDADO_P_PRECO]);
+        if (det.nomeBordado === 'Sim') priceItems.push(['Nome Bordado', NOME_BORDADO_CINTO_PRECO]);
+        const carimboEntry = BELT_CARIMBO.find(c => c.label === det.carimbo);
+        if (carimboEntry) priceItems.push([det.carimbo, carimboEntry.preco]);
+      } else if (o.tipoExtra && o.extraDetalhes) {
         // EXTRAS order — show extra details as composition
         const extraLabel = o.modelo.replace('Extra — ', '');
         priceItems.push([extraLabel, o.preco]);
-        // Add detail lines from extraDetalhes
-        Object.entries(o.extraDetalhes).forEach(([key, val]) => {
-          if (key === 'valor' || key === 'valorTotal' || !val) return;
-          if (typeof val === 'object') return;
-          // skip internal keys
-          if (['tipo', 'numeroPedidoBota'].includes(key)) return;
-        });
       } else {
         // Normal boot order composition
         const modeloP = MODELOS.find(m => m.label === o.modelo)?.preco;
