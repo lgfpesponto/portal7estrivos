@@ -345,7 +345,7 @@ const ReportsPage = () => {
         const stubAreaW = pw - m * 2;
         const stubW = stubAreaW / 2;
         const bcVal = orderBarcodeValue(order.numero);
-        const bcUrl = barcodeDataUrl(bcVal, { width: 1.2, height: 28 });
+        const bcUrl = barcodeDataUrl(bcVal, { width: 2, height: 40 });
 
         // Stub 1: PESPONTO
         let stubX = m;
