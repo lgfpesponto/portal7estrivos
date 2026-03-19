@@ -642,7 +642,7 @@ const ReportsPage = () => {
                   <div className="flex gap-2 mb-3">
                     <button
                       onClick={() => {
-                        const all = new Set(['bota', ...EXTRA_PRODUCTS.map(p => p.id)]);
+                        const all = new Set(['bota', 'cinto', ...EXTRA_PRODUCTS.map(p => p.id)]);
                         setFilterProduto(all);
                       }}
                       className="text-xs font-semibold text-primary hover:underline"
