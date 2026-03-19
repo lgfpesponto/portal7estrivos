@@ -164,7 +164,7 @@ export const COR_SOLA: { label: string; preco: number }[] = [
   { label: 'Preto', preco: 0 },
   { label: 'Branco', preco: 20 },
   { label: 'Madeira', preco: 0 },
-  { label: 'Avermelhada', preco: 0 },
+  { label: 'Avermelhada', preco: 10 },
   { label: 'Pintada de Preto', preco: 0 },
   { label: 'Off White', preco: 0 },
 ];
