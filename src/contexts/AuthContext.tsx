@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'; // v4-persistent
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'; // v5-session-fix
 import { supabase } from '@/integrations/supabase/client';
 
 /* ───── Brasilia helpers (unchanged) ───── */
