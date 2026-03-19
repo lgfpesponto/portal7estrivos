@@ -333,7 +333,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { numeroPedido, ...rest } = orderData;
     const dataHoje = formatBrasiliaDate();
     const horaAgora = formatBrasiliaTime();
-    const totalBizDays = rest.temLaser ? 30 : 10;
+    const totalBizDays = rest.tipoExtra === 'cinto' ? 5 : rest.tipoExtra ? 1 : rest.temLaser ? 30 : 10;
     const newOrder: Order = {
       ...rest,
       id: `order-${Date.now()}`,

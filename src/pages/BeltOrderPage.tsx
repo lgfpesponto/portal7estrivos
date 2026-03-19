@@ -185,6 +185,7 @@ const BeltOrderPage = () => {
       extraDetalhes,
     } as any);
 
+    if (loadedDraftId) deleteDraft(loadedDraftId);
     toast.success('Pedido de cinto criado com sucesso!');
     navigate('/relatorios');
   };

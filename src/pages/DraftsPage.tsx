@@ -33,7 +33,8 @@ const DraftsPage = () => {
   };
 
   const handleEdit = (draft: Draft) => {
-    navigate('/pedido', { state: { draft } });
+    const target = draft.id.startsWith('draft-belt-') ? '/pedido-cinto' : '/pedido';
+    navigate(target, { state: { draft } });
   };
 
   return (

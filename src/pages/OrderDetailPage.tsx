@@ -163,18 +163,15 @@ const OrderDetailPage = () => {
           <p className="text-sm text-muted-foreground mb-1">
             {formatDateBR(order.dataCriacao)} — {order.horaCriacao || ''}
           </p>
-          {/* Days remaining — only for boots, extras have no production deadline */}
-          {!order.tipoExtra && (
-            <div className="flex items-center gap-2 mb-4">
-              <Clock size={14} className="text-primary" />
-              <span className="text-sm font-semibold">
-                {daysLeft > 0 ? `${daysLeft} dias úteis restantes` : 'Prazo atingido ✓'}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                (prazo: {totalBizDays} dias úteis{order.temLaser ? ' — com laser' : ''})
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 mb-4">
+            <Clock size={14} className="text-primary" />
+            <span className="text-sm font-semibold">
+              {daysLeft > 0 ? `${daysLeft} dias úteis restantes` : 'Prazo atingido ✓'}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              (prazo: {totalBizDays} dias úteis{order.temLaser ? ' — com laser' : ''})
+            </span>
+          </div>
 
 
           {/* Production History + Change History side by side */}

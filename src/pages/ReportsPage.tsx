@@ -945,9 +945,13 @@ const ReportsPage = () => {
           </p>
           {(() => {
             const selectedOrders = filteredOrders.filter(o => selectedIds.has(o.id));
-            const hasExtras = selectedOrders.some(o => !!o.tipoExtra);
+            const hasBelts = selectedOrders.some(o => o.tipoExtra === 'cinto');
+            const hasExtras = selectedOrders.some(o => o.tipoExtra && o.tipoExtra !== 'cinto');
             const hasBotas = selectedOrders.some(o => !o.tipoExtra);
-            const statusList = hasExtras && !hasBotas ? EXTRAS_STATUSES : hasBotas && !hasExtras ? PRODUCTION_STATUSES : [...new Set([...PRODUCTION_STATUSES, ...EXTRAS_STATUSES])];
+            const statusList = hasBelts && !hasExtras && !hasBotas ? BELT_STATUSES
+              : hasExtras && !hasBelts && !hasBotas ? EXTRAS_STATUSES
+              : hasBotas && !hasBelts && !hasExtras ? PRODUCTION_STATUSES
+              : [...new Set([...PRODUCTION_STATUSES, ...BELT_STATUSES, ...EXTRAS_STATUSES])];
             return (
               <select
                 value={selectedProgress}
