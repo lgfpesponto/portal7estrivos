@@ -19,6 +19,7 @@ import ProfilePage from "./pages/ProfilePage";
 import DraftsPage from "./pages/DraftsPage";
 import BeltOrderPage from "./pages/BeltOrderPage";
 import ExtrasPage from "./pages/ExtrasPage";
+import UsersManagementPage from "./pages/UsersManagementPage";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
