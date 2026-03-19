@@ -24,7 +24,7 @@ interface Profile {
 const PROTECTED_USERNAMES = ['7estrivos', 'fernanda', 'demo'];
 
 const UsersManagementPage = () => {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
