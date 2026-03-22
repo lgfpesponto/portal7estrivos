@@ -893,9 +893,7 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
   const needsExtrasCintosFilter = activeReport === 'extras_cintos';
 
   const progressOptions = useMemo(() => {
-    if (activeReport === 'pesponto') return PESPONTO_STATUSES;
-    if (activeReport === 'bordados') return BORDADO_STATUSES;
-    return ['Aguardando', 'Corte', 'Sem bordado', ...BORDADO_STATUSES, ...PESPONTO_STATUSES, 'Montagem', 'Revisão', 'Expedição'];
+    return PRODUCTION_STATUSES;
   }, [activeReport]);
 
   return (
