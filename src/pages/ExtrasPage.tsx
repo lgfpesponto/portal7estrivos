@@ -39,7 +39,7 @@ const emptyForm = (): Record<string, any> => ({
 });
 
 const ExtrasPage = () => {
-  const { isLoggedIn, user, addOrder } = useAuth();
+  const { isLoggedIn, user, addOrder, isAdmin, allProfiles } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [openProduct, setOpenProduct] = useState<string | null>(null);
