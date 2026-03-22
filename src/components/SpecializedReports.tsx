@@ -437,10 +437,9 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.save('relatorio-metais.pdf');
   };
 
-  // ── Bordados: tabular format ──
-  const generateBordadosPDF = () => {
-    const statusFilter = filterProgresso === 'todos' ? BORDADO_STATUSES : [filterProgresso];
-    const filtered = sourceOrders.filter(o => statusFilter.some(s => s.toLowerCase() === o.status.toLowerCase()));
+  // ── Bordados: new layout with QR + Receita ──
+  const generateBordadosPDF = async () => {
+    const filtered = sourceOrders.filter(o => filterProgresso === 'todos' || o.status === filterProgresso);
 
     const doc = new jsPDF();
     const mx = 14;
@@ -451,49 +450,53 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`, mx, 27);
-    doc.text(`Filtro: ${filterProgresso === 'todos' ? 'Todos os bordados' : filterProgresso}`, mx, 32);
+    doc.text(`Filtro: ${filterProgresso === 'todos' ? 'Todos' : filterProgresso} | Total: ${filtered.length} pedidos`, mx, 32);
 
-    const cols = [25, 35, 95, 27];
+    const cols = [25, 90, 25, 42];
     const cx = [mx, mx + cols[0], mx + cols[0] + cols[1], mx + cols[0] + cols[1] + cols[2]];
 
-    const byStatus: Record<string, Order[]> = {};
-    filtered.forEach(o => {
-      if (!byStatus[o.status]) byStatus[o.status] = [];
-      byStatus[o.status].push(o);
-    });
+    let y = drawTableHeader(doc, 38, mx, cw, [
+      { label: 'Nº PEDIDO', x: cx[0] + 2 },
+      { label: 'DESCRIÇÃO DO BORDADO', x: cx[1] + 2 },
+      { label: 'QR CODE', x: cx[2] + 2 },
+      { label: 'RECEITA', x: cx[3] + 2 },
+    ]);
 
-    let y = 38;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6);
 
-    Object.entries(byStatus).forEach(([status, ords]) => {
-      if (y > 260) { doc.addPage(); y = 20; }
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text(status, mx, y + 5);
-      y += 8;
+    for (const o of filtered) {
+      const parts: string[] = [];
+      if (o.bordadoCano) parts.push(`Cano: ${o.bordadoCano}`);
+      if (o.corBordadoCano) parts.push(`Cor Cano: ${o.corBordadoCano}`);
+      if (o.bordadoVariadoDescCano) parts.push(`Desc Cano: ${o.bordadoVariadoDescCano}`);
+      if (o.bordadoGaspea) parts.push(`Gáspea: ${o.bordadoGaspea}`);
+      if (o.corBordadoGaspea) parts.push(`Cor Gáspea: ${o.corBordadoGaspea}`);
+      if (o.bordadoVariadoDescGaspea) parts.push(`Desc Gáspea: ${o.bordadoVariadoDescGaspea}`);
+      if (o.bordadoTaloneira) parts.push(`Taloneira: ${o.bordadoTaloneira}`);
+      if (o.corBordadoTaloneira) parts.push(`Cor Talon.: ${o.corBordadoTaloneira}`);
+      if (o.bordadoVariadoDescTaloneira) parts.push(`Desc Talon.: ${o.bordadoVariadoDescTaloneira}`);
+      if (o.nomeBordadoDesc || o.personalizacaoNome) parts.push(`Nome: ${o.nomeBordadoDesc || o.personalizacaoNome}`);
+      if (o.observacao) parts.push(`Obs: ${o.observacao}`);
+      const descText = parts.join('\n');
+      const lines = doc.splitTextToSize(descText, cols[1] - 4);
+      const rowH = Math.max(20, lines.length * 3 + 6);
 
-      y = drawTableHeader(doc, y, mx, cw, [
-        { label: 'Nº PEDIDO', x: cx[0] + 2 },
-        { label: 'VENDEDOR', x: cx[1] + 2 },
-        { label: 'BORDADOS', x: cx[2] + 2 },
-        { label: 'QTD', x: cx[3] + 2 },
-      ]);
+      if (y + rowH > 280) { doc.addPage(); y = 20; }
+      drawTableRow(doc, y, mx, cw, cols, rowH);
+      doc.setFontSize(8);
+      doc.text(o.numero, cx[0] + 2, y + 5);
+      doc.setFontSize(6);
+      doc.text(lines, cx[1] + 2, y + 4);
 
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      const rowH = 7;
-      ords.forEach(o => {
-        if (y + rowH > 280) { doc.addPage(); y = 20; }
-        drawTableRow(doc, y, mx, cw, cols, rowH);
-        doc.text(o.numero, cx[0] + 2, y + 5);
-        doc.text(o.vendedor.substring(0, 18), cx[1] + 2, y + 5);
-        const bordados = [o.bordadoCano, o.bordadoGaspea, o.bordadoTaloneira].filter(Boolean).join(', ') || 'sem bordado';
-        const bordLines = doc.splitTextToSize(bordados, cols[2] - 4);
-        doc.text(bordLines[0] || '', cx[2] + 2, y + 5);
-        doc.text(String(o.quantidade), cx[3] + 2, y + 5);
-        y += rowH;
-      });
-      y += 5;
-    });
+      const fotoUrl = o.fotos?.[0];
+      if (fotoUrl) {
+        const qr = await qrDataUrl(fotoUrl);
+        if (qr) try { doc.addImage(qr, 'PNG', cx[2] + 3, y + 1, 14, 14); } catch {}
+      }
+      // Receita: blank field (already empty rect from drawTableRow)
+      y += rowH;
+    }
 
     doc.save('relatorio-bordados.pdf');
   };
