@@ -278,7 +278,7 @@ const OrderDetailPage = () => {
               {daysLeft > 0 ? `${daysLeft} dias úteis restantes` : 'Prazo atingido ✓'}
             </span>
             <span className="text-xs text-muted-foreground">
-              (prazo: {totalBizDays} dias úteis{order.temLaser ? ' — com laser' : ''})
+              (prazo: {totalBizDays} dias úteis)
             </span>
           </div>
 
