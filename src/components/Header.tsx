@@ -16,7 +16,10 @@ const Header = () => {
         { label: 'FAÇA SEU PEDIDO', path: '/pedido' },
         { label: 'EXTRAS', path: '/extras' },
         { label: 'MEUS PEDIDOS', path: '/relatorios' },
-        ...(isJuliana ? [{ label: 'USUÁRIOS', path: '/usuarios' }] : []),
+        ...(isJuliana ? [
+          { label: 'USUÁRIOS', path: '/usuarios' },
+          { label: 'EXPORTAR', path: '/exportar-dados' },
+        ] : []),
         { label: 'MEU PERFIL', path: '/perfil' },
       ]
     : [
