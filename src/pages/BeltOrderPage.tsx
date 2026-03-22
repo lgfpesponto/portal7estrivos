@@ -25,12 +25,12 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
 );
 
 const BeltOrderPage = () => {
-  const { isLoggedIn, user, addOrder } = useAuth();
+  const { isLoggedIn, user, addOrder, isAdmin, allProfiles } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const draftData = (location.state as any)?.draft;
 
-  const isAdminUser = user?.nomeCompleto === 'Juliana Cristina Ribeiro' || user?.nomeCompleto === 'Fernanda ADM';
+  const isAdminUser = isAdmin;
 
   // Form state
   const [vendedor, setVendedor] = useState(user?.nomeCompleto || '');
