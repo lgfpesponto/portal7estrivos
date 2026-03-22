@@ -222,17 +222,83 @@ const ExportDataPage = () => {
     }
   };
 
+  const handleToggleSql = async (key: string) => {
+    if (expandedSql === key) {
+      setExpandedSql(null);
+      return;
+    }
+    setExpandedSql(key);
+    if (sqlData[key]) return; // already fetched
+
+    setSqlLoading(key);
+    try {
+      let allData: Record<string, unknown>[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await (supabase.from(key as 'orders' | 'profiles' | 'user_roles' | 'verification_codes') as any)
+          .select('*')
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allData = [...allData, ...data];
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      const inserts = generateInserts(key, allData);
+      const full = `${tableSchemas[key]}\n\n-- Dados (${allData.length} registros)\n${inserts}`;
+      setSqlData(prev => ({ ...prev, [key]: full }));
+    } catch (err: any) {
+      setSqlData(prev => ({ ...prev, [key]: `${tableSchemas[key]}\n\n-- Erro ao buscar dados: ${err.message}` }));
+    } finally {
+      setSqlLoading(null);
+    }
+  };
+
+  const getFullSql = (key: string) => sqlData[key] || tableSchemas[key];
+
   const handleCopySql = (key: string) => {
-    navigator.clipboard.writeText(tableSchemas[key]);
+    navigator.clipboard.writeText(getFullSql(key));
     setCopied(key);
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const handleCopyAll = () => {
-    const allSql = Object.values(tableSchemas).join('\n\n');
-    navigator.clipboard.writeText(allSql);
-    setCopied('all');
-    setTimeout(() => setCopied(null), 2000);
+  const handleCopyAll = async () => {
+    // fetch all tables that haven't been fetched yet
+    const keys = exportOptions.map(o => o.key);
+    for (const key of keys) {
+      if (!sqlData[key]) {
+        setSqlLoading(key);
+        try {
+          let allData: Record<string, unknown>[] = [];
+          let from = 0;
+          const pageSize = 1000;
+          while (true) {
+            const { data, error } = await (supabase.from(key as 'orders' | 'profiles' | 'user_roles' | 'verification_codes') as any)
+              .select('*')
+              .range(from, from + pageSize - 1);
+            if (error) throw error;
+            if (!data || data.length === 0) break;
+            allData = [...allData, ...data];
+            if (data.length < pageSize) break;
+            from += pageSize;
+          }
+          const inserts = generateInserts(key, allData);
+          const full = `${tableSchemas[key]}\n\n-- Dados (${allData.length} registros)\n${inserts}`;
+          setSqlData(prev => ({ ...prev, [key]: full }));
+        } catch {
+          // skip
+        }
+      }
+    }
+    setSqlLoading(null);
+    // Need a small delay to let state update
+    setTimeout(() => {
+      const allSql = keys.map(k => sqlData[k] || tableSchemas[k]).join('\n\n---\n\n');
+      navigator.clipboard.writeText(allSql);
+      setCopied('all');
+      setTimeout(() => setCopied(null), 2000);
+    }, 100);
   };
 
   return (
