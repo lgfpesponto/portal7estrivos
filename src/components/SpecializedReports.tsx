@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { useAuth, Order, orderBarcodeValue } from '@/contexts/AuthContext';
+import { useAuth, Order, orderBarcodeValue, PRODUCTION_STATUSES } from '@/contexts/AuthContext';
 import { FileText, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import jsPDF from 'jspdf';
 import JsBarcode from 'jsbarcode';
+import QRCode from 'qrcode';
 import {
   MODELOS, ACESSORIOS, BORDADOS_CANO, BORDADOS_GASPEA, BORDADOS_TALONEIRA, COURO_PRECOS, SOLADO, COR_SOLA, COR_VIRA,
   CARIMBO, AREA_METAL, DESENVOLVIMENTO,
