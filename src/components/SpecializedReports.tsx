@@ -501,7 +501,7 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.save('relatorio-bordados.pdf');
   };
 
-  // ── Expedição: tabular A4 layout ──
+  // ── Expedição: tabular A4 layout with composition + data ──
   const generateExpedicaoPDF = () => {
     const filtered = sourceOrders.filter(o =>
       o.status.toLowerCase() === 'expedição' &&
@@ -519,21 +519,21 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.setFont('helvetica', 'bold');
     doc.text(`Expedição  [${geradoEm} — ${vendedorLabel}]`, mx, 20);
 
-    const cols = [30, 50, 20, 35, cw - 30 - 50 - 20 - 35];
-    const cx = [mx, mx + cols[0], mx + cols[0] + cols[1], mx + cols[0] + cols[1] + cols[2], mx + cols[0] + cols[1] + cols[2] + cols[3]];
+    const cols = [25, 22, 60, 15, 30, cw - 25 - 22 - 60 - 15 - 30];
+    const cx = [mx, mx + cols[0], mx + cols[0] + cols[1], mx + cols[0] + cols[1] + cols[2], mx + cols[0] + cols[1] + cols[2] + cols[3], mx + cols[0] + cols[1] + cols[2] + cols[3] + cols[4]];
 
     let y = 30;
-    const rowH = 16;
 
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
     doc.setFillColor(232, 232, 232);
     doc.rect(mx, y, cw, 8, 'F');
-    doc.text('Nº PEDIDO', cx[0] + 2, y + 5.5);
-    doc.text('CÓD. BARRAS', cx[1] + 2, y + 5.5);
-    doc.text('QTD', cx[2] + 2, y + 5.5);
-    doc.text('PREÇO', cx[3] + 2, y + 5.5);
-    doc.text('ASSINATURA', cx[4] + 2, y + 5.5);
+    doc.text('Nº PEDIDO', cx[0] + 1, y + 5.5);
+    doc.text('DATA', cx[1] + 1, y + 5.5);
+    doc.text('COMPOSIÇÃO', cx[2] + 1, y + 5.5);
+    doc.text('QTD', cx[3] + 1, y + 5.5);
+    doc.text('PREÇO', cx[4] + 1, y + 5.5);
+    doc.text('ASSINATURA', cx[5] + 1, y + 5.5);
     y += 8;
 
     let totalValor = 0;
@@ -541,27 +541,34 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
 
     doc.setFont('helvetica', 'normal');
     filtered.forEach(o => {
+      const compItems = buildCompositionItems(o);
+      const compText = compItems.map(([name, val]) => `${name} ${formatCurrency(val)}`).join('\n');
+      doc.setFontSize(5);
+      const lines = doc.splitTextToSize(compText, cols[2] - 4);
+      const rowH = Math.max(12, lines.length * 2.8 + 4);
+
       if (y + rowH > 280) { doc.addPage(); y = 20; }
       doc.setLineWidth(0.2);
       doc.rect(mx, y, cw, rowH);
       cols.reduce((x, w) => { doc.line(x + w, y, x + w, y + rowH); return x + w; }, mx);
 
-      doc.setFontSize(9);
-      doc.text(o.numero, cx[0] + 2, y + 6);
+      doc.setFontSize(8);
+      doc.text(o.numero, cx[0] + 1, y + 5);
+      doc.setFontSize(7);
+      doc.text(formatDateBR(o.dataCriacao), cx[1] + 1, y + 5);
 
-      const bcVal = orderBarcodeValue(o.numero);
-      const bcUrl = barcodeDataUrl(bcVal, { width: 2, height: 40 });
-      if (bcUrl) {
-        try { doc.addImage(bcUrl, 'PNG', cx[1] + 2, y + 2, cols[1] - 4, 10); } catch {}
-      }
+      doc.setFontSize(5);
+      doc.text(lines, cx[2] + 1, y + 4);
 
-      doc.text(String(o.quantidade), cx[2] + 2, y + 6);
-      doc.text(formatCurrency(o.preco * o.quantidade), cx[3] + 2, y + 6);
+      doc.setFontSize(8);
+      doc.text(String(o.quantidade), cx[3] + 1, y + 5);
+      const orderTotal = o.tipoExtra ? o.preco : compItems.reduce((s, [, v]) => s + v, 0);
+      doc.text(formatCurrency(orderTotal * o.quantidade), cx[4] + 1, y + 5);
       doc.setLineWidth(0.3);
-      doc.line(cx[4] + 4, y + rowH - 4, cx[4] + cols[4] - 4, y + rowH - 4);
+      doc.line(cx[5] + 4, y + rowH - 4, cx[5] + cols[5] - 4, y + rowH - 4);
 
       y += rowH;
-      totalValor += o.preco * o.quantidade;
+      totalValor += orderTotal * o.quantidade;
       totalQtd += o.quantidade;
     });
 
@@ -570,9 +577,9 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.rect(mx, y, cw, 10, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.text('TOTAL', cx[0] + 2, y + 7);
-    doc.text(String(totalQtd), cx[2] + 2, y + 7);
-    doc.text(formatCurrency(totalValor), cx[3] + 2, y + 7);
+    doc.text('TOTAL', cx[0] + 1, y + 7);
+    doc.text(String(totalQtd), cx[3] + 1, y + 7);
+    doc.text(formatCurrency(totalValor), cx[4] + 1, y + 7);
 
     doc.save('relatorio-expedicao.pdf');
   };
