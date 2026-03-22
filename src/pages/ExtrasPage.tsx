@@ -132,7 +132,7 @@ const ExtrasPage = () => {
       }
 
       const success = await addOrder({
-        vendedor: user?.nomeCompleto || '',
+        vendedor: isAdmin ? (form.vendedorSelecionado || user?.nomeCompleto || '') : (user?.nomeCompleto || ''),
         tamanho: '-',
         modelo: `Extra — ${product.nome}`,
         solado: '-',
