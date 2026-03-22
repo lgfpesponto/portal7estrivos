@@ -80,7 +80,7 @@ const MultiSelect = ({
 
 /* ───── main component ───── */
 const OrderPage = () => {
-  const { isLoggedIn, user, addOrder } = useAuth();
+  const { isLoggedIn, user, addOrder, isAdmin, allProfiles } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const draftState = (location.state as { draft?: Draft })?.draft;
@@ -91,6 +91,7 @@ const OrderPage = () => {
   const df = draftState?.form || {};
 
   /* form state */
+  const [vendedorSelecionado, setVendedorSelecionado] = useState(user?.nomeCompleto || '');
   const [numeroPedido, setNumeroPedido] = useState(draftState?.numeroPedido || '');
   const [tamanho, setTamanho] = useState(df.tamanho || '');
   const [genero, setGenero] = useState(df.genero || '');
@@ -376,7 +377,7 @@ const OrderPage = () => {
     try {
       const success = await addOrder({
         numeroPedido: numeroPedido.trim(),
-        vendedor: user?.nomeCompleto || '',
+        vendedor: isAdmin ? vendedorSelecionado : (user?.nomeCompleto || ''),
         tamanho, genero, modelo, sobMedida, sobMedidaDesc,
         solado, formatoBico, quantidade: 1, preco: total, temLaser: hasAnyLaser, fotos,
         couroGaspea: tipoCouroGaspea, couroCano: tipoCouroCano, couroTaloneira: tipoCouroTaloneira,
@@ -463,7 +464,7 @@ const OrderPage = () => {
 
   /* ───── mirror data (only filled fields, NO value) ───── */
   const mirrorRows: [string, string][] = [
-    ['Vendedor', user?.nomeCompleto || ''],
+    ['Vendedor', isAdmin ? vendedorSelecionado : (user?.nomeCompleto || '')],
     ['Número do Pedido', numeroPedido],
     ['Tamanho', tamanho ? `${tamanho}${genero ? ' — ' + genero : ''}` : ''],
     ['Modelo', modelo],
@@ -539,7 +540,15 @@ const OrderPage = () => {
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className={cls.label}>Vendedor</label>
-              <input type="text" value={user?.nomeCompleto || ''} readOnly className={cls.input + ' opacity-70'} />
+              {isAdmin ? (
+                <select value={vendedorSelecionado} onChange={e => setVendedorSelecionado(e.target.value)} className={cls.select}>
+                  {allProfiles.map(p => (
+                    <option key={p.id} value={p.nomeCompleto}>{p.nomeCompleto}</option>
+                  ))}
+                </select>
+              ) : (
+                <input type="text" value={user?.nomeCompleto || ''} readOnly className={cls.input + ' opacity-70'} />
+              )}
             </div>
             <div>
               <label className={cls.label}>Número do Pedido<span className="text-destructive ml-0.5">*</span></label>

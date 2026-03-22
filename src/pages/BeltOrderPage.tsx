@@ -25,12 +25,12 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
 );
 
 const BeltOrderPage = () => {
-  const { isLoggedIn, user, addOrder } = useAuth();
+  const { isLoggedIn, user, addOrder, isAdmin, allProfiles } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const draftData = (location.state as any)?.draft;
 
-  const isAdminUser = user?.nomeCompleto === 'Juliana Cristina Ribeiro' || user?.nomeCompleto === 'Fernanda ADM';
+  const isAdminUser = isAdmin;
 
   // Form state
   const [vendedor, setVendedor] = useState(user?.nomeCompleto || '');
@@ -239,7 +239,11 @@ const BeltOrderPage = () => {
             <div>
               <label className={cls.label}>Vendedor</label>
               {isAdminUser ? (
-                <input type="text" value={vendedor} onChange={e => setVendedor(e.target.value)} className={cls.input} />
+                <select value={vendedor} onChange={e => setVendedor(e.target.value)} className={cls.select}>
+                  {allProfiles.map(p => (
+                    <option key={p.id} value={p.nomeCompleto}>{p.nomeCompleto}</option>
+                  ))}
+                </select>
               ) : (
                 <input type="text" value={user?.nomeCompleto || ''} readOnly className={cls.input + ' opacity-70'} />
               )}

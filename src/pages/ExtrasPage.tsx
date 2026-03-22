@@ -39,7 +39,7 @@ const emptyForm = (): Record<string, any> => ({
 });
 
 const ExtrasPage = () => {
-  const { isLoggedIn, user, addOrder } = useAuth();
+  const { isLoggedIn, user, addOrder, isAdmin, allProfiles } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [openProduct, setOpenProduct] = useState<string | null>(null);
@@ -132,7 +132,7 @@ const ExtrasPage = () => {
       }
 
       const success = await addOrder({
-        vendedor: user?.nomeCompleto || '',
+        vendedor: isAdmin ? (form.vendedorSelecionado || user?.nomeCompleto || '') : (user?.nomeCompleto || ''),
         tamanho: '-',
         modelo: `Extra — ${product.nome}`,
         solado: '-',
@@ -183,6 +183,18 @@ const ExtrasPage = () => {
 
     return (
       <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+        {/* Vendedor — ADM only */}
+        {isAdmin && (
+          <div>
+            <Label>Vendedor</Label>
+            <Select value={form.vendedorSelecionado || user?.nomeCompleto || ''} onValueChange={v => set('vendedorSelecionado', v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione vendedor" /></SelectTrigger>
+              <SelectContent>
+                {allProfiles.map(p => <SelectItem key={p.id} value={p.nomeCompleto}>{p.nomeCompleto}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         {/* Número do pedido — obrigatório em TODOS */}
         <div>
           <Label>Nº do pedido *</Label>

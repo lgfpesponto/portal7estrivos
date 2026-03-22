@@ -337,6 +337,12 @@ function orderToDbRow(order: any, userId: string) {
 }
 
 /* ───── Context interface ───── */
+export interface ProfileSummary {
+  id: string;
+  nomeCompleto: string;
+  nomeUsuario: string;
+}
+
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
@@ -354,6 +360,7 @@ interface AuthContextType {
   recoverPassword: (cpfCnpj: string, digits: string) => Promise<boolean>;
   allOrders: Order[];
   loading: boolean;
+  allProfiles: ProfileSummary[];
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -365,6 +372,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [allProfiles, setAllProfiles] = useState<ProfileSummary[]>([]);
 
   const isFernanda = user?.nomeUsuario?.toLowerCase() === 'fernanda';
 
@@ -727,6 +735,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAllOrders(prev => prev.map(o => o.id === id ? updatedOrder : o));
   }, [orders, allOrders]);
 
+  /* ───── Load all profiles for ADM vendor selection ───── */
+  const loadAllProfiles = useCallback(async () => {
+    const { data } = await supabase.from('profiles').select('id, nome_completo, nome_usuario');
+    if (data) {
+      setAllProfiles(data.map(p => ({ id: p.id, nomeCompleto: p.nome_completo, nomeUsuario: p.nome_usuario })));
+    }
+  }, []);
+
+  // Load profiles when admin logs in
+  useEffect(() => {
+    if (isAdmin) loadAllProfiles();
+  }, [isAdmin, loadAllProfiles]);
+
   const userOrders = isAdmin ? orders : orders;
 
   return (
@@ -734,7 +755,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user, isLoggedIn: !!user, isAdmin, isFernanda,
       login, register, logout, updateProfile,
       orders: userOrders, addOrder, deleteOrder, updateOrder, updateOrderStatus,
-      recoverPassword, allOrders, loading,
+      recoverPassword, allOrders, loading, allProfiles,
     }}>
       {children}
     </AuthContext.Provider>

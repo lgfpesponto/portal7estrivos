@@ -14,9 +14,11 @@ const fadeIn = {
 };
 
 const Index = () => {
-  const { isLoggedIn, isAdmin, isFernanda, orders, allOrders, user } = useAuth();
+  const { isLoggedIn, isAdmin, isFernanda, orders, allOrders, user, allProfiles } = useAuth();
   const [chartPeriod, setChartPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano'>('mes');
   const [receberVendedor, setReceberVendedor] = useState<string>('todos');
+  const [chartProductFilter, setChartProductFilter] = useState<string>('todos');
+  const [chartVendedorFilter, setChartVendedorFilter] = useState<string>('todos');
 
   const sourceOrders = isAdmin ? allOrders : orders;
 
@@ -42,39 +44,52 @@ const Index = () => {
   }, [sourceOrders]);
 
   const chartData = useMemo(() => {
-    const data: { name: string; botas: number }[] = [];
+    const data: { name: string; vendas: number }[] = [];
     const now = new Date();
+
+    // Filter orders for chart based on product and vendor filters
+    const chartOrders = sourceOrders.filter(o => {
+      // Product filter
+      if (chartProductFilter === 'bota') return !o.tipoExtra;
+      if (chartProductFilter === 'regata') return o.tipoExtra === 'regata';
+      if (chartProductFilter === 'bota_pronta_entrega') return o.tipoExtra === 'bota_pronta_entrega';
+      // 'todos' = bota + regata + bota_pronta_entrega
+      return !o.tipoExtra || o.tipoExtra === 'regata' || o.tipoExtra === 'bota_pronta_entrega';
+    }).filter(o => {
+      if (chartVendedorFilter === 'todos') return true;
+      return o.vendedor === chartVendedorFilter;
+    });
 
     if (chartPeriod === 'dia') {
       for (let i = 6; i >= 0; i--) {
         const d = new Date(now.getTime() - i * 86400000);
         const key = d.toISOString().split('T')[0];
-        data.push({ name: `${d.getDate()}/${d.getMonth() + 1}`, botas: orders.filter((o) => o.dataCriacao === key).reduce((s, o) => s + o.quantidade, 0) });
+        data.push({ name: `${d.getDate()}/${d.getMonth() + 1}`, vendas: chartOrders.filter((o) => o.dataCriacao === key).reduce((s, o) => s + o.quantidade, 0) });
       }
     } else if (chartPeriod === 'semana') {
       for (let i = 3; i >= 0; i--) {
         const end = new Date(now.getTime() - i * 7 * 86400000);
         const start = new Date(end.getTime() - 7 * 86400000);
-        const botas = orders.filter((o) => o.dataCriacao >= start.toISOString().split('T')[0] && o.dataCriacao <= end.toISOString().split('T')[0]).reduce((s, o) => s + o.quantidade, 0);
-        data.push({ name: `Sem ${4 - i}`, botas });
+        const vendas = chartOrders.filter((o) => o.dataCriacao >= start.toISOString().split('T')[0] && o.dataCriacao <= end.toISOString().split('T')[0]).reduce((s, o) => s + o.quantidade, 0);
+        data.push({ name: `Sem ${4 - i}`, vendas });
       }
     } else if (chartPeriod === 'mes') {
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-        const botas = orders.filter((o) => o.dataCriacao >= d.toISOString().split('T')[0] && o.dataCriacao <= monthEnd.toISOString().split('T')[0]).reduce((s, o) => s + o.quantidade, 0);
+        const vendas = chartOrders.filter((o) => o.dataCriacao >= d.toISOString().split('T')[0] && o.dataCriacao <= monthEnd.toISOString().split('T')[0]).reduce((s, o) => s + o.quantidade, 0);
         const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-        data.push({ name: months[d.getMonth()], botas });
+        data.push({ name: months[d.getMonth()], vendas });
       }
     } else {
       for (let i = 2; i >= 0; i--) {
         const year = now.getFullYear() - i;
-        const botas = orders.filter((o) => o.dataCriacao.startsWith(`${year}`)).reduce((s, o) => s + o.quantidade, 0);
-        data.push({ name: `${year}`, botas });
+        const vendas = chartOrders.filter((o) => o.dataCriacao.startsWith(`${year}`)).reduce((s, o) => s + o.quantidade, 0);
+        data.push({ name: `${year}`, vendas });
       }
     }
     return data;
-  }, [chartPeriod, orders]);
+  }, [chartPeriod, sourceOrders, chartProductFilter, chartVendedorFilter]);
 
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -97,7 +112,7 @@ const Index = () => {
           <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-display font-bold flex items-center gap-2">
-                <BarChart3 className="text-primary" size={22} /> Botas Vendidas
+                <BarChart3 className="text-primary" size={22} /> Quantidade de vendas
               </h2>
             </div>
             <div className="flex gap-2 mb-4 flex-wrap">
@@ -108,14 +123,33 @@ const Index = () => {
                 </button>
               )}
             </div>
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {[{ value: 'todos', label: 'Todos' }, { value: 'bota', label: 'Bota' }, { value: 'regata', label: 'Regata' }, { value: 'bota_pronta_entrega', label: 'Bota P.E.' }].map(f =>
+                <button key={f.value} onClick={() => setChartProductFilter(f.value)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold tracking-wider transition-colors ${chartProductFilter === f.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-primary/10'}`}>
+                  {f.label}
+                </button>
+              )}
+            </div>
+            <div className="mb-4">
+              <Select value={chartVendedorFilter} onValueChange={setChartVendedorFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Todos vendedores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos vendedores</SelectItem>
+                  {vendedores.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(30 20% 80%)" />
                   <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
                   <YAxis tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
-                  <Tooltip formatter={(v: number) => [v, 'Botas']} />
-                  <Line type="monotone" dataKey="botas" stroke="hsl(25 85% 48%)" strokeWidth={3} dot={{ fill: 'hsl(25 85% 48%)', r: 5 }} />
+                  <Tooltip formatter={(v: number) => [v, 'Vendas']} />
+                  <Line type="monotone" dataKey="vendas" stroke="hsl(25 85% 48%)" strokeWidth={3} dot={{ fill: 'hsl(25 85% 48%)', r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -206,11 +240,14 @@ const Index = () => {
   );
 
   // ── Revendedor: pendente + produção + gráfico ──
-  const renderVendedorDashboard = () => (
+  const renderVendedorDashboard = () => {
+    const isSiteUser = user?.nomeUsuario?.toLowerCase() === 'site';
+    return (
     <section className="container mx-auto px-4 py-8">
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="space-y-6">
-          {/* Pendente */}
+          {/* Pendente — hidden for 'site' user */}
+          {!isSiteUser && (
           <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
             <h2 className="text-xl font-display font-bold flex items-center gap-2 mb-4">
               <AlertCircle className="text-primary" size={22} /> Pendente
@@ -220,6 +257,7 @@ const Index = () => {
               <p className="text-3xl font-bold text-primary mt-1">{formatCurrency(financialData.aReceber)}</p>
             </div>
           </motion.div>
+          )}
 
           {/* Botas na produção */}
           <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={1} className="bg-card rounded-xl p-6 western-shadow">
@@ -240,7 +278,7 @@ const Index = () => {
           <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={2} className="bg-card rounded-xl p-6 western-shadow">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-display font-bold flex items-center gap-2">
-                <BarChart3 className="text-primary" size={22} /> Botas Vendidas
+                <BarChart3 className="text-primary" size={22} /> Quantidade de vendas
               </h2>
             </div>
             <div className="flex gap-2 mb-4 flex-wrap">
@@ -257,8 +295,8 @@ const Index = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(30 20% 80%)" />
                   <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
                   <YAxis tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
-                  <Tooltip formatter={(v: number) => [v, 'Botas']} />
-                  <Line type="monotone" dataKey="botas" stroke="hsl(25 85% 48%)" strokeWidth={3} dot={{ fill: 'hsl(25 85% 48%)', r: 5 }} />
+                  <Tooltip formatter={(v: number) => [v, 'Vendas']} />
+                  <Line type="monotone" dataKey="vendas" stroke="hsl(25 85% 48%)" strokeWidth={3} dot={{ fill: 'hsl(25 85% 48%)', r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -266,7 +304,8 @@ const Index = () => {
         </div>
       </div>
     </section>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen">
