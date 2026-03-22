@@ -183,6 +183,18 @@ const ExtrasPage = () => {
 
     return (
       <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+        {/* Vendedor — ADM only */}
+        {isAdmin && (
+          <div>
+            <Label>Vendedor</Label>
+            <Select value={form.vendedorSelecionado || user?.nomeCompleto || ''} onValueChange={v => set('vendedorSelecionado', v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione vendedor" /></SelectTrigger>
+              <SelectContent>
+                {allProfiles.map(p => <SelectItem key={p.id} value={p.nomeCompleto}>{p.nomeCompleto}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         {/* Número do pedido — obrigatório em TODOS */}
         <div>
           <Label>Nº do pedido *</Label>
