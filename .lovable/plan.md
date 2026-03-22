@@ -1,42 +1,31 @@
 
 
-## Plano: Corrigir filtro de bordados e metais nos relatórios
+## Plano: Filtro de produto como Select no gráfico de vendas para todos os usuários
 
 ### Problema
 
-Os campos de bordado e metais usam `"-"` como valor padrão (sem preenchimento), mas os filtros só verificam `""` e `"Não"`. Pedidos com valor `"-"` passam pelo filtro indevidamente.
+1. O filtro de produto (Bota, Regata, Bota P.E.) aparece apenas no `renderAdminDashboard()` (linhas 126-133) como botões. Não aparece no `renderVendedorDashboard()` (linhas 284-291).
+2. O formato de botões ocupa muito espaço — deve ser um `<Select>` igual ao filtro de vendedor.
 
 ### Solução
 
-**Arquivo:** `src/components/SpecializedReports.tsx`
+**Arquivo:** `src/pages/Index.tsx`
 
-Adicionar `'-'` às verificações em ambos os filtros:
-
-**Bordados (linha ~444):** Cada campo precisa excluir `'-'`:
-```typescript
-const hasBordado =
-  (o.bordadoCano && o.bordadoCano !== '' && o.bordadoCano !== 'Não' && o.bordadoCano !== '-') ||
-  (o.bordadoGaspea && o.bordadoGaspea !== '' && o.bordadoGaspea !== 'Não' && o.bordadoGaspea !== '-') ||
-  (o.bordadoTaloneira && o.bordadoTaloneira !== '' && o.bordadoTaloneira !== 'Não' && o.bordadoTaloneira !== '-') ||
-  (o.nomeBordadoDesc && o.nomeBordadoDesc !== '' && o.nomeBordadoDesc !== '-') ||
-  (o.personalizacaoNome && o.personalizacaoNome !== '' && o.personalizacaoNome !== 'Não' && o.personalizacaoNome !== '-') ||
-  (o.personalizacaoBordado && o.personalizacaoBordado !== '' && o.personalizacaoBordado !== 'Não' && o.personalizacaoBordado !== '-');
+1. **Admin dashboard (linhas 126-133):** Substituir os botões de filtro de produto por um `<Select>`:
+```tsx
+<Select value={chartProductFilter} onValueChange={setChartProductFilter}>
+  <SelectTrigger className="w-40">
+    <SelectValue placeholder="Todos produtos" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="todos">Todos produtos</SelectItem>
+    <SelectItem value="bota">Bota</SelectItem>
+    <SelectItem value="regata">Regata</SelectItem>
+    <SelectItem value="bota_pronta_entrega">Bota P.E.</SelectItem>
+  </SelectContent>
+</Select>
 ```
+Colocar lado a lado com o Select de vendedor em uma `div flex gap-2`.
 
-**Metais (linha ~383):** Mesma correção:
-```typescript
-const hasMetals =
-  (o.metais && o.metais !== '' && o.metais !== 'Não' && o.metais !== '-') ||
-  (o.tipoMetal && o.tipoMetal !== '' && o.tipoMetal !== '-') ||
-  (o.corMetal && o.corMetal !== '' && o.corMetal !== '-') ||
-  (o.strassQtd && o.strassQtd > 0) ||
-  (o.cruzMetalQtd && o.cruzMetalQtd > 0) ||
-  (o.bridaoMetalQtd && o.bridaoMetalQtd > 0);
-```
-
-### Arquivo alterado
-
-| Arquivo | Alteração |
-|---|---|
-| `src/components/SpecializedReports.tsx` | Adicionar `'-'` aos filtros de bordado e metais |
+2. **Vendedor dashboard (linhas 284-291):** Adicionar o mesmo `<Select>` de produto entre os botões de período e o gráfico.
 
