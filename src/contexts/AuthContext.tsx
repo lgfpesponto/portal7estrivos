@@ -565,7 +565,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { numeroPedido, ...rest } = orderData;
       const dataHoje = formatBrasiliaDate();
       const horaAgora = formatBrasiliaTime();
-      const totalBizDays = rest.tipoExtra === 'cinto' ? 5 : rest.tipoExtra ? 1 : rest.temLaser ? 30 : 10;
+      const totalBizDays = rest.tipoExtra === 'cinto' ? 5 : rest.tipoExtra ? 1 : 15;
 
       // Generate order number
       const { count } = await supabase.from('orders').select('*', { count: 'exact', head: true });
@@ -714,15 +714,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!current) return;
 
     const newHistEntry = { data: dataHoje, hora: horaAgora, local: newStatus, descricao: `Pedido movido para ${newStatus}`, observacao: observacao || undefined };
-    const altEntry: OrderAlteracao = { data: dataHoje, hora: horaAgora, descricao: `Alterado progresso para ${newStatus}${observacao ? ` — Obs: ${observacao}` : ''}` };
-
     const updatedHistorico = [...current.historico, newHistEntry];
-    const updatedAlteracoes = [...(current.alteracoes || []), altEntry];
 
     const { error } = await supabase.from('orders').update({
       status: newStatus,
       historico: updatedHistorico as any,
-      alteracoes: updatedAlteracoes as any,
     }).eq('id', id);
 
     if (error) {
@@ -730,7 +726,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const updatedOrder = { ...current, status: newStatus, historico: updatedHistorico, alteracoes: updatedAlteracoes };
+    const updatedOrder = { ...current, status: newStatus, historico: updatedHistorico };
     setOrders(prev => prev.map(o => o.id === id ? updatedOrder : o));
     setAllOrders(prev => prev.map(o => o.id === id ? updatedOrder : o));
   }, [orders, allOrders]);
