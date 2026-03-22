@@ -337,6 +337,12 @@ function orderToDbRow(order: any, userId: string) {
 }
 
 /* ───── Context interface ───── */
+export interface ProfileSummary {
+  id: string;
+  nomeCompleto: string;
+  nomeUsuario: string;
+}
+
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
@@ -354,6 +360,7 @@ interface AuthContextType {
   recoverPassword: (cpfCnpj: string, digits: string) => Promise<boolean>;
   allOrders: Order[];
   loading: boolean;
+  allProfiles: ProfileSummary[];
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
