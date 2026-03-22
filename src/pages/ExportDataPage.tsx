@@ -352,20 +352,23 @@ const ExportDataPage = () => {
             {copied === 'all' ? 'Copiado!' : 'Copiar tudo'}
           </button>
         </div>
-        <p className="text-muted-foreground text-xs mb-4">Clique em uma tabela para ver o SQL de criação. Use para migrar a estrutura.</p>
+        <p className="text-muted-foreground text-xs mb-4">Clique em uma tabela para gerar o SQL completo (CREATE + INSERT com dados). Use para migrar estrutura e dados.</p>
 
         <div className="space-y-2">
           {exportOptions.map(opt => (
             <div key={`sql-${opt.key}`} className="bg-card rounded-xl western-shadow overflow-hidden">
               <button
-                onClick={() => setExpandedSql(expandedSql === opt.key ? null : opt.key)}
+                onClick={() => handleToggleSql(opt.key)}
                 className="w-full flex items-center justify-between p-4 text-left hover:bg-accent/30 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <Code size={16} className="text-primary" />
                   <span className="font-semibold text-sm text-foreground">{opt.label}</span>
                 </div>
-                <span className="text-xs text-muted-foreground">{expandedSql === opt.key ? '▲ Fechar' : '▼ Ver SQL'}</span>
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  {sqlLoading === opt.key && <Loader2 size={12} className="animate-spin" />}
+                  {expandedSql === opt.key ? '▲ Fechar' : '▼ Ver SQL + Dados'}
+                </span>
               </button>
 
               {expandedSql === opt.key && (
@@ -379,8 +382,8 @@ const ExportDataPage = () => {
                       {copied === opt.key ? 'Copiado!' : 'Copiar'}
                     </button>
                   </div>
-                  <pre className="bg-muted rounded-lg p-4 text-xs text-foreground overflow-x-auto whitespace-pre font-mono leading-relaxed">
-                    {tableSchemas[opt.key]}
+                  <pre className="bg-muted rounded-lg p-4 text-xs text-foreground overflow-x-auto whitespace-pre font-mono leading-relaxed max-h-96 overflow-y-auto">
+                    {sqlLoading === opt.key ? 'Carregando dados...' : getFullSql(opt.key)}
                   </pre>
                 </div>
               )}
