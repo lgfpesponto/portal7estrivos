@@ -44,39 +44,52 @@ const Index = () => {
   }, [sourceOrders]);
 
   const chartData = useMemo(() => {
-    const data: { name: string; botas: number }[] = [];
+    const data: { name: string; vendas: number }[] = [];
     const now = new Date();
+
+    // Filter orders for chart based on product and vendor filters
+    const chartOrders = sourceOrders.filter(o => {
+      // Product filter
+      if (chartProductFilter === 'bota') return !o.tipoExtra;
+      if (chartProductFilter === 'regata') return o.tipoExtra === 'regata';
+      if (chartProductFilter === 'bota_pronta_entrega') return o.tipoExtra === 'bota_pronta_entrega';
+      // 'todos' = bota + regata + bota_pronta_entrega
+      return !o.tipoExtra || o.tipoExtra === 'regata' || o.tipoExtra === 'bota_pronta_entrega';
+    }).filter(o => {
+      if (chartVendedorFilter === 'todos') return true;
+      return o.vendedor === chartVendedorFilter;
+    });
 
     if (chartPeriod === 'dia') {
       for (let i = 6; i >= 0; i--) {
         const d = new Date(now.getTime() - i * 86400000);
         const key = d.toISOString().split('T')[0];
-        data.push({ name: `${d.getDate()}/${d.getMonth() + 1}`, botas: orders.filter((o) => o.dataCriacao === key).reduce((s, o) => s + o.quantidade, 0) });
+        data.push({ name: `${d.getDate()}/${d.getMonth() + 1}`, vendas: chartOrders.filter((o) => o.dataCriacao === key).reduce((s, o) => s + o.quantidade, 0) });
       }
     } else if (chartPeriod === 'semana') {
       for (let i = 3; i >= 0; i--) {
         const end = new Date(now.getTime() - i * 7 * 86400000);
         const start = new Date(end.getTime() - 7 * 86400000);
-        const botas = orders.filter((o) => o.dataCriacao >= start.toISOString().split('T')[0] && o.dataCriacao <= end.toISOString().split('T')[0]).reduce((s, o) => s + o.quantidade, 0);
-        data.push({ name: `Sem ${4 - i}`, botas });
+        const vendas = chartOrders.filter((o) => o.dataCriacao >= start.toISOString().split('T')[0] && o.dataCriacao <= end.toISOString().split('T')[0]).reduce((s, o) => s + o.quantidade, 0);
+        data.push({ name: `Sem ${4 - i}`, vendas });
       }
     } else if (chartPeriod === 'mes') {
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-        const botas = orders.filter((o) => o.dataCriacao >= d.toISOString().split('T')[0] && o.dataCriacao <= monthEnd.toISOString().split('T')[0]).reduce((s, o) => s + o.quantidade, 0);
+        const vendas = chartOrders.filter((o) => o.dataCriacao >= d.toISOString().split('T')[0] && o.dataCriacao <= monthEnd.toISOString().split('T')[0]).reduce((s, o) => s + o.quantidade, 0);
         const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-        data.push({ name: months[d.getMonth()], botas });
+        data.push({ name: months[d.getMonth()], vendas });
       }
     } else {
       for (let i = 2; i >= 0; i--) {
         const year = now.getFullYear() - i;
-        const botas = orders.filter((o) => o.dataCriacao.startsWith(`${year}`)).reduce((s, o) => s + o.quantidade, 0);
-        data.push({ name: `${year}`, botas });
+        const vendas = chartOrders.filter((o) => o.dataCriacao.startsWith(`${year}`)).reduce((s, o) => s + o.quantidade, 0);
+        data.push({ name: `${year}`, vendas });
       }
     }
     return data;
-  }, [chartPeriod, orders]);
+  }, [chartPeriod, sourceOrders, chartProductFilter, chartVendedorFilter]);
 
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
