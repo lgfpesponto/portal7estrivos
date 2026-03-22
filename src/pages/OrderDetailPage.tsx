@@ -23,6 +23,7 @@ import { EXTRA_PRODUCT_NAME_MAP, EXTRA_DETAIL_LABELS, EXTRA_INTERNAL_KEYS, isExt
 const OrderDetailPage = () => {
   const { id } = useParams();
   const { orders, isAdmin, user, updateOrder, isFernanda, allOrders } = useAuth();
+  const { toggle, isSelected, count, clear, selectedIds } = useSelectedOrders();
   const navigate = useNavigate();
   const order = orders.find(o => o.id === id);
 
@@ -30,6 +31,7 @@ const OrderDetailPage = () => {
   const [justificativaInput, setJustificativaInput] = useState('');
   const [showScanner, setShowScanner] = useState(false);
   const [scanValue, setScanValue] = useState('');
+  const [bulkStatus, setBulkStatus] = useState('');
   const scanInputRef = useRef<HTMLInputElement>(null);
 
   const handleScanSubmit = useCallback(() => {
