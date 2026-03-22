@@ -14,9 +14,11 @@ const fadeIn = {
 };
 
 const Index = () => {
-  const { isLoggedIn, isAdmin, isFernanda, orders, allOrders, user } = useAuth();
+  const { isLoggedIn, isAdmin, isFernanda, orders, allOrders, user, allProfiles } = useAuth();
   const [chartPeriod, setChartPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano'>('mes');
   const [receberVendedor, setReceberVendedor] = useState<string>('todos');
+  const [chartProductFilter, setChartProductFilter] = useState<string>('todos');
+  const [chartVendedorFilter, setChartVendedorFilter] = useState<string>('todos');
 
   const sourceOrders = isAdmin ? allOrders : orders;
 
