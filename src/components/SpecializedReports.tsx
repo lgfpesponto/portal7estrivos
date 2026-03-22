@@ -40,7 +40,7 @@ interface SpecializedReportsProps {
 const REPORT_LABELS: Record<ReportType, string> = {
   escalacao: 'Escalação',
   forro: 'Forro',
-  pesponto: 'Pesponto',
+  pesponto: 'Metais',
   bordados: 'Bordados',
   expedicao: 'Expedição',
   cobranca: 'Cobrança',
