@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { SelectedOrdersProvider } from "@/hooks/useSelectedOrders";
 import Header from "@/components/Header";
 import Index from "./pages/Index.tsx";
 import LoginPage from "./pages/LoginPage";
@@ -32,6 +33,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <SelectedOrdersProvider>
           <Header />
           <Routes>
             <Route path="/" element={<Index />} />
@@ -52,6 +54,7 @@ const App = () => (
             <Route path="/verificar" element={<VerifyCodePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </SelectedOrdersProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
