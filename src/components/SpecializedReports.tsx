@@ -380,7 +380,7 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     const filtered = sourceOrders.filter(o => {
       if (filterProgresso !== 'todos' && o.status !== filterProgresso) return false;
       // Only include orders that have metal fields filled
-      const hasMetals = (o.metais && o.metais !== '' && o.metais !== 'Não') || (o.tipoMetal && o.tipoMetal !== '') || (o.corMetal && o.corMetal !== '') || (o.strassQtd && o.strassQtd > 0) || (o.cruzMetalQtd && o.cruzMetalQtd > 0) || (o.bridaoMetalQtd && o.bridaoMetalQtd > 0);
+      const hasMetals = (o.metais && o.metais !== '' && o.metais !== 'Não' && o.metais !== '-') || (o.tipoMetal && o.tipoMetal !== '' && o.tipoMetal !== '-') || (o.corMetal && o.corMetal !== '' && o.corMetal !== '-') || (o.strassQtd && o.strassQtd > 0) || (o.cruzMetalQtd && o.cruzMetalQtd > 0) || (o.bridaoMetalQtd && o.bridaoMetalQtd > 0);
       return !!hasMetals;
     });
 
