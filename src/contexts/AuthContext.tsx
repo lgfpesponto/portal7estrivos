@@ -372,6 +372,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [allProfiles, setAllProfiles] = useState<ProfileSummary[]>([]);
 
   const isFernanda = user?.nomeUsuario?.toLowerCase() === 'fernanda';
 
