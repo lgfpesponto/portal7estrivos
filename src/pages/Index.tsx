@@ -240,11 +240,14 @@ const Index = () => {
   );
 
   // ── Revendedor: pendente + produção + gráfico ──
-  const renderVendedorDashboard = () => (
+  const renderVendedorDashboard = () => {
+    const isSiteUser = user?.nomeUsuario?.toLowerCase() === 'site';
+    return (
     <section className="container mx-auto px-4 py-8">
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="space-y-6">
-          {/* Pendente */}
+          {/* Pendente — hidden for 'site' user */}
+          {!isSiteUser && (
           <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
             <h2 className="text-xl font-display font-bold flex items-center gap-2 mb-4">
               <AlertCircle className="text-primary" size={22} /> Pendente
@@ -254,6 +257,7 @@ const Index = () => {
               <p className="text-3xl font-bold text-primary mt-1">{formatCurrency(financialData.aReceber)}</p>
             </div>
           </motion.div>
+          )}
 
           {/* Botas na produção */}
           <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={1} className="bg-card rounded-xl p-6 western-shadow">
@@ -274,7 +278,7 @@ const Index = () => {
           <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={2} className="bg-card rounded-xl p-6 western-shadow">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-display font-bold flex items-center gap-2">
-                <BarChart3 className="text-primary" size={22} /> Botas Vendidas
+                <BarChart3 className="text-primary" size={22} /> Quantidade de vendas
               </h2>
             </div>
             <div className="flex gap-2 mb-4 flex-wrap">
@@ -291,8 +295,8 @@ const Index = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(30 20% 80%)" />
                   <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
                   <YAxis tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
-                  <Tooltip formatter={(v: number) => [v, 'Botas']} />
-                  <Line type="monotone" dataKey="botas" stroke="hsl(25 85% 48%)" strokeWidth={3} dot={{ fill: 'hsl(25 85% 48%)', r: 5 }} />
+                  <Tooltip formatter={(v: number) => [v, 'Vendas']} />
+                  <Line type="monotone" dataKey="vendas" stroke="hsl(25 85% 48%)" strokeWidth={3} dot={{ fill: 'hsl(25 85% 48%)', r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -300,7 +304,8 @@ const Index = () => {
         </div>
       </div>
     </section>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen">
