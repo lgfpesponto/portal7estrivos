@@ -292,6 +292,19 @@ const Index = () => {
                 </button>
               )}
             </div>
+            <div className="flex gap-2 mb-4">
+              <Select value={chartProductFilter} onValueChange={setChartProductFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Todos produtos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos produtos</SelectItem>
+                  <SelectItem value="bota">Bota</SelectItem>
+                  <SelectItem value="regata">Regata</SelectItem>
+                  <SelectItem value="bota_pronta_entrega">Bota P.E.</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
