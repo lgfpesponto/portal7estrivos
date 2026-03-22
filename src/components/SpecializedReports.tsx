@@ -375,67 +375,66 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.save('relatorio-forro.pdf');
   };
 
-  // ── Pesponto: tabular format ──
-  const generatePespontoPDF = () => {
-    const statusFilter = filterProgresso === 'todos' ? PESPONTO_STATUSES : [filterProgresso];
-    const filtered = sourceOrders.filter(o => statusFilter.some(s => s.toLowerCase() === o.status.toLowerCase()));
+  // ── Metais (formerly Pesponto): tabular format with QR ──
+  const generatePespontoPDF = async () => {
+    const filtered = sourceOrders.filter(o => {
+      if (filterProgresso !== 'todos' && o.status !== filterProgresso) return false;
+      // Only include orders that have metal fields filled
+      const hasMetals = o.metais || o.tipoMetal || o.corMetal || (o.strassQtd && o.strassQtd > 0) || (o.cruzMetalQtd && o.cruzMetalQtd > 0) || (o.bridaoMetalQtd && o.bridaoMetalQtd > 0);
+      return !!hasMetals;
+    });
 
     const doc = new jsPDF();
     const mx = 14;
     const cw = 182;
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text('Relatório de Pesponto — 7ESTRIVOS', mx, 20);
+    doc.text('Relatório de Metais — 7ESTRIVOS', mx, 20);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`, mx, 27);
-    doc.text(`Filtro: ${filterProgresso === 'todos' ? 'Todos os pespontos' : filterProgresso}`, mx, 32);
+    doc.text(`Filtro: ${filterProgresso === 'todos' ? 'Todos' : filterProgresso} | Total: ${filtered.length} pedidos`, mx, 32);
 
-    const cols = [25, 40, 70, 25, 22];
-    const cx = [mx, mx + cols[0], mx + cols[0] + cols[1], mx + cols[0] + cols[1] + cols[2], mx + cols[0] + cols[1] + cols[2] + cols[3]];
+    const cols = [25, 120, 37];
+    const cx = [mx, mx + cols[0], mx + cols[0] + cols[1]];
 
-    // Group by status
-    const byStatus: Record<string, Order[]> = {};
-    filtered.forEach(o => {
-      if (!byStatus[o.status]) byStatus[o.status] = [];
-      byStatus[o.status].push(o);
-    });
+    let y = drawTableHeader(doc, 38, mx, cw, [
+      { label: 'Nº PEDIDO', x: cx[0] + 2 },
+      { label: 'DESCRIÇÃO DE METAIS', x: cx[1] + 2 },
+      { label: 'QR CODE', x: cx[2] + 2 },
+    ]);
 
-    let y = 38;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
 
-    Object.entries(byStatus).forEach(([status, ords]) => {
-      if (y > 260) { doc.addPage(); y = 20; }
-      // Status header
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text(status, mx, y + 5);
-      y += 8;
+    for (const o of filtered) {
+      const metalParts: string[] = [];
+      if (o.metais) metalParts.push(`Área: ${o.metais}`);
+      if (o.tipoMetal) metalParts.push(`Tipo: ${o.tipoMetal}`);
+      if (o.corMetal) metalParts.push(`Cor: ${o.corMetal}`);
+      if (o.strassQtd && o.strassQtd > 0) metalParts.push(`Strass: ${o.strassQtd} un.`);
+      if (o.cruzMetalQtd && o.cruzMetalQtd > 0) metalParts.push(`Cruz: ${o.cruzMetalQtd} un.`);
+      if (o.bridaoMetalQtd && o.bridaoMetalQtd > 0) metalParts.push(`Bridão: ${o.bridaoMetalQtd} un.`);
+      const metalText = metalParts.join(' | ');
+      const lines = doc.splitTextToSize(metalText, cols[1] - 4);
+      const rowH = Math.max(18, lines.length * 3.5 + 6);
 
-      y = drawTableHeader(doc, y, mx, cw, [
-        { label: 'Nº PEDIDO', x: cx[0] + 2 },
-        { label: 'VENDEDOR', x: cx[1] + 2 },
-        { label: 'MODELO', x: cx[2] + 2 },
-        { label: 'TAM.', x: cx[3] + 2 },
-        { label: 'QTD', x: cx[4] + 2 },
-      ]);
-
-      doc.setFont('helvetica', 'normal');
+      if (y + rowH > 280) { doc.addPage(); y = 20; }
+      drawTableRow(doc, y, mx, cw, cols, rowH);
+      doc.setFontSize(8);
+      doc.text(o.numero, cx[0] + 2, y + 5);
       doc.setFontSize(7);
-      const rowH = 7;
-      ords.forEach(o => {
-        if (y + rowH > 280) { doc.addPage(); y = 20; }
-        drawTableRow(doc, y, mx, cw, cols, rowH);
-        doc.text(o.numero, cx[0] + 2, y + 5);
-        doc.text(o.vendedor.substring(0, 20), cx[1] + 2, y + 5);
-        doc.text(o.modelo.substring(0, 35), cx[2] + 2, y + 5);
-        doc.text(o.tamanho, cx[3] + 2, y + 5);
-        doc.text(String(o.quantidade), cx[4] + 2, y + 5);
-        y += rowH;
-      });
-      y += 5;
-    });
+      doc.text(lines, cx[1] + 2, y + 5);
 
-    doc.save('relatorio-pesponto.pdf');
+      const fotoUrl = o.fotos?.[0];
+      if (fotoUrl) {
+        const qr = await qrDataUrl(fotoUrl);
+        if (qr) try { doc.addImage(qr, 'PNG', cx[2] + 4, y + 1, 14, 14); } catch {}
+      }
+      y += rowH;
+    }
+
+    doc.save('relatorio-metais.pdf');
   };
 
   // ── Bordados: tabular format ──
