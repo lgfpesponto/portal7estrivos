@@ -172,14 +172,75 @@ const OrderDetailPage = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft size={16} /> Voltar
           </button>
-          <Button variant="outline" size="sm" onClick={() => { setShowScanner(!showScanner); setTimeout(() => scanInputRef.current?.focus(), 100); }}>
-            <ScanBarcode size={16} /> Escanear
-          </Button>
+          <div className="flex items-center gap-2">
+            {isAdmin && order && (
+              <label className="flex items-center gap-2 text-sm cursor-pointer border border-border rounded-md px-3 py-1.5">
+                <Checkbox
+                  checked={isSelected(order.id)}
+                  onCheckedChange={() => toggle(order.id)}
+                />
+                Selecionar
+              </label>
+            )}
+            <Button variant="outline" size="sm" onClick={() => { setShowScanner(!showScanner); setTimeout(() => scanInputRef.current?.focus(), 100); }}>
+              <ScanBarcode size={16} /> Escanear
+            </Button>
+          </div>
         </div>
+
+        {/* Bulk selection bar */}
+        {isAdmin && count > 0 && (
+          <div className="mb-4 p-3 bg-muted rounded-lg flex items-center justify-between flex-wrap gap-2">
+            <span className="text-sm font-semibold">
+              <CheckSquare size={16} className="inline mr-1" />
+              {count} pedido{count > 1 ? 's' : ''} selecionado{count > 1 ? 's' : ''}
+            </span>
+            <div className="flex items-center gap-2">
+              <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                <SelectTrigger className="w-48 h-8 text-xs">
+                  <SelectValue placeholder="Novo progresso..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRODUCTION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                disabled={!bulkStatus}
+                onClick={async () => {
+                  if (!bulkStatus) return;
+                  const ids = Array.from(selectedIds);
+                  const sourceOrders = isAdmin ? allOrders : orders;
+                  let updated = 0;
+                  for (const oid of ids) {
+                    const o = sourceOrders.find(x => x.id === oid);
+                    if (!o) continue;
+                    const dataHoje = formatBrasiliaDate();
+                    const horaAgora = formatBrasiliaTime();
+                    const newHist = { local: bulkStatus, data: dataHoje, hora: horaAgora, descricao: `Movido para ${bulkStatus}` };
+                    await updateOrder(oid, {
+                      status: bulkStatus,
+                      historico: [...(o.historico || []), newHist],
+                    });
+                    updated++;
+                  }
+                  toast.success(`${updated} pedido${updated > 1 ? 's' : ''} atualizado${updated > 1 ? 's' : ''} para "${bulkStatus}"`);
+                  clear();
+                  setBulkStatus('');
+                }}
+              >
+                Mudar progresso
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => { clear(); setBulkStatus(''); }}>
+                Limpar
+              </Button>
+            </div>
+          </div>
+        )}
         {showScanner && (
           <div className="mb-4">
             <input
