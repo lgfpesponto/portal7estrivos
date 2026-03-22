@@ -68,7 +68,7 @@ const OrderDetailPage = () => {
 
   // Calculate days remaining
   const createdDate = new Date(order.dataCriacao + 'T00:00:00');
-  const totalBizDays = order.tipoExtra === 'cinto' ? 5 : order.tipoExtra ? 1 : order.temLaser ? 30 : 10;
+  const totalBizDays = order.tipoExtra === 'cinto' ? 5 : order.tipoExtra ? 1 : 15;
   const daysLeft = businessDaysRemaining(createdDate, totalBizDays);
 
   // Build details list (only filled fields)
@@ -278,7 +278,7 @@ const OrderDetailPage = () => {
               {daysLeft > 0 ? `${daysLeft} dias úteis restantes` : 'Prazo atingido ✓'}
             </span>
             <span className="text-xs text-muted-foreground">
-              (prazo: {totalBizDays} dias úteis{order.temLaser ? ' — com laser' : ''})
+              (prazo: {totalBizDays} dias úteis)
             </span>
           </div>
 
