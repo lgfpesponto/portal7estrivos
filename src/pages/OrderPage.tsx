@@ -464,7 +464,7 @@ const OrderPage = () => {
 
   /* ───── mirror data (only filled fields, NO value) ───── */
   const mirrorRows: [string, string][] = [
-    ['Vendedor', user?.nomeCompleto || ''],
+    ['Vendedor', isAdmin ? vendedorSelecionado : (user?.nomeCompleto || '')],
     ['Número do Pedido', numeroPedido],
     ['Tamanho', tamanho ? `${tamanho}${genero ? ' — ' + genero : ''}` : ''],
     ['Modelo', modelo],
