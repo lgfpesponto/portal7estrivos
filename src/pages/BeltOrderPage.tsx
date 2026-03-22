@@ -239,10 +239,15 @@ const BeltOrderPage = () => {
             <div>
               <label className={cls.label}>Vendedor</label>
               {isAdminUser ? (
-                <input type="text" value={vendedor} onChange={e => setVendedor(e.target.value)} className={cls.input} />
+                <select value={vendedor} onChange={e => setVendedor(e.target.value)} className={cls.select}>
+                  {allProfiles.map(p => (
+                    <option key={p.id} value={p.nomeCompleto}>{p.nomeCompleto}</option>
+                  ))}
+                </select>
               ) : (
                 <input type="text" value={user?.nomeCompleto || ''} readOnly className={cls.input + ' opacity-70'} />
               )}
+            </div>
             </div>
             <div>
               <label className={cls.label}>Número do Pedido<span className="text-destructive ml-0.5">*</span></label>
