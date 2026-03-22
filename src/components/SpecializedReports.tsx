@@ -281,7 +281,7 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
 
   // ── Escalação: tabular format ──
   const generateEscalacaoPDF = () => {
-    const filtered = sourceOrders.filter(o => o.status.toLowerCase() === 'pespontando');
+    const filtered = sourceOrders.filter(o => o.status.toLowerCase() === 'pespontando' && o.solado && o.solado !== '' && o.solado !== '-');
     const groups: Record<string, { tamanho: string; solado: string; formatoBico: string; corSola: string; quantidade: number }> = {};
     filtered.forEach(o => {
       const key = `${o.tamanho}|${o.solado}|${o.formatoBico}|${o.corSola || ''}`;
