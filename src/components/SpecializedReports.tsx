@@ -331,7 +331,7 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
 
   // ── Forro: tabular format ──
   const generateForroPDF = () => {
-    const filtered = sourceOrders.filter(o => (filterProgresso === 'todos' || o.status === filterProgresso) && o.modelo && o.modelo !== '' && o.modelo !== '-');
+    const filtered = sourceOrders.filter(o => (filterProgresso === 'todos' || o.status === filterProgresso) && !o.tipoExtra && o.modelo && o.modelo !== '' && o.modelo !== '-');
     const groups: Record<string, { modelo: string; tamanho: string; quantidade: number }> = {};
     filtered.forEach(o => {
       const key = `${o.modelo}|${o.tamanho}`;
