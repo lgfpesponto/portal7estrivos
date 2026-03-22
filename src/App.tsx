@@ -33,6 +33,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <SelectedOrdersProvider>
           <Header />
           <Routes>
             <Route path="/" element={<Index />} />
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/verificar" element={<VerifyCodePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </SelectedOrdersProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
