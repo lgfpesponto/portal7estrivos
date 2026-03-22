@@ -145,6 +145,107 @@ function drawTableRow(doc: jsPDF, y: number, mx: number, cw: number, colWidths: 
   });
 }
 
+// ── Helper: generate QR code data URL ──
+async function qrDataUrl(text: string, size: number = 100): Promise<string> {
+  if (!text) return '';
+  try {
+    return await QRCode.toDataURL(text, { width: size, margin: 1 });
+  } catch { return ''; }
+}
+
+// ── Helper: build price composition items for an order ──
+function buildCompositionItems(o: Order): [string, number][] {
+  const priceItems: [string, number][] = [];
+
+  if (o.tipoExtra === 'cinto' && o.extraDetalhes) {
+    const det = o.extraDetalhes as any;
+    priceItems.push(['Cinto', 0]);
+    const sizeEntry = BELT_SIZES.find(s => s.label === det.tamanhoCinto);
+    if (sizeEntry) priceItems.push([`Tamanho: ${sizeEntry.label}`, sizeEntry.preco]);
+    if (det.bordadoP === 'Sim') priceItems.push(['Bordado P', BORDADO_P_PRECO]);
+    if (det.nomeBordado === 'Sim') priceItems.push(['Nome Bordado', NOME_BORDADO_CINTO_PRECO]);
+    const carimboEntry = BELT_CARIMBO.find(c => c.label === det.carimbo);
+    if (carimboEntry) priceItems.push([det.carimbo, carimboEntry.preco]);
+  } else if (o.tipoExtra && o.extraDetalhes) {
+    const det = o.extraDetalhes as any;
+    const extraLabel = o.modelo.replace('Extra — ', '');
+    switch (o.tipoExtra) {
+      case 'desmanchar': {
+        priceItems.push(['Desmanchar (base)', 65]);
+        if (det.qualSola === 'Preta borracha') priceItems.push(['Sola preta borracha', 25]);
+        else if (det.qualSola === 'De cor borracha') priceItems.push(['Sola de cor borracha', 40]);
+        else if (det.qualSola === 'De couro') priceItems.push(['Sola de couro', 60]);
+        if (det.trocaGaspea === 'Sim') priceItems.push(['Troca Gáspea/Taloneira', 35]);
+        break;
+      }
+      case 'kit_canivete': { priceItems.push(['Kit Canivete', 30]); if (det.vaiCanivete === 'Sim') priceItems.push(['Com canivete', 30]); break; }
+      case 'kit_faca': { priceItems.push(['Kit Faca', 35]); if (det.vaiCanivete === 'Sim') priceItems.push(['Com faca', 35]); break; }
+      case 'carimbo_fogo': { const qty = parseInt(det.qtdCarimbos) || 1; priceItems.push([`Carimbo a Fogo (${qty} un.)`, qty >= 4 ? 40 : 20]); break; }
+      case 'revitalizador': { const qty = parseInt(det.quantidade) || 1; priceItems.push([`Revitalizador (${qty} un.)`, 10 * qty]); break; }
+      case 'kit_revitalizador': { const qty = parseInt(det.quantidade) || 1; priceItems.push([`Kit 2 Revitalizador (${qty} un.)`, 26 * qty]); break; }
+      case 'adicionar_metais': {
+        const sel = det.metaisSelecionados || [];
+        if (sel.includes('Bola grande')) priceItems.push(['Bola grande', 15]);
+        if (sel.includes('Strass')) { const qtd = parseInt(det.qtdStrass) || 1; priceItems.push([`Strass (${qtd} un.)`, 0.60 * qtd]); }
+        break;
+      }
+      case 'bota_pronta_entrega': { priceItems.push([det.descricaoProduto || 'Bota Pronta Entrega', parseFloat(det.valorManual) || o.preco]); break; }
+      default: priceItems.push([extraLabel, o.preco]); break;
+    }
+  } else {
+    const modeloP = MODELOS.find(m => m.label === o.modelo)?.preco;
+    if (modeloP) priceItems.push(['Modelo: ' + o.modelo, modeloP]);
+    if (o.sobMedida) priceItems.push(['Sob Medida', SOB_MEDIDA_PRECO]);
+    if (o.acessorios) {
+      o.acessorios.split(', ').filter(Boolean).forEach(a => {
+        const p = ACESSORIOS.find(x => x.label === a)?.preco;
+        if (p) priceItems.push([a, p]);
+      });
+    }
+    [o.couroCano, o.couroGaspea, o.couroTaloneira].forEach(t => {
+      if (t && COURO_PRECOS[t]) priceItems.push(['Couro: ' + t, COURO_PRECOS[t]]);
+    });
+    const desenvP = DESENVOLVIMENTO.find(d => d.label === o.desenvolvimento)?.preco;
+    if (desenvP) priceItems.push(['Desenvolvimento: ' + o.desenvolvimento, desenvP]);
+    const bordadoLists: [string | undefined, typeof BORDADOS_CANO][] = [
+      [o.bordadoCano, BORDADOS_CANO],
+      [o.bordadoGaspea, BORDADOS_GASPEA],
+      [o.bordadoTaloneira, BORDADOS_TALONEIRA],
+    ];
+    bordadoLists.forEach(([bStr, list]) => {
+      if (bStr) bStr.split(', ').filter(Boolean).forEach(b => {
+        const p = list.find(x => x.label === b)?.preco;
+        if (p) priceItems.push([b.includes('Bordado Variado') ? (b + ' (variado)') : b, p]);
+      });
+    });
+    if (o.nomeBordadoDesc || o.personalizacaoNome) priceItems.push(['Nome Bordado', NOME_BORDADO_PRECO]);
+    if (o.laserCano) priceItems.push(['Laser Cano', LASER_CANO_PRECO]);
+    if (o.corGlitterCano) priceItems.push(['Glitter/Tecido Cano', GLITTER_CANO_PRECO]);
+    if (o.laserGaspea) priceItems.push(['Laser Gáspea', LASER_GASPEA_PRECO]);
+    if (o.corGlitterGaspea) priceItems.push(['Glitter/Tecido Gáspea', GLITTER_GASPEA_PRECO]);
+    if (o.pintura === 'Sim') priceItems.push(['Pintura', PINTURA_PRECO]);
+    if (o.estampa === 'Sim') priceItems.push(['Estampa', ESTAMPA_PRECO]);
+    const areaP = AREA_METAL.find(a => a.label === o.metais)?.preco;
+    if (areaP) priceItems.push(['Área Metal: ' + o.metais, areaP]);
+    if (o.strassQtd) priceItems.push([`Strass (${o.strassQtd} un.)`, o.strassQtd * STRASS_PRECO]);
+    if (o.cruzMetalQtd) priceItems.push([`Cruz metal (${o.cruzMetalQtd} un.)`, o.cruzMetalQtd * CRUZ_METAL_PRECO]);
+    if (o.bridaoMetalQtd) priceItems.push([`Bridão metal (${o.bridaoMetalQtd} un.)`, o.bridaoMetalQtd * BRIDAO_METAL_PRECO]);
+    if (o.trisce === 'Sim') priceItems.push(['Tricê', TRICE_PRECO]);
+    if (o.tiras === 'Sim') priceItems.push(['Tiras', TIRAS_PRECO]);
+    const soladoP = SOLADO.find(s => s.label === o.solado)?.preco;
+    if (soladoP) priceItems.push(['Solado: ' + o.solado, soladoP]);
+    const corSolaP = COR_SOLA.find(c => c.label === o.corSola)?.preco;
+    if (corSolaP) priceItems.push(['Cor Sola: ' + o.corSola, corSolaP]);
+    const corViraP = (o.corVira && !['Bege', 'Neutra'].includes(o.corVira)) ? (COR_VIRA.find(c => c.label === o.corVira)?.preco || 0) : 0;
+    if (corViraP) priceItems.push(['Cor Vira: ' + o.corVira, corViraP]);
+    if (o.costuraAtras === 'Sim') priceItems.push(['Costura Atrás', COSTURA_ATRAS_PRECO]);
+    const carimboP = CARIMBO.find(c => c.label === o.carimbo)?.preco;
+    if (carimboP) priceItems.push([o.carimbo!, carimboP]);
+    if (o.adicionalValor && o.adicionalValor > 0) priceItems.push(['Adicional: ' + (o.adicionalDesc || ''), o.adicionalValor]);
+  }
+  return priceItems;
+}
+
 const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsProps) => {
   const { allOrders, orders, isAdmin } = useAuth();
   const sourceOrders = isAdmin ? allOrders : orders;
