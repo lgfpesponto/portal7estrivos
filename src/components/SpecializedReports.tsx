@@ -747,7 +747,7 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
       const compText = priceItems.map(([name, val]) => `${name} ${formatCurrency(val)}`).join('\n');
 
       doc.setFontSize(6);
-      const lines = doc.splitTextToSize(compText, cols[1] - 4);
+      const lines = doc.splitTextToSize(compText, cols[2] - 4);
       const rowH = Math.max(12, lines.length * 3.5 + 6);
 
       if (y + rowH > 280) { doc.addPage(); y = 20; }
@@ -758,16 +758,18 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
 
       doc.setFontSize(8);
       doc.text(o.numero, cx[0] + 1, y + 5);
+      doc.setFontSize(7);
+      doc.text(formatDateBR(o.dataCriacao), cx[1] + 1, y + 5);
 
       doc.setFontSize(6);
-      doc.text(lines, cx[1] + 1, y + 4);
+      doc.text(lines, cx[2] + 1, y + 4);
 
       doc.setFontSize(8);
-      doc.text(String(o.quantidade), cx[2] + 1, y + 5);
-      doc.text(formatCurrency(orderTotal), cx[3] + 1, y + 5);
+      doc.text(String(o.quantidade), cx[3] + 1, y + 5);
+      doc.text(formatCurrency(orderTotal), cx[4] + 1, y + 5);
 
       const cbSize = 4;
-      doc.rect(cx[4] + (cols[4] - cbSize) / 2, y + (rowH - cbSize) / 2, cbSize, cbSize);
+      doc.rect(cx[5] + (cols[5] - cbSize) / 2, y + (rowH - cbSize) / 2, cbSize, cbSize);
 
       y += rowH;
       totalValor += orderTotal;
