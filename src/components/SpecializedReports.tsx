@@ -602,8 +602,8 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.setFont('helvetica', 'bold');
     doc.text(`Cobrança  [${geradoEm} — ${vendedorLabel}]`, mx, 20);
 
-    const cols = [25, 80, 15, 30, cw - 25 - 80 - 15 - 30];
-    const cx = [mx, mx + cols[0], mx + cols[0] + cols[1], mx + cols[0] + cols[1] + cols[2], mx + cols[0] + cols[1] + cols[2] + cols[3]];
+    const cols = [25, 22, 68, 15, 28, cw - 25 - 22 - 68 - 15 - 28];
+    const cx = [mx, mx + cols[0], mx + cols[0] + cols[1], mx + cols[0] + cols[1] + cols[2], mx + cols[0] + cols[1] + cols[2] + cols[3], mx + cols[0] + cols[1] + cols[2] + cols[3] + cols[4]];
 
     let y = 30;
 
@@ -612,10 +612,11 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.setFillColor(232, 232, 232);
     doc.rect(mx, y, cw, 8, 'F');
     doc.text('Nº PEDIDO', cx[0] + 1, y + 5.5);
-    doc.text('COMPOSIÇÃO', cx[1] + 1, y + 5.5);
-    doc.text('QTD', cx[2] + 1, y + 5.5);
-    doc.text('PREÇO', cx[3] + 1, y + 5.5);
-    doc.text('PAGO', cx[4] + 1, y + 5.5);
+    doc.text('DATA', cx[1] + 1, y + 5.5);
+    doc.text('COMPOSIÇÃO', cx[2] + 1, y + 5.5);
+    doc.text('QTD', cx[3] + 1, y + 5.5);
+    doc.text('PREÇO', cx[4] + 1, y + 5.5);
+    doc.text('PAGO', cx[5] + 1, y + 5.5);
     y += 8;
 
     let totalValor = 0;
