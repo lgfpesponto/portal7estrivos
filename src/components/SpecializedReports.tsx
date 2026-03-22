@@ -782,8 +782,8 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
     doc.text('TOTAL', cx[0] + 1, y + 7);
-    doc.text(String(totalQtd), cx[2] + 1, y + 7);
-    doc.text(formatCurrency(totalValor), cx[3] + 1, y + 7);
+    doc.text(String(totalQtd), cx[3] + 1, y + 7);
+    doc.text(formatCurrency(totalValor), cx[4] + 1, y + 7);
 
     doc.save('relatorio-cobranca.pdf');
   };
