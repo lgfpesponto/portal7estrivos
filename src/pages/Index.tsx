@@ -124,14 +124,17 @@ const Index = () => {
               )}
             </div>
             <div className="flex gap-2 mb-4 flex-wrap">
-              {[{ value: 'todos', label: 'Todos' }, { value: 'bota', label: 'Bota' }, { value: 'regata', label: 'Regata' }, { value: 'bota_pronta_entrega', label: 'Bota P.E.' }].map(f =>
-                <button key={f.value} onClick={() => setChartProductFilter(f.value)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-bold tracking-wider transition-colors ${chartProductFilter === f.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-primary/10'}`}>
-                  {f.label}
-                </button>
-              )}
-            </div>
-            <div className="mb-4">
+              <Select value={chartProductFilter} onValueChange={setChartProductFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Todos produtos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos produtos</SelectItem>
+                  <SelectItem value="bota">Bota</SelectItem>
+                  <SelectItem value="regata">Regata</SelectItem>
+                  <SelectItem value="bota_pronta_entrega">Bota P.E.</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={chartVendedorFilter} onValueChange={setChartVendedorFilter}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Todos vendedores" />
@@ -288,6 +291,19 @@ const Index = () => {
                   {p === 'mes' ? 'Mês' : p}
                 </button>
               )}
+            </div>
+            <div className="flex gap-2 mb-4">
+              <Select value={chartProductFilter} onValueChange={setChartProductFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Todos produtos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos produtos</SelectItem>
+                  <SelectItem value="bota">Bota</SelectItem>
+                  <SelectItem value="regata">Regata</SelectItem>
+                  <SelectItem value="bota_pronta_entrega">Bota P.E.</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
