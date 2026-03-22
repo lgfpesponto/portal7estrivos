@@ -1,49 +1,34 @@
 
 
-## Plano: Prazo de 15 dias úteis para botas + Remover progresso do histórico de alterações
+## Plano: Corrigir prazo na página de detalhes do pedido
 
-### Alterações
+### Problema
 
-**Arquivo:** `src/contexts/AuthContext.tsx`
+O prazo foi atualizado em `AuthContext.tsx` (criação do pedido), mas a página de detalhes (`OrderDetailPage.tsx`) ainda usa a lógica antiga para **exibir** os dias restantes:
 
-#### 1. Prazo de produção para botas = 15 dias úteis (linha 568)
-
-Atual:
 ```typescript
-const totalBizDays = rest.tipoExtra === 'cinto' ? 5 : rest.tipoExtra ? 1 : rest.temLaser ? 30 : 10;
+// Linha 71 — ANTIGO (ainda presente)
+const totalBizDays = order.tipoExtra === 'cinto' ? 5 : order.tipoExtra ? 1 : order.temLaser ? 30 : 10;
 ```
 
-Novo:
+### Solução
+
+**Arquivo:** `src/pages/OrderDetailPage.tsx`
+
+**Linha 71:** Atualizar para a mesma lógica do AuthContext:
 ```typescript
-const totalBizDays = rest.tipoExtra === 'cinto' ? 5 : rest.tipoExtra ? 1 : 15;
+const totalBizDays = order.tipoExtra === 'cinto' ? 5 : order.tipoExtra ? 1 : 15;
 ```
 
-Botas passam de 10 (ou 30 se laser) para **15 dias úteis** fixos, independente de laser ou bordado. Cintos e extras mantêm seus prazos.
-
-#### 2. Remover registro de progresso no histórico de alterações (linhas 716-725)
-
-No `updateOrderStatus`, remover a criação de `altEntry` e não adicionar ao `alteracoes`. O histórico de produção (`historico`) já registra mudanças de progresso.
-
-Atual:
+**Linha 281:** Remover o texto condicional sobre laser:
 ```typescript
-const altEntry: OrderAlteracao = { data: dataHoje, hora: horaAgora, descricao: `Alterado progresso para ${newStatus}...` };
-const updatedAlteracoes = [...(current.alteracoes || []), altEntry];
-// ... update com alteracoes: updatedAlteracoes
+// De:
+(prazo: {totalBizDays} dias úteis{order.temLaser ? ' — com laser' : ''})
+// Para:
+(prazo: {totalBizDays} dias úteis)
 ```
-
-Novo:
-```typescript
-// Sem altEntry — apenas atualiza historico e status
-const { error } = await supabase.from('orders').update({
-  status: newStatus,
-  historico: updatedHistorico as any,
-}).eq('id', id);
-// updatedOrder sem modificar alteracoes
-```
-
-### Resumo
 
 | Arquivo | Alteração |
 |---|---|
-| `src/contexts/AuthContext.tsx` | Prazo bota = 15 dias úteis; remover progresso do histórico de alterações |
+| `src/pages/OrderDetailPage.tsx` | Corrigir cálculo do prazo (linha 71) e remover menção a laser (linha 281) |
 
