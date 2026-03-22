@@ -112,7 +112,7 @@ const Index = () => {
           <motion.div initial="hidden" animate="visible" variants={fadeIn} custom={0} className="bg-card rounded-xl p-6 western-shadow">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-display font-bold flex items-center gap-2">
-                <BarChart3 className="text-primary" size={22} /> Botas Vendidas
+                <BarChart3 className="text-primary" size={22} /> Quantidade de vendas
               </h2>
             </div>
             <div className="flex gap-2 mb-4 flex-wrap">
@@ -123,14 +123,33 @@ const Index = () => {
                 </button>
               )}
             </div>
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {[{ value: 'todos', label: 'Todos' }, { value: 'bota', label: 'Bota' }, { value: 'regata', label: 'Regata' }, { value: 'bota_pronta_entrega', label: 'Bota P.E.' }].map(f =>
+                <button key={f.value} onClick={() => setChartProductFilter(f.value)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold tracking-wider transition-colors ${chartProductFilter === f.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-primary/10'}`}>
+                  {f.label}
+                </button>
+              )}
+            </div>
+            <div className="mb-4">
+              <Select value={chartVendedorFilter} onValueChange={setChartVendedorFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Todos vendedores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos vendedores</SelectItem>
+                  {vendedores.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(30 20% 80%)" />
                   <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
                   <YAxis tick={{ fontSize: 12, fill: 'hsl(20 10% 40%)' }} />
-                  <Tooltip formatter={(v: number) => [v, 'Botas']} />
-                  <Line type="monotone" dataKey="botas" stroke="hsl(25 85% 48%)" strokeWidth={3} dot={{ fill: 'hsl(25 85% 48%)', r: 5 }} />
+                  <Tooltip formatter={(v: number) => [v, 'Vendas']} />
+                  <Line type="monotone" dataKey="vendas" stroke="hsl(25 85% 48%)" strokeWidth={3} dot={{ fill: 'hsl(25 85% 48%)', r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
