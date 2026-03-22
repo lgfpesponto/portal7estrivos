@@ -152,12 +152,31 @@ function downloadCsv(csv: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+function escapeSQL(val: unknown): string {
+  if (val === null || val === undefined) return 'NULL';
+  if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
+  if (typeof val === 'number') return String(val);
+  if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'::jsonb`;
+  return `'${String(val).replace(/'/g, "''")}'`;
+}
+
+function generateInserts(table: string, data: Record<string, unknown>[]): string {
+  if (!data.length) return '-- Nenhum dado encontrado';
+  const cols = Object.keys(data[0]);
+  return data.map(row => {
+    const vals = cols.map(c => escapeSQL(row[c])).join(', ');
+    return `INSERT INTO public.${table} (${cols.join(', ')}) VALUES (${vals});`;
+  }).join('\n');
+}
+
 const ExportDataPage = () => {
   const { isLoggedIn, isAdmin } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [expandedSql, setExpandedSql] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [sqlData, setSqlData] = useState<Record<string, string>>({});
+  const [sqlLoading, setSqlLoading] = useState<string | null>(null);
 
   if (!isLoggedIn || !isAdmin) {
     return (
@@ -203,17 +222,83 @@ const ExportDataPage = () => {
     }
   };
 
+  const handleToggleSql = async (key: string) => {
+    if (expandedSql === key) {
+      setExpandedSql(null);
+      return;
+    }
+    setExpandedSql(key);
+    if (sqlData[key]) return; // already fetched
+
+    setSqlLoading(key);
+    try {
+      let allData: Record<string, unknown>[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await (supabase.from(key as 'orders' | 'profiles' | 'user_roles' | 'verification_codes') as any)
+          .select('*')
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allData = [...allData, ...data];
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      const inserts = generateInserts(key, allData);
+      const full = `${tableSchemas[key]}\n\n-- Dados (${allData.length} registros)\n${inserts}`;
+      setSqlData(prev => ({ ...prev, [key]: full }));
+    } catch (err: any) {
+      setSqlData(prev => ({ ...prev, [key]: `${tableSchemas[key]}\n\n-- Erro ao buscar dados: ${err.message}` }));
+    } finally {
+      setSqlLoading(null);
+    }
+  };
+
+  const getFullSql = (key: string) => sqlData[key] || tableSchemas[key];
+
   const handleCopySql = (key: string) => {
-    navigator.clipboard.writeText(tableSchemas[key]);
+    navigator.clipboard.writeText(getFullSql(key));
     setCopied(key);
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const handleCopyAll = () => {
-    const allSql = Object.values(tableSchemas).join('\n\n');
-    navigator.clipboard.writeText(allSql);
-    setCopied('all');
-    setTimeout(() => setCopied(null), 2000);
+  const handleCopyAll = async () => {
+    // fetch all tables that haven't been fetched yet
+    const keys = exportOptions.map(o => o.key);
+    for (const key of keys) {
+      if (!sqlData[key]) {
+        setSqlLoading(key);
+        try {
+          let allData: Record<string, unknown>[] = [];
+          let from = 0;
+          const pageSize = 1000;
+          while (true) {
+            const { data, error } = await (supabase.from(key as 'orders' | 'profiles' | 'user_roles' | 'verification_codes') as any)
+              .select('*')
+              .range(from, from + pageSize - 1);
+            if (error) throw error;
+            if (!data || data.length === 0) break;
+            allData = [...allData, ...data];
+            if (data.length < pageSize) break;
+            from += pageSize;
+          }
+          const inserts = generateInserts(key, allData);
+          const full = `${tableSchemas[key]}\n\n-- Dados (${allData.length} registros)\n${inserts}`;
+          setSqlData(prev => ({ ...prev, [key]: full }));
+        } catch {
+          // skip
+        }
+      }
+    }
+    setSqlLoading(null);
+    // Need a small delay to let state update
+    setTimeout(() => {
+      const allSql = keys.map(k => sqlData[k] || tableSchemas[k]).join('\n\n---\n\n');
+      navigator.clipboard.writeText(allSql);
+      setCopied('all');
+      setTimeout(() => setCopied(null), 2000);
+    }, 100);
   };
 
   return (
@@ -267,20 +352,23 @@ const ExportDataPage = () => {
             {copied === 'all' ? 'Copiado!' : 'Copiar tudo'}
           </button>
         </div>
-        <p className="text-muted-foreground text-xs mb-4">Clique em uma tabela para ver o SQL de criação. Use para migrar a estrutura.</p>
+        <p className="text-muted-foreground text-xs mb-4">Clique em uma tabela para gerar o SQL completo (CREATE + INSERT com dados). Use para migrar estrutura e dados.</p>
 
         <div className="space-y-2">
           {exportOptions.map(opt => (
             <div key={`sql-${opt.key}`} className="bg-card rounded-xl western-shadow overflow-hidden">
               <button
-                onClick={() => setExpandedSql(expandedSql === opt.key ? null : opt.key)}
+                onClick={() => handleToggleSql(opt.key)}
                 className="w-full flex items-center justify-between p-4 text-left hover:bg-accent/30 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <Code size={16} className="text-primary" />
                   <span className="font-semibold text-sm text-foreground">{opt.label}</span>
                 </div>
-                <span className="text-xs text-muted-foreground">{expandedSql === opt.key ? '▲ Fechar' : '▼ Ver SQL'}</span>
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  {sqlLoading === opt.key && <Loader2 size={12} className="animate-spin" />}
+                  {expandedSql === opt.key ? '▲ Fechar' : '▼ Ver SQL + Dados'}
+                </span>
               </button>
 
               {expandedSql === opt.key && (
@@ -294,8 +382,8 @@ const ExportDataPage = () => {
                       {copied === opt.key ? 'Copiado!' : 'Copiar'}
                     </button>
                   </div>
-                  <pre className="bg-muted rounded-lg p-4 text-xs text-foreground overflow-x-auto whitespace-pre font-mono leading-relaxed">
-                    {tableSchemas[opt.key]}
+                  <pre className="bg-muted rounded-lg p-4 text-xs text-foreground overflow-x-auto whitespace-pre font-mono leading-relaxed max-h-96 overflow-y-auto">
+                    {sqlLoading === opt.key ? 'Carregando dados...' : getFullSql(opt.key)}
                   </pre>
                 </div>
               )}
