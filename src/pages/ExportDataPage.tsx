@@ -152,12 +152,31 @@ function downloadCsv(csv: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+function escapeSQL(val: unknown): string {
+  if (val === null || val === undefined) return 'NULL';
+  if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
+  if (typeof val === 'number') return String(val);
+  if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'::jsonb`;
+  return `'${String(val).replace(/'/g, "''")}'`;
+}
+
+function generateInserts(table: string, data: Record<string, unknown>[]): string {
+  if (!data.length) return '-- Nenhum dado encontrado';
+  const cols = Object.keys(data[0]);
+  return data.map(row => {
+    const vals = cols.map(c => escapeSQL(row[c])).join(', ');
+    return `INSERT INTO public.${table} (${cols.join(', ')}) VALUES (${vals});`;
+  }).join('\n');
+}
+
 const ExportDataPage = () => {
   const { isLoggedIn, isAdmin } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [expandedSql, setExpandedSql] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [sqlData, setSqlData] = useState<Record<string, string>>({});
+  const [sqlLoading, setSqlLoading] = useState<string | null>(null);
 
   if (!isLoggedIn || !isAdmin) {
     return (
