@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Download, Database, Users, FileText, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Download, Database, Users, FileText, Loader2, Copy, Check, Code } from 'lucide-react';
 
 interface ExportOption {
   key: string;
@@ -17,6 +16,117 @@ const exportOptions: ExportOption[] = [
   { key: 'user_roles', label: 'Papéis de Usuário', icon: <Users size={20} />, description: 'Roles atribuídas aos usuários' },
   { key: 'verification_codes', label: 'Códigos de Verificação', icon: <Database size={20} />, description: 'Códigos de verificação gerados' },
 ];
+
+const tableSchemas: Record<string, string> = {
+  orders: `CREATE TABLE public.orders (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  numero text NOT NULL,
+  vendedor text NOT NULL DEFAULT '',
+  tamanho text NOT NULL DEFAULT '',
+  genero text,
+  modelo text NOT NULL DEFAULT '',
+  solado text NOT NULL DEFAULT '',
+  formato_bico text NOT NULL DEFAULT '',
+  cor_vira text NOT NULL DEFAULT '',
+  couro_gaspea text NOT NULL DEFAULT '',
+  couro_cano text NOT NULL DEFAULT '',
+  couro_taloneira text NOT NULL DEFAULT '',
+  cor_couro_gaspea text,
+  cor_couro_cano text,
+  cor_couro_taloneira text,
+  bordado_cano text NOT NULL DEFAULT '',
+  bordado_gaspea text NOT NULL DEFAULT '',
+  bordado_taloneira text NOT NULL DEFAULT '',
+  cor_bordado_cano text,
+  cor_bordado_gaspea text,
+  cor_bordado_taloneira text,
+  bordado_variado_desc_cano text,
+  bordado_variado_desc_gaspea text,
+  bordado_variado_desc_taloneira text,
+  personalizacao_nome text NOT NULL DEFAULT '',
+  personalizacao_bordado text NOT NULL DEFAULT '',
+  nome_bordado_desc text,
+  cor_linha text NOT NULL DEFAULT '',
+  cor_borrachinha text NOT NULL DEFAULT '',
+  trisce text NOT NULL DEFAULT 'Não',
+  trice_desc text,
+  tiras text NOT NULL DEFAULT 'Não',
+  tiras_desc text,
+  metais text NOT NULL DEFAULT '',
+  tipo_metal text,
+  cor_metal text,
+  strass_qtd integer,
+  cruz_metal_qtd integer,
+  bridao_metal_qtd integer,
+  acessorios text NOT NULL DEFAULT '',
+  desenvolvimento text NOT NULL DEFAULT '',
+  sob_medida boolean NOT NULL DEFAULT false,
+  sob_medida_desc text,
+  observacao text NOT NULL DEFAULT '',
+  status text NOT NULL DEFAULT 'Em aberto',
+  quantidade integer NOT NULL DEFAULT 1,
+  preco numeric NOT NULL DEFAULT 0,
+  adicional_valor numeric,
+  adicional_desc text,
+  desconto numeric,
+  desconto_justificativa text,
+  dias_restantes integer NOT NULL DEFAULT 10,
+  data_criacao text NOT NULL,
+  hora_criacao text NOT NULL,
+  tem_laser boolean NOT NULL DEFAULT false,
+  laser_cano text,
+  laser_gaspea text,
+  laser_taloneira text,
+  cor_glitter_cano text,
+  cor_glitter_gaspea text,
+  cor_glitter_taloneira text,
+  estampa text,
+  estampa_desc text,
+  pintura text,
+  pintura_desc text,
+  costura_atras text,
+  cor_sola text,
+  carimbo text,
+  carimbo_desc text,
+  cor_vivo text,
+  forma text,
+  tipo_extra text,
+  numero_pedido_bota text,
+  extra_detalhes jsonb,
+  fotos jsonb NOT NULL DEFAULT '[]'::jsonb,
+  historico jsonb NOT NULL DEFAULT '[]'::jsonb,
+  alteracoes jsonb NOT NULL DEFAULT '[]'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);`,
+  profiles: `CREATE TABLE public.profiles (
+  id uuid PRIMARY KEY,
+  nome_completo text NOT NULL DEFAULT '',
+  nome_usuario text NOT NULL,
+  telefone text NOT NULL DEFAULT '',
+  email text NOT NULL DEFAULT '',
+  cpf_cnpj text NOT NULL DEFAULT '',
+  verificado boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);`,
+  user_roles: `CREATE TYPE public.app_role AS ENUM ('admin', 'user');
+
+CREATE TABLE public.user_roles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  role app_role NOT NULL,
+  UNIQUE (user_id, role)
+);`,
+  verification_codes: `CREATE TABLE public.verification_codes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  code text NOT NULL,
+  type text NOT NULL,
+  destination text NOT NULL,
+  expires_at timestamptz NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);`,
+};
 
 function jsonToCsv(data: Record<string, unknown>[]): string {
   if (!data.length) return '';
@@ -44,9 +154,10 @@ function downloadCsv(csv: string, filename: string) {
 
 const ExportDataPage = () => {
   const { isLoggedIn, isAdmin } = useAuth();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [expandedSql, setExpandedSql] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
   if (!isLoggedIn || !isAdmin) {
     return (
@@ -63,12 +174,12 @@ const ExportDataPage = () => {
       let allData: Record<string, unknown>[] = [];
       let from = 0;
       const pageSize = 1000;
-      
+
       while (true) {
         const { data, error } = await (supabase.from(key as 'orders' | 'profiles' | 'user_roles' | 'verification_codes') as any)
           .select('*')
           .range(from, from + pageSize - 1);
-        
+
         if (error) throw error;
         if (!data || data.length === 0) break;
         allData = [...allData, ...data];
@@ -92,15 +203,32 @@ const ExportDataPage = () => {
     }
   };
 
+  const handleCopySql = (key: string) => {
+    navigator.clipboard.writeText(tableSchemas[key]);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const handleCopyAll = () => {
+    const allSql = Object.values(tableSchemas).join('\n\n');
+    navigator.clipboard.writeText(allSql);
+    setCopied('all');
+    setTimeout(() => setCopied(null), 2000);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <h1 className="text-2xl font-display font-bold text-foreground mb-2 flex items-center gap-2">
           <Database className="text-primary" size={24} /> Exportar Dados
         </h1>
-        <p className="text-muted-foreground mb-6 text-sm">Exporte os dados das tabelas do banco de dados em formato CSV.</p>
+        <p className="text-muted-foreground mb-6 text-sm">Exporte os dados em CSV ou copie o SQL das tabelas para migração.</p>
 
-        <div className="space-y-3">
+        {/* CSV Export Section */}
+        <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+          <Download size={18} className="text-primary" /> Exportar CSV
+        </h2>
+        <div className="space-y-3 mb-8">
           {exportOptions.map(opt => (
             <button
               key={opt.key}
@@ -123,8 +251,57 @@ const ExportDataPage = () => {
         </div>
 
         {message && (
-          <p className="mt-4 text-sm text-muted-foreground bg-muted rounded-lg p-3">{message}</p>
+          <p className="mb-6 text-sm text-muted-foreground bg-muted rounded-lg p-3">{message}</p>
         )}
+
+        {/* SQL Schema Section */}
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <Code size={18} className="text-primary" /> SQL das Tabelas
+          </h2>
+          <button
+            onClick={handleCopyAll}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+          >
+            {copied === 'all' ? <Check size={14} /> : <Copy size={14} />}
+            {copied === 'all' ? 'Copiado!' : 'Copiar tudo'}
+          </button>
+        </div>
+        <p className="text-muted-foreground text-xs mb-4">Clique em uma tabela para ver o SQL de criação. Use para migrar a estrutura.</p>
+
+        <div className="space-y-2">
+          {exportOptions.map(opt => (
+            <div key={`sql-${opt.key}`} className="bg-card rounded-xl western-shadow overflow-hidden">
+              <button
+                onClick={() => setExpandedSql(expandedSql === opt.key ? null : opt.key)}
+                className="w-full flex items-center justify-between p-4 text-left hover:bg-accent/30 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Code size={16} className="text-primary" />
+                  <span className="font-semibold text-sm text-foreground">{opt.label}</span>
+                </div>
+                <span className="text-xs text-muted-foreground">{expandedSql === opt.key ? '▲ Fechar' : '▼ Ver SQL'}</span>
+              </button>
+
+              {expandedSql === opt.key && (
+                <div className="border-t border-border/30 p-4">
+                  <div className="flex justify-end mb-2">
+                    <button
+                      onClick={() => handleCopySql(opt.key)}
+                      className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded bg-muted text-foreground hover:bg-accent transition-colors"
+                    >
+                      {copied === opt.key ? <Check size={12} /> : <Copy size={12} />}
+                      {copied === opt.key ? 'Copiado!' : 'Copiar'}
+                    </button>
+                  </div>
+                  <pre className="bg-muted rounded-lg p-4 text-xs text-foreground overflow-x-auto whitespace-pre font-mono leading-relaxed">
+                    {tableSchemas[opt.key]}
+                  </pre>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
