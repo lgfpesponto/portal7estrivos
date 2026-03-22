@@ -531,7 +531,7 @@ const EditOrderPage = () => {
           </div>
 
           <div className="bg-muted rounded-lg p-3">
-            <p className="text-sm"><span className="font-semibold">Prazo de Produção:</span> {hasAnyLaser ? '30' : '10'} dias úteis</p>
+            <p className="text-sm"><span className="font-semibold">Prazo de Produção:</span> 15 dias úteis</p>
           </div>
 
           <div className="bg-muted rounded-lg p-4">
