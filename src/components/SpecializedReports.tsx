@@ -439,7 +439,17 @@ const SpecializedReports = ({ reports, showTitle = true }: SpecializedReportsPro
 
   // ── Bordados: new layout with QR + Receita ──
   const generateBordadosPDF = async () => {
-    const filtered = sourceOrders.filter(o => filterProgresso === 'todos' || o.status === filterProgresso);
+    const filtered = sourceOrders.filter(o => {
+      if (filterProgresso !== 'todos' && o.status !== filterProgresso) return false;
+      const hasBordado =
+        (o.bordadoCano && o.bordadoCano !== '' && o.bordadoCano !== 'Não') ||
+        (o.bordadoGaspea && o.bordadoGaspea !== '' && o.bordadoGaspea !== 'Não') ||
+        (o.bordadoTaloneira && o.bordadoTaloneira !== '' && o.bordadoTaloneira !== 'Não') ||
+        (o.nomeBordadoDesc && o.nomeBordadoDesc !== '') ||
+        (o.personalizacaoNome && o.personalizacaoNome !== '' && o.personalizacaoNome !== 'Não') ||
+        (o.personalizacaoBordado && o.personalizacaoBordado !== '' && o.personalizacaoBordado !== 'Não');
+      return !!hasBordado;
+    });
 
     const doc = new jsPDF();
     const mx = 14;
