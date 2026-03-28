@@ -1,37 +1,48 @@
 
-Objetivo: corrigir o prazo mostrado na ficha de produção/formulário para pedidos de ficha "bota", porque ainda há telas usando a regra antiga de 10/30 dias.
 
-Implementação proposta:
+## Plano: Edição de pedidos Extras com formulário correto
 
-1. Ajustar a exibição do prazo em `src/pages/OrderPage.tsx`
-- Hoje a tela mostra:
-  `Prazo de Produção: {hasAnyLaser ? '30' : '10'} dias úteis`
-- Trocar para a regra nova de bota:
-  `15 dias úteis`
-- Isso garante que, ao criar pedido de bota, a ficha/formulário não continue exibindo o prazo antigo por causa do laser.
+### Problema
+Ao clicar no ícone de editar (lápis) em um pedido de Extras, o sistema abre `/pedido/:id/editar` — a ficha de produção de bota. O correto é abrir o formulário específico do produto Extra com os dados já preenchidos.
 
-2. Ajustar a exibição do prazo em `src/pages/EditOrderPage.tsx`
-- Hoje a edição também mostra:
-  `Prazo de Produção: {hasAnyLaser ? '30' : '10'} dias úteis`
-- Trocar para `15 dias úteis` para manter consistência entre criação, edição e detalhes do pedido.
+### Solução
 
-3. Manter a lógica limitada à ficha “bota”
-- Como essas telas são a ficha principal de produção de bota, a mudança deve afetar apenas esse fluxo.
-- Não mexer no comportamento de extras e cintos nessas telas sem necessidade.
+#### 1. Criar página `src/pages/EditExtrasPage.tsx`
+- Rota: `/extras/:id/editar`
+- Busca o pedido pelo `id`, verifica que é Extra (`tipoExtra` preenchido) e que o usuário é admin
+- Pré-popula o formulário com os dados de `order.extraDetalhes` e `order.numeroPedidoBota`
+- Reutiliza exatamente o mesmo layout de campos do `ExtrasPage.renderForm()` (campos condicionais por `tipoExtra`)
+- Campos editáveis: vendedor (admin), número do pedido, e campos específicos do produto (ex: corTiras para Tiras Laterais, tipoCouro/corCouro/vaiCanivete para Kit Faca, etc.)
+- Ao salvar: recalcula o preço com `calcPrice()`, chama `updateOrder()` atualizando `extraDetalhes`, `numeroPedidoBota`, `vendedor`, `preco`
+- Botão "Salvar" em vez de "Finalizar Pedido"
 
-4. Validar consistência com o restante do sistema
-- Confirmar que a página de detalhes já está usando 15 dias úteis.
-- Garantir que não reste nenhuma outra exibição visível da regra antiga “10/30 dias” no fluxo de ficha de bota.
+#### 2. Registrar rota em `src/App.tsx`
+- Adicionar `<Route path="/extras/:id/editar" element={<EditExtrasPage />} />`
 
-Detalhes técnicos:
-- Arquivos a alterar:
-  - `src/pages/OrderPage.tsx`
-  - `src/pages/EditOrderPage.tsx`
-- Trecho atual encontrado:
-  - `hasAnyLaser ? '30' : '10'`
-- Novo comportamento:
-  - exibir prazo fixo de `15 dias úteis` para pedidos da ficha de produção bota, independentemente de laser ou bordado.
+#### 3. Atualizar navegação condicional
+**`src/pages/OrderDetailPage.tsx` (linha 264):**
+```typescript
+onClick={() => navigate(order.tipoExtra 
+  ? `/extras/${order.id}/editar` 
+  : order.tipoExtra === 'cinto' 
+    ? `/pedido-cinto/${order.id}/editar` 
+    : `/pedido/${order.id}/editar`
+)}
+```
+Simplificado: se `order.tipoExtra` existe e não é `'cinto'`, vai para `/extras/:id/editar`. Caso contrário mantém o comportamento atual.
 
-Resultado esperado:
-- Ao criar ou editar uma ficha de produção de bota, o prazo exibido passa a ser 15 dias úteis.
-- O prazo antigo deixa de aparecer na ficha.
+**`src/pages/ReportsPage.tsx` (linha 941):** Mesma lógica condicional.
+
+#### 4. Permissão
+- Apenas admin (Juliana e Fernanda) vê o botão de editar — já é assim hoje
+- Na `EditExtrasPage`, redirecionar para `/relatorios` se não for admin
+
+### Arquivos
+
+| Arquivo | Alteração |
+|---|---|
+| `src/pages/EditExtrasPage.tsx` | **Novo** — formulário de edição de extras |
+| `src/App.tsx` | Adicionar rota `/extras/:id/editar` |
+| `src/pages/OrderDetailPage.tsx` | Redirecionar edição de extras para nova rota |
+| `src/pages/ReportsPage.tsx` | Redirecionar edição de extras para nova rota |
+
