@@ -23,6 +23,7 @@ import ExtrasPage from "./pages/ExtrasPage";
 import UsersManagementPage from "./pages/UsersManagementPage";
 import VerifyCodePage from "./pages/VerifyCodePage";
 import ExportDataPage from "./pages/ExportDataPage";
+import EditExtrasPage from "./pages/EditExtrasPage";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
