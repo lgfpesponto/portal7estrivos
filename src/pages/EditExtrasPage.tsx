@@ -16,7 +16,7 @@ const EditExtrasPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { orders, allOrders, isAdmin, user, updateOrder, allProfiles } = useAuth();
+  const { orders, allOrders, isAdmin, user, updateOrder, allProfiles, loading: authLoading } = useAuth();
 
   const sourceOrders = isAdmin ? allOrders : orders;
   const order = sourceOrders.find(o => o.id === id);
@@ -25,6 +25,7 @@ const EditExtrasPage = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAdmin) {
       navigate('/relatorios');
       return;
