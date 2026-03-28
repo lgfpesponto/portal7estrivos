@@ -16,7 +16,7 @@ const EditExtrasPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { orders, allOrders, isAdmin, user, updateOrder, allProfiles } = useAuth();
+  const { orders, allOrders, isAdmin, user, updateOrder, allProfiles, loading: authLoading } = useAuth();
 
   const sourceOrders = isAdmin ? allOrders : orders;
   const order = sourceOrders.find(o => o.id === id);
@@ -25,6 +25,7 @@ const EditExtrasPage = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAdmin) {
       navigate('/relatorios');
       return;
@@ -57,7 +58,15 @@ const EditExtrasPage = () => {
         valorManual: det.valorManual || '',
       });
     }
-  }, [order, isAdmin, navigate]);
+  }, [order, isAdmin, authLoading, navigate]);
+
+  if (authLoading || (!order && sourceOrders.length === 0)) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
 
   if (!order || !order.tipoExtra || order.tipoExtra === 'cinto') {
     return (
