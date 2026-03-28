@@ -23,6 +23,7 @@ import ExtrasPage from "./pages/ExtrasPage";
 import UsersManagementPage from "./pages/UsersManagementPage";
 import VerifyCodePage from "./pages/VerifyCodePage";
 import ExportDataPage from "./pages/ExportDataPage";
+import EditExtrasPage from "./pages/EditExtrasPage";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/pedido-cinto" element={<BeltOrderPage />} />
             <Route path="/pedido/:id" element={<OrderDetailPage />} />
             <Route path="/pedido/:id/editar" element={<EditOrderPage />} />
+            <Route path="/extras/:id/editar" element={<EditExtrasPage />} />
             <Route path="/acompanhar" element={<TrackOrderPage />} />
             <Route path="/relatorios" element={<ReportsPage />} />
             <Route path="/relatorio-pecas" element={<PiecesReportPage />} />
