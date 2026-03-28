@@ -58,7 +58,15 @@ const EditExtrasPage = () => {
         valorManual: det.valorManual || '',
       });
     }
-  }, [order, isAdmin, navigate]);
+  }, [order, isAdmin, authLoading, navigate]);
+
+  if (authLoading || (!order && sourceOrders.length === 0)) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
 
   if (!order || !order.tipoExtra || order.tipoExtra === 'cinto') {
     return (
