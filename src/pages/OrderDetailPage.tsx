@@ -213,6 +213,15 @@ const OrderDetailPage = () => {
                 disabled={!bulkStatus}
                 onClick={async () => {
                   if (!bulkStatus) return;
+                  let motivo: string | undefined;
+                  if (bulkStatus === 'Cancelado') {
+                    const r = window.prompt('Informe o motivo do cancelamento:');
+                    if (!r || !r.trim()) {
+                      toast.error('Motivo do cancelamento é obrigatório.');
+                      return;
+                    }
+                    motivo = r.trim();
+                  }
                   const ids = Array.from(selectedIds);
                   const sourceOrders = isAdmin ? allOrders : orders;
                   let updated = 0;
@@ -221,7 +230,7 @@ const OrderDetailPage = () => {
                     if (!o) continue;
                     const dataHoje = formatBrasiliaDate();
                     const horaAgora = formatBrasiliaTime();
-                    const newHist = { local: bulkStatus, data: dataHoje, hora: horaAgora, descricao: `Movido para ${bulkStatus}` };
+                    const newHist = { local: bulkStatus, data: dataHoje, hora: horaAgora, descricao: `Movido para ${bulkStatus}`, observacao: motivo };
                     await updateOrder(oid, {
                       status: bulkStatus,
                       historico: [...(o.historico || []), newHist],
