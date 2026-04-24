@@ -8,6 +8,7 @@ const statusColors: Record<string, string> = {
   'Entregue': 'bg-green-100 text-green-800',
   'Pago': 'bg-green-100 text-green-800',
   'Expedição': 'bg-blue-100 text-blue-800',
+  'Cancelado': 'bg-red-100 text-red-800',
 };
 
 const TrackOrderPage = () => {
