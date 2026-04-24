@@ -119,6 +119,10 @@ const ReportsPage = () => {
 
   const handleBulkProgressUpdate = () => {
     if (!selectedProgress) { toast.error('Selecione uma etapa de produção.'); return; }
+    if (selectedProgress === 'Cancelado' && !progressObservacao.trim()) {
+      toast.error('Informe o motivo do cancelamento.');
+      return;
+    }
     selectedIds.forEach(id => updateOrderStatus(id, selectedProgress, progressObservacao.trim() || undefined));
     toast.success(`${selectedIds.size} pedido(s) atualizado(s) para "${selectedProgress}".`);
     setShowProgressModal(false);
@@ -992,12 +996,18 @@ const ReportsPage = () => {
             );
           })()}
           <div className="mt-3">
-            <label className="block text-xs font-semibold mb-1">Observação (opcional)</label>
+            <label className={`block text-xs font-semibold mb-1 ${selectedProgress === 'Cancelado' ? 'text-destructive' : ''}`}>
+              {selectedProgress === 'Cancelado' ? 'Motivo do cancelamento *' : 'Observação (opcional)'}
+            </label>
             <textarea
               value={progressObservacao}
               onChange={e => setProgressObservacao(e.target.value)}
-              placeholder="Ex: pedido priorizado..."
-              className="w-full bg-muted rounded-lg px-4 py-2.5 text-sm border border-border focus:border-primary outline-none min-h-[60px]"
+              placeholder={selectedProgress === 'Cancelado'
+                ? 'Ex: cliente desistiu, pagamento não confirmado, erro no pedido...'
+                : 'Ex: pedido priorizado...'}
+              className={`w-full bg-muted rounded-lg px-4 py-2.5 text-sm border focus:border-primary outline-none min-h-[60px] ${
+                selectedProgress === 'Cancelado' ? 'border-destructive' : 'border-border'
+              }`}
             />
           </div>
           <DialogFooter className="mt-4">

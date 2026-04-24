@@ -1,48 +1,45 @@
+## Plano: Cor "Whisky" + status "Cancelado" com motivo obrigatório
 
+### 1. Adicionar cor "Whisky" na lista de cores de couro
+Arquivo: `src/lib/orderFieldsConfig.ts` — incluir `'Whisky'` no array `CORES_COURO`. Isso faz a cor aparecer automaticamente em todos os formulários que já usam essa lista (OrderPage, EditOrderPage, ExtrasPage, EditExtrasPage, BeltOrderPage).
 
-## Plano: Edição de pedidos Extras com formulário correto
+### 2. Adicionar status "Cancelado" para os três tipos de produto
+Arquivo: `src/contexts/AuthContext.tsx` — incluir `"Cancelado"` ao final dos arrays:
+- `PRODUCTION_STATUSES` (botas — admin)
+- `PRODUCTION_STATUSES_USER` (botas — revendedor)
+- `EXTRAS_STATUSES` (extras)
+- `BELT_STATUSES` (cintos)
 
-### Problema
-Ao clicar no ícone de editar (lápis) em um pedido de Extras, o sistema abre `/pedido/:id/editar` — a ficha de produção de bota. O correto é abrir o formulário específico do produto Extra com os dados já preenchidos.
+Também incluir nas listas de filtros: `src/pages/Index.tsx` e `src/pages/ProfilePage.tsx`.
 
-### Solução
+### 3. Tornar a observação OBRIGATÓRIA quando o status escolhido for "Cancelado"
+Arquivo: `src/pages/ReportsPage.tsx` (modal "Mudar Progresso de Produção"):
 
-#### 1. Criar página `src/pages/EditExtrasPage.tsx`
-- Rota: `/extras/:id/editar`
-- Busca o pedido pelo `id`, verifica que é Extra (`tipoExtra` preenchido) e que o usuário é admin
-- Pré-popula o formulário com os dados de `order.extraDetalhes` e `order.numeroPedidoBota`
-- Reutiliza exatamente o mesmo layout de campos do `ExtrasPage.renderForm()` (campos condicionais por `tipoExtra`)
-- Campos editáveis: vendedor (admin), número do pedido, e campos específicos do produto (ex: corTiras para Tiras Laterais, tipoCouro/corCouro/vaiCanivete para Kit Faca, etc.)
-- Ao salvar: recalcula o preço com `calcPrice()`, chama `updateOrder()` atualizando `extraDetalhes`, `numeroPedidoBota`, `vendedor`, `preco`
-- Botão "Salvar" em vez de "Finalizar Pedido"
+- Quando `selectedProgress === 'Cancelado'`:
+  - Mudar o label do textarea para **"Motivo do cancelamento *"** (vermelho/destaque)
+  - Trocar o placeholder para `"Ex: cliente desistiu, pagamento não confirmado, erro no pedido..."`
+  - Em `handleBulkProgressUpdate`, validar: se status é "Cancelado" e `progressObservacao.trim()` está vazio → `toast.error('Informe o motivo do cancelamento.')` e não prosseguir.
 
-#### 2. Registrar rota em `src/App.tsx`
-- Adicionar `<Route path="/extras/:id/editar" element={<EditExtrasPage />} />`
+### 4. Aplicar a mesma regra ao modal de mudança de status individual
+O `OrderDetailPage` também movimenta status (via seleção em massa de produção). Verificar e aplicar a mesma validação onde houver mudança individual de status para "Cancelado".
 
-#### 3. Atualizar navegação condicional
-**`src/pages/OrderDetailPage.tsx` (linha 264):**
-```typescript
-onClick={() => navigate(order.tipoExtra 
-  ? `/extras/${order.id}/editar` 
-  : order.tipoExtra === 'cinto' 
-    ? `/pedido-cinto/${order.id}/editar` 
-    : `/pedido/${order.id}/editar`
-)}
-```
-Simplificado: se `order.tipoExtra` existe e não é `'cinto'`, vai para `/extras/:id/editar`. Caso contrário mantém o comportamento atual.
+### 5. Estilo visual do badge "Cancelado"
+Onde o status é exibido como badge colorido (`OrderDetailPage`, `TrackOrderPage`, listagens), adicionar a entrada `'Cancelado': 'bg-red-100 text-red-800'` para destacar visualmente.
 
-**`src/pages/ReportsPage.tsx` (linha 941):** Mesma lógica condicional.
+### Arquivos alterados
 
-#### 4. Permissão
-- Apenas admin (Juliana e Fernanda) vê o botão de editar — já é assim hoje
-- Na `EditExtrasPage`, redirecionar para `/relatorios` se não for admin
-
-### Arquivos
-
-| Arquivo | Alteração |
+| Arquivo | Mudança |
 |---|---|
-| `src/pages/EditExtrasPage.tsx` | **Novo** — formulário de edição de extras |
-| `src/App.tsx` | Adicionar rota `/extras/:id/editar` |
-| `src/pages/OrderDetailPage.tsx` | Redirecionar edição de extras para nova rota |
-| `src/pages/ReportsPage.tsx` | Redirecionar edição de extras para nova rota |
+| `src/lib/orderFieldsConfig.ts` | Adicionar `'Whisky'` em `CORES_COURO` |
+| `src/contexts/AuthContext.tsx` | Adicionar `"Cancelado"` em todos os arrays de status |
+| `src/pages/Index.tsx` | Adicionar `'Cancelado'` no filtro de status |
+| `src/pages/ProfilePage.tsx` | Adicionar `'Cancelado'` no filtro de status |
+| `src/pages/ReportsPage.tsx` | Validar motivo obrigatório + label dinâmico no modal |
+| `src/pages/OrderDetailPage.tsx` | Cor do badge `Cancelado` (vermelho) + validação se houver mudança individual |
+| `src/pages/TrackOrderPage.tsx` | Cor do badge `Cancelado` (vermelho) |
 
+### Resultado esperado
+- A cor **Whisky** aparece em todos os campos de cor de couro (botas, extras, cintos).
+- O status **Cancelado** fica disponível em qualquer pedido (bota, extras, cinto).
+- Ao mover um pedido para "Cancelado", o sistema **exige** que o usuário escreva o motivo antes de confirmar, ficando registrado no histórico do pedido com data/hora/autor.
+- O badge "Cancelado" aparece em vermelho para identificação rápida nas listagens.
